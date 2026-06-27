@@ -1,12 +1,10 @@
-"""Fetch this week's events from iCloud over CalDAV."""
-
+import asyncio
 from datetime import datetime, timedelta, timezone
 
 import caldav
 from loguru import logger
 
 from backend.core.config import settings
-from backend.repo.caldav_repo import CalDavEventRepo
 
 CALDAV_URL = "https://caldav.icloud.com/"
 
@@ -36,6 +34,8 @@ def week_range() -> tuple[datetime, datetime]:
 
 
 def main() -> None:
+    from backend.repo.caldav_repo import CalDavEventRepo
+
     calendar_url = discover_calendar_url()
     repo = CalDavEventRepo(
         caldav_url=CALDAV_URL,
@@ -53,5 +53,48 @@ def main() -> None:
         logger.info("{} | {} -> {}", event.title, event.start, event.end)
 
 
+def list_notion_databases() -> None:
+    """Print every Notion database shared with the integration, with its id."""
+    from backend.repo.notion_repo import NotionPageRepo
+
+    repo = NotionPageRepo(token=settings.notion_token)
+    repo.connect()
+
+    dbs = repo.list_databases()
+    if not dbs:
+        logger.warning("No databases found — did you share one with the integration?")
+        return
+    for db in dbs:
+        logger.info("{} | {}", db.id, db.title or "(untitled)")
+
+
+def get_pages():
+    from backend.repo.notion_repo import NotionPageRepo
+
+    repo = NotionPageRepo(token=settings.notion_token)
+    repo.connect()
+
+    db_id = "e17a5558-72b4-8367-8c69-87a36a845e37"
+
+    pages = repo.query_database(db_id)
+    for page in pages:
+        logger.debug(page.id)
+        logger.info("{} | {}", page.id, page.title or "(untitled)")
+
+
+async def test_db() -> None:
+    """Smoke-test the DB connection: run SELECT 1."""
+    from sqlalchemy import text
+
+    from backend.core.db import async_engine
+
+    async with async_engine.connect() as conn:
+        result = await conn.execute(text("SELECT 1"))
+        logger.info("DB ok, SELECT 1 -> {}", result.scalar_one())
+    await async_engine.dispose()
+
+
 if __name__ == "__main__":
-    main()
+    # list_notion_databases()
+    # get_pages()
+    asyncio.run(test_db())
