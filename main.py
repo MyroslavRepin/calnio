@@ -1,4 +1,3 @@
-import asyncio
 from datetime import datetime, timedelta, timezone
 
 import caldav
@@ -68,33 +67,6 @@ def list_notion_databases() -> None:
         logger.info("{} | {}", db.id, db.title or "(untitled)")
 
 
-def get_pages():
-    from backend.repo.notion_repo import NotionPageRepo
-
-    repo = NotionPageRepo(token=settings.notion_token)
-    repo.connect()
-
-    db_id = "e17a5558-72b4-8367-8c69-87a36a845e37"
-
-    pages = repo.query_database(db_id)
-    for page in pages:
-        logger.debug(page.id)
-        logger.info("{} | {}", page.id, page.title or "(untitled)")
-
-
-async def test_db() -> None:
-    """Smoke-test the DB connection: run SELECT 1."""
-    from sqlalchemy import text
-
-    from backend.core.db import async_engine
-
-    async with async_engine.connect() as conn:
-        result = await conn.execute(text("SELECT 1"))
-        logger.info("DB ok, SELECT 1 -> {}", result.scalar_one())
-    await async_engine.dispose()
-
-
 if __name__ == "__main__":
-    # list_notion_databases()
+    list_notion_databases()
     # get_pages()
-    asyncio.run(test_db())

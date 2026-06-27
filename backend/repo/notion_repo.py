@@ -4,7 +4,8 @@ from typing import Any, Callable
 from loguru import logger
 from notion_client import Client
 
-from backend.repo.models import NotionDatabase, NotionPage
+from backend.schemas.notion_database import NotionDatabase
+from backend.schemas.notion_page import NotionPage
 
 
 def _join_rich_text(parts: list[dict[str, Any]]) -> str:

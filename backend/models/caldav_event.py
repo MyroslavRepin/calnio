@@ -3,13 +3,13 @@ from datetime import datetime
 from sqlalchemy import DateTime, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from backend.models.base import Base
+from backend.deps.base import Base
 
 
-class CalDavEventORM(Base):
-    """Persisted mirror of a CalDAV calendar event."""
+class CalDavEvent(Base):
+    """Database ORM model for a CalDavEvent table"""
 
-    __tablename__ = "caldav_events"
+    __tablename__: str = "caldav_events"
 
     id: Mapped[int] = mapped_column(primary_key=True)
 

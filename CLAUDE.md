@@ -30,13 +30,14 @@ OUT of scope now (do not build):
 
 ## Architecture
 
-Current code (`backend/`). Only `core/`, `deps/`, `repo/` exist — no `api/` or `services/` yet; `deps/caldav.py` is empty.
+Current code (`backend/`). Only `core/`, `deps/`, `models/`, `repo/`, `schemas/` exist — no `api/` or `services/` yet; `deps/caldav.py` is empty.
 
 - `core/config.py` — `Settings(BaseSettings)` from `.env`: `icloud_email`, `app_specific_password`, `notion_token`. Exports singleton `settings`.
-- `repo/models/` — pydantic v2 models, one per file, re-exported from `models/__init__.py`:
-  - `CalDavEvent` — `uid, title, start, end, all_day, calendar, href, created_at, updated_at`.
-  - `NotionPage` (read-only projection) — `id, title, parent_id, parent_type, properties (raw dict), url, archived, created_at, updated_at`.
-  - `NotionDatabase` (read-only projection) — `id, title, properties (raw schema), url, created_at, updated_at`.
+- `schemas/` — pydantic v2 domain models, one per file, **no `__init__.py`** (import the module directly, e.g. `from backend.schemas.caldav_event import CalDavEvent`):
+  - `caldav_event.py` → `CalDavEvent` — `uid, title, start, end, all_day, calendar, href, created_at, updated_at`.
+  - `notion_page.py` → `NotionPage` (read-only projection) — `id, title, parent_id, parent_type, properties (raw dict), url, archived, created_at, updated_at`.
+  - `notion_database.py` → `NotionDatabase` (read-only projection) — `id, title, properties (raw schema), url, created_at, updated_at`.
+- `models/` — SQLAlchemy ORM models, one per file, no `__init__.py`. `base.py` → `Base` (DeclarativeBase); `caldav_event.py` → `CalDavEventORM` (table `caldav_events`, mirrors the `CalDavEvent` schema).
 - `repo/caldav_repo.py` — `CalDavEventRepo(caldav_url, username, password, calendar_url)`. Write side.
   - `connect()`, `get_range(start, end) -> list[CalDavEvent]`, `create(event) -> CalDavEvent`, `update(event) -> CalDavEvent`, `delete(event) -> None`.
   - Module-level helpers: `_to_ical`, `_from_caldav`, `_as_datetime`.

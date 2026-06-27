@@ -5,7 +5,7 @@ from icalendar import Calendar as ICalendar
 from icalendar import Event as IEvent
 from loguru import logger
 
-from backend.repo.models import CalDavEvent
+from backend.schemas.caldav_event import CalDavEvent
 
 
 def _to_ical(event: CalDavEvent) -> str:
@@ -68,10 +68,10 @@ class CalDavEventRepo:
         password: str,
         calendar_url: str,
     ) -> None:
-        self.caldav_url = caldav_url
-        self.username = username
-        self.password = password
-        self.calendar_url = calendar_url
+        self.caldav_url: str = caldav_url
+        self.username: str = username
+        self.password: str = password
+        self.calendar_url: str = calendar_url
         self._calendar: caldav.Calendar | None = None  # pyright: ignore[reportGeneralTypeIssues]
 
     def connect(self) -> None:
