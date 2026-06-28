@@ -131,9 +131,6 @@ def sync_notion_to_caldav() -> None:
         caldav_orm.create(event)
 
 
-names = ("bob", "gey")
-
-
 if __name__ == "__main__":
     # list_notion_databases()
     # get_pages()
