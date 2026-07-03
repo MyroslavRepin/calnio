@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     notion_token: str
     db_url: str
     caldav_url: str
+    tasks_data_source: str
 
 
 settings = Settings()  # pyright: ignore[reportCallIssue]

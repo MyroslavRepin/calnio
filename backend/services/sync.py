@@ -11,8 +11,7 @@ from backend.repo.notion_repo import NotionPageRepo
 from backend.schemas.caldav_event import CalDavEvent as CalDavEventScheme
 from backend.schemas.notion_page import NotionPage
 
-# TODO(phase3): move to .env / Settings
-tasks_data_source_id = "e17a5558-72b4-8367-8c69-87a36a845e37"
+tasks_data_source_id = settings.tasks_data_source
 
 
 def _page_to_event(page: NotionPage, calendar: str) -> CalDavEventScheme | None:
