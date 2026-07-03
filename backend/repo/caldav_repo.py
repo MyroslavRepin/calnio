@@ -38,6 +38,33 @@ def _as_datetime(value: date | datetime) -> tuple[datetime, bool]:
     return datetime(value.year, value.month, value.day), True
 
 
+def get_calendar_url(
+    caldav_url: str,
+    username: str,
+    password: str,
+    name: str | None = None,
+) -> str:
+    """Find an iCloud calendar URL — by display name, else the first one."""
+    client = caldav.DAVClient(  # pyright: ignore[reportCallIssue]
+        url=caldav_url,
+        username=username,
+        password=password,
+    )
+    calendars = client.principal().calendars()
+    if not calendars:
+        raise RuntimeError("no calendars found on iCloud account")
+    if name is not None:
+        for cal in calendars:
+            if cal.get_display_name() == name:
+                url = str(cal.url)
+                logger.info("Using calendar {} ({})", name, url)
+                return url
+        raise RuntimeError(f"calendar {name!r} not found on iCloud account")
+    url = str(calendars[0].url)
+    logger.info("Using calendar {}", url)
+    return url
+
+
 def _from_caldav(obj: caldav.Event, calendar: str) -> CalDavEvent:
     """Parse a caldav Event into a CalDavEvent."""
     vevent = obj.icalendar_component
@@ -126,3 +153,21 @@ class CalDavEventRepo:
         remote = self._calendar.event_by_url(event.href)
         remote.delete()
         logger.info("Deleted event {}", event.uid)
+
+    def delete_by_href(self, href: str) -> None:
+        """Delete the event at href (no CalDavEvent needed)."""
+        assert self._calendar is not None, "call connect() first"
+        logger.info("Deleting event at {}", href)
+        remote = self._calendar.event_by_url(href)
+        remote.delete()
+        logger.info("Deleted event at {}", href)
+
+    def delete_all(self) -> int:
+        """Delete every event in the calendar. Returns the count deleted."""
+        assert self._calendar is not None, "call connect() first"
+        events = self._calendar.events()
+        logger.info("Deleting all {} events from {}", len(events), self.calendar_url)
+        for event in events:
+            event.delete()
+        logger.info("Deleted {} events", len(events))
+        return len(events)
