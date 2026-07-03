@@ -70,6 +70,8 @@ def _build_repos() -> tuple[NotionPageRepo, CalDavEventRepo, str]:
 
 def sync_notion_to_caldav() -> None:
     """One-way push Notion -> CalDAV; synced_events links page id -> caldav href."""
+    # TODO: code needs to be updated to handle Notion event updating (update everytime)
+
     notion, caldav, calendar_url = _build_repos()
 
     pages = notion.query_database(tasks_data_source_id)
@@ -91,7 +93,7 @@ def sync_notion_to_caldav() -> None:
         for event in events:
             row = by_id.get(event.uid)
             if row is not None and not _changed(event, row):
-                continue
+                continue  # TODO: add fields check for updated (hash method)
             try:
                 if row is None:
                     created = caldav.create(event)
