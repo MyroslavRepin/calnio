@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     db_url: str
     caldav_url: str
     tasks_data_source: str
+    syncing_interval_minutes: str
 
 
 settings = Settings()  # pyright: ignore[reportCallIssue]

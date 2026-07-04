@@ -42,7 +42,14 @@ def _page_to_event(page: NotionPage, calendar: str) -> CalDavEventScheme | None:
 
 
 def _changed(event: CalDavEventScheme, row: SyncedEvent) -> bool:
-    """True if the Notion page is newer than what we last synced (LWW)."""
+    """True if the event differs from what we last synced.
+
+    Compare title directly (Notion's last_edited_time is minute-rounded, so
+    same-minute edits slip past a timestamp check); fall back to LWW for the
+    rest (dates).
+    """
+    if event.title != row.title:
+        return True
     if event.updated_at is None or row.notion_last_edited is None:
         return True  # missing timestamp -> re-push, safer than skipping
     return event.updated_at > row.notion_last_edited
@@ -85,15 +92,20 @@ def sync_notion_to_caldav() -> None:
     current_ids = {e.uid for e in events}
 
     with SessionLocal() as db:
-        rows = db.scalars(select(SyncedEvent)).all()
+        stmt = select(SyncedEvent)
+        rows = db.scalars(stmt).all()
         by_id = {row.notion_page_id: row for row in rows}
 
         # Commit per event so a failure mid-batch never orphans CalDAV events
         # (uncommitted rows -> next run re-creates -> iCloud 412 duplicate).
         for event in events:
             row = by_id.get(event.uid)
+
             if row is not None and not _changed(event, row):
+                if event.title != page.title:
+                    logger.info("Theere is a diff between Notion and CalDav")
                 continue  # TODO: add fields check for updated (hash method)
+
             try:
                 if row is None:
                     created = caldav.create(event)
@@ -104,6 +116,7 @@ def sync_notion_to_caldav() -> None:
                             caldav_uid=event.uid,
                             etag=None,
                             notion_last_edited=event.updated_at,
+                            title=event.title,
                         )
                     )
                     logger.info("Created {} ({})", event.uid, event.title)
@@ -112,6 +125,7 @@ def sync_notion_to_caldav() -> None:
                     updated = caldav.update(event)
                     row.caldav_href = updated.href
                     row.notion_last_edited = event.updated_at
+                    row.title = event.title
                     logger.info("Updated {} ({})", event.uid, event.title)
                 db.commit()
             except Exception as exc:

@@ -16,6 +16,9 @@ class SyncedEvent(Base):
     # Mapping key — Notion page id, also the iCal uid.
     notion_page_id: Mapped[str] = mapped_column(String, unique=True, index=True)
 
+    # Last-synced title — compared to detect Notion title edits.
+    title: Mapped[str | None] = mapped_column(String, nullable=True)
+
     # CalDAV locators.
     caldav_href: Mapped[str] = mapped_column(String)
     caldav_uid: Mapped[str] = mapped_column(String)
