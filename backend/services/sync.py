@@ -101,10 +101,8 @@ def sync_notion_to_caldav() -> None:
         for event in events:
             row = by_id.get(event.uid)
 
-            # if row is not None and not _changed(event, row):
-            #     if event.title != page.title:
-            #         logger.info("Theere is a diff between Notion and CalDav")
-            continue  # TODO: add fields check for updated (hash method)
+            if row is not None and not _changed(event, row):
+                continue  # TODO: add fields check for updated (hash method)
 
             try:
                 if row is None:
