@@ -1,0 +1,7 @@
+name: calnio
+
+services:
+  backend:
+    build: .
+    env_file: .env
+    restart: unless-stopped
