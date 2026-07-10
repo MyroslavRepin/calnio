@@ -2,7 +2,7 @@ import time
 
 from backend.core.config import settings
 from backend.core.scheduler import init_scheduler
-from backend.services.sync import sync_notion_to_caldav
+from backend.services.sync import reset_all, sync_notion_to_caldav
 
 
 def sync_workflow():
@@ -24,4 +24,4 @@ def sync_workflow():
 
 if __name__ == "__main__":
     sync_workflow()
-    # remove_all()
+    # reset_all()

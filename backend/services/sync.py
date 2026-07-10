@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 from loguru import logger
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from backend.core.config import settings
 from backend.deps.db import SessionLocal
@@ -144,6 +144,15 @@ def sync_notion_to_caldav() -> None:
                 logger.error("Delete failed for {}: {}", row.notion_page_id, exc)
 
 
-def delete_all() -> int:
+def reset_all() -> int:
+    """Wipe all sync state: delete every CalDAV event and every synced_events row.
+
+    Returns the number of CalDAV events deleted.
+    """
     _, caldav, _ = _build_repos()
-    return caldav.delete_all()
+    count = caldav.delete_all()
+    with SessionLocal() as db:
+        db.execute(delete(SyncedEvent))
+        db.commit()
+    logger.info("Reset complete: {} CalDAV events + all synced_events rows deleted", count)
+    return count

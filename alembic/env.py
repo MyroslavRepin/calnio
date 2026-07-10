@@ -7,7 +7,6 @@ from backend.core.base import Base
 from backend.core.config import settings
 
 # Import sqlalchemy tables
-from backend.models.caldav_event import CalDavEvent
 from backend.models.synced_event import SyncedEvent
 
 # this is the Alembic Config object, which provides
