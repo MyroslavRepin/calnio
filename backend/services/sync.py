@@ -82,6 +82,9 @@ def sync_notion_to_caldav() -> None:
     notion, caldav, calendar_url = _build_repos()
 
     pages = notion.query_database(tasks_data_source_id)
+    logger.info("Sync started: {} Notion pages", len(pages))
+    created = updated = deleted = 0
+
     events: list[CalDavEventScheme] = []
     for page in pages:
         if page.archived:
@@ -106,25 +109,27 @@ def sync_notion_to_caldav() -> None:
 
             try:
                 if row is None:
-                    created = caldav.create(event)
+                    new_event = caldav.create(event)
                     db.add(
                         SyncedEvent(
                             notion_page_id=event.uid,
-                            caldav_href=created.href,
+                            caldav_href=new_event.href,
                             caldav_uid=event.uid,
                             etag=None,
                             notion_last_edited=event.updated_at,
                             title=event.title,
                         )
                     )
-                    logger.info("Created {} ({})", event.uid, event.title)
+                    created += 1
+                    logger.debug("Created {} ({})", event.uid, event.title)
                 else:
                     event.href = row.caldav_href
-                    updated = caldav.update(event)
-                    row.caldav_href = updated.href
+                    new_event = caldav.update(event)
+                    row.caldav_href = new_event.href
                     row.notion_last_edited = event.updated_at
                     row.title = event.title
-                    logger.info("Updated {} ({})", event.uid, event.title)
+                    updated += 1
+                    logger.debug("Updated {} ({})", event.uid, event.title)
                 db.commit()
             except Exception as exc:
                 db.rollback()
@@ -138,15 +143,19 @@ def sync_notion_to_caldav() -> None:
                 caldav.delete_by_href(row.caldav_href)
                 db.delete(row)
                 db.commit()
-                logger.info("Deleted {}", row.notion_page_id)
+                deleted += 1
+                logger.debug("Deleted {}", row.notion_page_id)
             except Exception as exc:
                 db.rollback()
                 logger.error("Delete failed for {}: {}", row.notion_page_id, exc)
 
+    logger.info(
+        "Sync done: {} created, {} updated, {} deleted", created, updated, deleted
+    )
+
 
 def reset_all() -> int:
     """Wipe all sync state: delete every CalDAV event and every synced_events row.
-
     Returns the number of CalDAV events deleted.
     """
     _, caldav, _ = _build_repos()
@@ -154,5 +163,7 @@ def reset_all() -> int:
     with SessionLocal() as db:
         db.execute(delete(SyncedEvent))
         db.commit()
-    logger.info("Reset complete: {} CalDAV events + all synced_events rows deleted", count)
+    logger.info(
+        "Reset complete: {} CalDAV events + all synced_events rows deleted", count
+    )
     return count

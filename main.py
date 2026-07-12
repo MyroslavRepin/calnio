@@ -1,27 +1,35 @@
-import time
+from contextlib import asynccontextmanager
+from datetime import datetime
 
+from fastapi import FastAPI
+from starlette.middleware.sessions import SessionMiddleware
+
+from backend.api.oauth import router as oauth_router
 from backend.core.config import settings
+from backend.core.logging import setup_logging
 from backend.core.scheduler import init_scheduler
-from backend.services.sync import reset_all, sync_notion_to_caldav
+from backend.services.sync import sync_notion_to_caldav
+
+setup_logging()
 
 
-def sync_workflow():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     scheduler = init_scheduler()
-    sync_notion_to_caldav()  # Start sync func manually
     scheduler.add_job(
         sync_notion_to_caldav,
         "interval",
         minutes=int(settings.syncing_interval_minutes),
         max_instances=1,  # never overlap two syncs
+        next_run_time=datetime.now(),  # run once immediately on startup
     )
-    # Keep main thread alive so the background scheduler keeps running.
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt, SystemExit:
-        scheduler.shutdown()
+    yield
+    scheduler.shutdown(wait=False)  # don't block Ctrl+C on an in-flight sync
 
 
-if __name__ == "__main__":
-    sync_workflow()
-    # reset_all()
+app = FastAPI(lifespan=lifespan)
+
+# SessionMiddleware: stores the OAuth `state` in a signed cookie (CSRF protection).
+app.add_middleware(SessionMiddleware, secret_key=settings.session_secret)
+
+app.include_router(oauth_router)
