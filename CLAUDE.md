@@ -1,77 +1,73 @@
 # CLAUDE.md
 
-Guidance for Claude Code working in this repo. Durable context — not a task list or changelog.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project
 
-- **Calnio** — syncs Notion with Apple Calendar.
-- Notion holds tasks/events; Apple Calendar is where people actually look. Calnio pushes Notion dates into Apple Calendar automatically.
-- End goal: full two-way sync.
-- MVP (current, only thing in scope): one-way sync, **Notion → Apple Calendar**.
+- **Calnio** — syncs Notion with Apple Calendar. Notion holds tasks; Apple Calendar is where people look. Calnio pushes Notion due dates into Apple Calendar via CalDAV on a schedule.
+- MVP (only thing in scope): **one-way sync, Notion → Apple Calendar**. Notion is a READ-ONLY source — no write back to Notion, no Calendar → Notion propagation, no two-way sync. Do not build those.
+- Second track in progress: Google OAuth login (see README "Auth" section for flow + todo list).
 
-## Scope
+## Commands
 
-IN scope now:
-- Read pages from Notion.
-- Write events to Apple Calendar via CalDAV.
-- Track sync state.
-
-OUT of scope now (do not build):
-- Two-way sync.
-- Any write back to Notion — **Notion is a READ-ONLY source in the MVP**.
-- Calendar → Notion propagation.
-
-## Stack
-
-- Python 3.11+ (pyproject pins `requires-python >=3.14`), pydantic v2, FastAPI, Vue.js, PostgreSQL.
-- Package manager: **uv** (not pip).
-- Integrations: `notion-client`, `caldav` 3.x, `icalendar`, `loguru`.
-- Settings via `pydantic-settings`.
+- Install deps: `uv sync` (package manager is **uv**, not pip)
+- Add dep: `uv add <package>` (dev: `uv add --dev <package>`)
+- Dev server: `uv run uvicorn main:app --reload --port 8080`
+- Migrations: `uv run alembic upgrade head`; new one: `uv run alembic revision --autogenerate -m "..."` (autogenerate works — `alembic/env.py` imports all models and uses `Base.metadata`; a new model must be imported there or autogenerate won't see it)
+- Docker: `docker compose up --build` (serves on 8080)
+- Type check: pyright (config in `pyrightconfig.json`, venv-aware)
+- No tests and no linter configured yet.
 
 ## Architecture
 
-Current code (`backend/`). Only `core/`, `deps/`, `models/`, `repo/`, `schemas/` exist — no `api/` or `services/` yet; `deps/caldav.py` is empty.
+FastAPI app in `main.py`: lifespan starts an APScheduler `BackgroundScheduler` that runs `sync_notion_to_caldav` every `SYNCING_INTERVAL_MINUTES` (and once at startup); `SessionMiddleware` holds the OAuth `state` cookie; mounts `backend/api/oauth.py` router.
 
-- `core/config.py` — `Settings(BaseSettings)` from `.env`: `icloud_email`, `app_specific_password`, `notion_token`. Exports singleton `settings`.
-- `schemas/` — pydantic v2 domain models, one per file, **no `__init__.py`** (import the module directly, e.g. `from backend.schemas.caldav_event import CalDavEvent`):
-  - `caldav_event.py` → `CalDavEvent` — `uid, title, start, end, all_day, calendar, href, created_at, updated_at`.
-  - `notion_page.py` → `NotionPage` (read-only projection) — `id, title, parent_id, parent_type, properties (raw dict), url, archived, created_at, updated_at`.
-  - `notion_database.py` → `NotionDatabase` (read-only projection) — `id, title, properties (raw schema), url, created_at, updated_at`.
-- `models/` — SQLAlchemy ORM models, one per file, no `__init__.py`. `base.py` → `Base` (DeclarativeBase); `caldav_event.py` → `CalDavEventORM` (table `caldav_events`, mirrors the `CalDavEvent` schema).
-- `repo/caldav_repo.py` — `CalDavEventRepo(caldav_url, username, password, calendar_url)`. Write side.
-  - `connect()`, `get_range(start, end) -> list[CalDavEvent]`, `create(event) -> CalDavEvent`, `update(event) -> CalDavEvent`, `delete(event) -> None`.
-  - Module-level helpers: `_to_ical`, `_from_caldav`, `_as_datetime`.
-- `repo/notion_repo.py` — `NotionPageRepo(token)`. Read-only source.
-  - `connect()`, `client` (property, asserts connected), `get_page(page_id) -> NotionPage`, `get_database(data_source_id) -> NotionDatabase`, `query_database(data_source_id, *, filter=None, sorts=None) -> list[NotionPage]`, `list_databases() -> list[NotionDatabase]` (via `search`). All read-only; no create/update/delete.
-  - **API 2025-09-03 (notion-client 3.1.0):** databases are containers of *data sources*; pages + schema live on the data source. So `get_database`/`query_database` hit `client.data_sources.retrieve`/`.query` and take a `data_source_id`; `list_databases` searches with filter value `"data_source"`. `databases.query` no longer exists. See `[[notion-data-source-api-split]]`.
-  - Module-level helpers: `_join_rich_text`, `_extract_title`, `_extract_parent_id`, `_parse_ts`, `_from_notion`, `_from_notion_database`, `_paginate` (drains `start_cursor`/`has_more`).
-- `main.py` — current entry/demo: `discover_calendar_url()`, `week_range()`, `main()` prints this week's iCloud events. (FastAPI `app` referenced in run command not yet present.)
+**Everything DB is synchronous** — `create_engine` + `sessionmaker` (`core/db.py`), sync `Session` everywhere, psycopg3 driver. Routes are `async def` only because authlib requires `await`; don't introduce `AsyncSession` — that decision was made deliberately (scheduler thread + blocking CalDAV/Notion IO gain nothing from async).
 
-## Data & sync state
+Layers under `backend/` (import modules directly — **no `__init__.py` anywhere**, e.g. `from backend.schemas.notion_page import NotionPage`):
 
-- **PostgreSQL is the only store.** No JSON files, no local-file shortcuts.
-- `synced_events` table (`uid, href, etag`) is the source of truth for sync state — avoids constantly re-reading iCloud.
-- Not yet implemented in code; build it in Postgres when adding persistence.
+- `core/` — stateless infra, no DB access: `config.py` (`Settings` from `.env`, singleton `settings`), `db.py` (engine + `SessionLocal`), `base.py` (ORM `Base`), `oauth.py` (authlib Google client), `security.py` (`JWTService`, PyJWT HS256, access + refresh tokens), `scheduler.py`, `logging.py` (loguru).
+- `models/` — SQLAlchemy ORM, one per file: `user.py`, `oauth_account.py` (N per user, unique `(provider, provider_account_id)`, lookup by Google `sub` never email), `synced_event.py`.
+- `schemas/` — pydantic v2 domain models: `caldav_event.py`, `notion_page.py`, `notion_database.py` (both read-only projections of raw Notion payloads), `synced_event.py`.
+- `repo/` — data access. `caldav_repo.py` (`CalDavEventRepo`, write side, plus `get_calendar_url`), `notion_repo.py` (`NotionPageRepo`, read-only — no create/update/delete, keep it that way), `user_repo.py` (`UserRepo(db: Session)`, `get_or_create_user_oauth` = login and registration in one). Repos take a `Session`/credentials in the constructor; **caller owns the transaction and the commit** (exception: `sync.py` commits per event deliberately — see below).
+- `services/` — flows composing multiple repos: `sync.py` only. Auth is thin enough to live in the route; add a service only when a flow really composes repos with logic.
+- `api/` — route handlers: `oauth.py` (`/auth/oauth/google/login` + `/callback`).
+- `deps/` — FastAPI dependencies: `db.py` (`get_session`).
+
+### Sync model (core of the app)
+
+- Source of truth: Notion; events recomputed from Notion every run. Mapping key: Notion page id == iCal `uid`.
+- `synced_events` table is a **link index** (`notion_page_id -> caldav_href`), not an event mirror. Only rows Calnio owns; foreign Apple Calendar events (no row) are never touched.
+- `services/sync.py` reconcile loop: query Notion data source → map pages to events (skip archived / no Due Date) → create/update in CalDAV per diff against `synced_events` → delete CalDAV events whose Notion page disappeared. **Commits per event on purpose** — a failure mid-batch must not orphan CalDAV events (uncommitted row → next run re-creates → iCloud 412 duplicate).
+- Change detection: compare title directly, then last-edited timestamp LWW — Notion's `last_edited_time` is minute-rounded, so a pure timestamp check misses same-minute edits.
+- `reset_all()` in `sync.py` wipes every CalDAV event + all `synced_events` rows — destructive, never call casually.
+
+## Notion API (2025-09-03, notion-client 3.x)
+
+Databases are containers of *data sources*; pages and schema live on the data source. `databases.query` no longer exists — `NotionPageRepo.get_database`/`query_database` hit `client.data_sources.retrieve`/`.query` with a `data_source_id`; `list_databases` searches with filter value `"data_source"`.
+
+Notion parsing rules (real payload shapes): title = the property whose `type == "title"` (key is the column name, not literally `"title"`); `parent_id` from `parent[parent["type"]]`, `None` when the value is the workspace bool; timestamps parsed to aware UTC.
 
 ## iCloud CalDAV quirks
 
-- Requires `features="icloud"` and app-specific-password auth.
-- Server-side search is unreliable → use client-side fallback filtering.
-- Cache the calendar home URL per user after first discovery; do not re-discover each run.
+- Needs `features="icloud"` and app-specific-password auth.
+- Server-side search unreliable → client-side fallback filtering.
+- Calendar home URL discovery is slow; the target calendar (named "Calnio") is resolved via `get_calendar_url` at sync start.
+- Known issue: events occasionally duplicate with the same UID (see README "Known errors").
 
-## Conventions & principles
+## Conventions
 
-- **Simplicity is rule #1.** No premature abstraction, no extra layers/classes, no scope creep. Answer the actual need, nothing more.
-- Conversion logic lives as private methods/module functions inside the repo modules — **no separate mapper classes**.
-- Notion parsing rules (real shapes): title = property whose `type == "title"` (key is the column name, not literally `"title"`); `parent_id` from `parent[parent["type"]]`, coerced to `None` when value is the workspace bool; timestamps parsed to aware UTC.
-
-## Run
-
-- Install deps: `uv sync`
-- Add dep: `uv add <package>` (dev: `uv add --dev <package>`)
-- Dev server: `uv run uvicorn main:app --reload` (once FastAPI `app` exists)
-- Current demo script: `uv run python main.py`
+- **Simplicity is rule #1.** No premature abstraction, no extra layers, no scope creep.
+- Conversion logic = private module functions inside the repo modules (`_page_to_event`, `_from_notion`, …) — no separate mapper classes.
+- PostgreSQL is the only store — no JSON files, no local-file shortcuts.
+- Timestamps: ORM rows use db-managed `row_created_at`/`row_updated_at`; domain timestamps are timezone-aware UTC.
 
 ## Config
 
-`.env`: `ICLOUD_EMAIL`, `APP_SPECIFIC_PASSWORD`, `NOTION_TOKEN`.
+`.env` (all required by `Settings`): `ICLOUD_EMAIL`, `APP_SPECIFIC_PASSWORD`, `NOTION_TOKEN`, `DB_URL` (postgresql+psycopg://), `CALDAV_URL`, `TASKS_DATA_SOURCE`, `SYNCING_INTERVAL_MINUTES`, `EVENT_DUE_DATE_FIELD_NAME`, `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URI`, `SESSION_SECRET`.
+
+`.env.example` is stale (lists only the first three keys).
+
+## README.md
+
+README holds the working plan: sync model detail, roadmap phases, auth flow + todo checklist, frontend integration plan (Vue/Vite dev on :5173, prod served by FastAPI `StaticFiles`). Check it before starting auth or frontend work — it tracks what's done vs todo.

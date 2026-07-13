@@ -1525,3 +1525,317 @@
 2026-07-11 18:23:25.842 | INFO     | backend.services.sync:sync_notion_to_caldav:152 - Sync done: 0 created, 0 updated, 0 deleted
 2026-07-11 18:23:25.843 | INFO     | apscheduler.executors.base:run_job:156 - Job "sync_notion_to_caldav (trigger: interval[0:01:00], next run at: 2026-07-11 18:24:23 MDT)" executed successfully
 2026-07-11 18:23:28.720 | DEBUG    | logging:log:1945 - [8b01bb1d64afd793] Remote max_streams_bidi raised to 130
+2026-07-12 21:50:07.376 | INFO     | backend.core.logging:setup_logging:57 - Logging initialized
+2026-07-12 21:52:22.093 | INFO     | backend.core.logging:setup_logging:57 - Logging initialized
+2026-07-12 21:52:22.469 | INFO     | backend.core.logging:setup_logging:57 - Logging initialized
+2026-07-12 21:52:22.471 | INFO     | apscheduler.schedulers.base:start:214 - Scheduler started
+2026-07-12 21:52:22.471 | DEBUG    | apscheduler.schedulers.base:_process_jobs:1153 - Looking for jobs to run
+2026-07-12 21:52:22.472 | DEBUG    | apscheduler.schedulers.base:_process_jobs:1254 - No jobs; waiting until a job is added
+2026-07-12 21:52:22.472 | INFO     | apscheduler.schedulers.base:_real_add_job:1092 - Added job "sync_notion_to_caldav" to job store "default"
+2026-07-12 21:52:22.472 | DEBUG    | apscheduler.schedulers.base:_process_jobs:1153 - Looking for jobs to run
+2026-07-12 21:52:22.472 | INFO     | apscheduler.executors.base:run_job:129 - Running job "sync_notion_to_caldav (trigger: interval[0:01:00], next run at: 2026-07-12 21:52:22 MDT)" (scheduled at 2026-07-12 21:52:22.472096-06:00)
+2026-07-12 21:52:22.473 | DEBUG    | apscheduler.schedulers.base:_process_jobs:1260 - Next wakeup is due at 2026-07-12 21:53:22.472096-06:00 (in 59.999101 seconds)
+2026-07-12 21:52:23.431 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] TLS: Advertising to peer post-quantum algorithm using X25519ML768 (0x11EC)
+2026-07-12 21:52:23.432 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] ECH: GREASE extension added to ClientHello
+2026-07-12 21:52:23.432 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] TLS CLIENT_HANDSHAKE_START -> CLIENT_EXPECT_SERVER_HELLO
+2026-07-12 21:52:23.492 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] FIRSTFLIGHT -> CONNECTED
+2026-07-12 21:52:23.497 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] TLS: Post-quantum safety achieved using X25519ML768 (key-exchange)
+2026-07-12 21:52:23.498 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] Negotiated protocol version 0x00000001 (VERSION_1)
+2026-07-12 21:52:23.498 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] TLS CLIENT_EXPECT_SERVER_HELLO -> CLIENT_EXPECT_ENCRYPTED_EXTENSIONS
+2026-07-12 21:52:23.498 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] TLS CLIENT_EXPECT_ENCRYPTED_EXTENSIONS -> CLIENT_EXPECT_CERTIFICATE_REQUEST_OR_CERTIFICATE
+2026-07-12 21:52:23.498 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] Discarding epoch 0
+2026-07-12 21:52:23.499 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] TLS CLIENT_EXPECT_CERTIFICATE_REQUEST_OR_CERTIFICATE -> CLIENT_EXPECT_CERTIFICATE_VERIFY
+2026-07-12 21:52:23.500 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] TLS CLIENT_EXPECT_CERTIFICATE_VERIFY -> CLIENT_EXPECT_FINISHED
+2026-07-12 21:52:23.501 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] TLS CLIENT_EXPECT_FINISHED -> CLIENT_POST_HANDSHAKE
+2026-07-12 21:52:23.501 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] ALPN negotiated protocol h3
+2026-07-12 21:52:23.566 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] Discarding epoch 2
+2026-07-12 21:52:23.566 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] Stream 3 created by peer
+2026-07-12 21:52:23.566 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] Stream 7 created by peer
+2026-07-12 21:52:23.624 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] MTU probe ACK'd, datagram size now 1350
+2026-07-12 21:52:23.704 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] MTU probe ACK'd, datagram size now 1452
+2026-07-12 21:52:23.959 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] Stream 0 discarded
+2026-07-12 21:52:24.019 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] Remote max_streams_bidi raised to 129
+2026-07-12 21:52:24.419 | INFO     | backend.repo.caldav_repo:get_calendar_url:60 - Using calendar Calnio (https://caldav.icloud.com/21349328538/calendars/8C2EF912-7218-4E17-90B6-5E5B06665CC5/)
+2026-07-12 21:52:24.420 | INFO     | backend.repo.notion_repo:connect:91 - Connecting to Notion
+2026-07-12 21:52:24.440 | INFO     | backend.repo.notion_repo:connect:93 - Notion client ready
+2026-07-12 21:52:24.440 | INFO     | backend.repo.caldav_repo:connect:106 - Connecting to CalDAV at https://caldav.icloud.com/
+2026-07-12 21:52:24.440 | INFO     | backend.repo.caldav_repo:connect:113 - Loaded calendar https://caldav.icloud.com/21349328538/calendars/8C2EF912-7218-4E17-90B6-5E5B06665CC5/
+2026-07-12 21:52:24.440 | INFO     | backend.repo.notion_repo:query_database:124 - Querying data source e17a5558-72b4-8367-8c69-87a36a845e37
+2026-07-12 21:52:24.441 | DEBUG    | httpcore._trace:trace:47 - connect_tcp.started host='api.notion.com' port=443 local_address=None timeout=60.0 socket_options=None
+2026-07-12 21:52:24.502 | DEBUG    | httpcore._trace:trace:47 - connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x1123db8c0>
+2026-07-12 21:52:24.503 | DEBUG    | httpcore._trace:trace:47 - start_tls.started ssl_context=<ssl.SSLContext object at 0x10fc15f30> server_hostname='api.notion.com' timeout=60.0
+2026-07-12 21:52:24.558 | DEBUG    | httpcore._trace:trace:47 - start_tls.complete return_value=<httpcore._backends.sync.SyncStream object at 0x1123ed810>
+2026-07-12 21:52:24.558 | DEBUG    | httpcore._trace:trace:47 - send_request_headers.started request=<Request [b'POST']>
+2026-07-12 21:52:24.558 | DEBUG    | httpcore._trace:trace:47 - send_request_headers.complete
+2026-07-12 21:52:24.558 | DEBUG    | httpcore._trace:trace:47 - send_request_body.started request=<Request [b'POST']>
+2026-07-12 21:52:24.559 | DEBUG    | httpcore._trace:trace:47 - send_request_body.complete
+2026-07-12 21:52:24.559 | DEBUG    | httpcore._trace:trace:47 - receive_response_headers.started request=<Request [b'POST']>
+2026-07-12 21:52:24.944 | DEBUG    | httpcore._trace:trace:47 - receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Date', b'Mon, 13 Jul 2026 03:52:24 GMT'), (b'Content-Type', b'application/json; charset=utf-8'), (b'Transfer-Encoding', b'chunked'), (b'Connection', b'keep-alive'), (b'CF-Ray', b'a1a555b25cd2a36b-SEA'), (b'CF-Cache-Status', b'DYNAMIC'), (b'Content-Encoding', b'gzip'), (b'ETag', b'W/"b9a3-7/35YUrbYQ/nVY0j3cLWdMoy/QY"'), (b'Server', b'cloudflare'), (b'Strict-Transport-Security', b'max-age=31536000; includeSubDomains; preload'), (b'Vary', b'Accept-Encoding'), (b'content-security-policy', b"default-src 'none'"), (b'referrer-policy', b'strict-origin-when-cross-origin'), (b'x-content-type-options', b'nosniff'), (b'x-dns-prefetch-control', b'off'), (b'x-download-options', b'noopen'), (b'x-frame-options', b'SAMEORIGIN'), (b'x-notion-request-id', b'de02aae2-b704-446a-8481-296e3c515842'), (b'x-permitted-cross-domain-policies', b'none'), (b'x-xss-protection', b'0'), (b'set-cookie', b'__cf_bm=hoZJEebD4kgOs9qzf5GYh13bNSg.5LN68T0.z1bO8Eg-1783914744.6956902-1.0.1.1-n1rMnxdKbhFIZ_DM_gX4FZLgFd7d08HP6uD6UTzK0fWoptDKF9pH_aA1fAvWJbdAbjUnt.pi3v8Cp3RbZ19btsVVv3H6c0DMdnX.FKnlU4816JrkMvAKGhm1PbXPNpx6; HttpOnly; SameSite=None; Secure; Path=/; Domain=notion.com; Expires=Mon, 13 Jul 2026 04:22:24 GMT'), (b'alt-svc', b'h3=":443"; ma=86400')])
+2026-07-12 21:52:24.946 | INFO     | httpx._client:_send_single_request:1025 - HTTP Request: POST https://api.notion.com/v1/data_sources/e17a5558-72b4-8367-8c69-87a36a845e37/query "HTTP/1.1 200 OK"
+2026-07-12 21:52:24.947 | DEBUG    | httpcore._trace:trace:47 - receive_response_body.started request=<Request [b'POST']>
+2026-07-12 21:52:24.948 | DEBUG    | httpcore._trace:trace:47 - receive_response_body.complete
+2026-07-12 21:52:24.948 | DEBUG    | httpcore._trace:trace:47 - response_closed.started
+2026-07-12 21:52:24.948 | DEBUG    | httpcore._trace:trace:47 - response_closed.complete
+2026-07-12 21:52:24.950 | INFO     | backend.repo.notion_repo:query_database:138 - Found 18 pages in data source e17a5558-72b4-8367-8c69-87a36a845e37
+2026-07-12 21:52:24.950 | INFO     | backend.services.sync:sync_notion_to_caldav:85 - Sync started: 18 Notion pages
+2026-07-12 21:52:26.603 | INFO     | backend.services.sync:sync_notion_to_caldav:152 - Sync done: 0 created, 0 updated, 0 deleted
+2026-07-12 21:52:26.603 | INFO     | apscheduler.executors.base:run_job:156 - Job "sync_notion_to_caldav (trigger: interval[0:01:00], next run at: 2026-07-12 21:53:22 MDT)" executed successfully
+2026-07-12 21:52:27.602 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] Loss detection triggered
+2026-07-12 21:52:27.603 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] Loss detection triggered
+2026-07-12 21:52:27.603 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] Loss detection triggered
+2026-07-12 21:52:27.603 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] Sending PING (probe) in packet 13
+2026-07-12 21:52:29.013 | DEBUG    | httpcore._trace:atrace:87 - connect_tcp.started host='accounts.google.com' port=443 local_address=None timeout=5.0 socket_options=None
+2026-07-12 21:52:29.195 | DEBUG    | httpcore._trace:atrace:87 - connect_tcp.complete return_value=<httpcore._backends.anyio.AnyIOStream object at 0x11249ea50>
+2026-07-12 21:52:29.195 | DEBUG    | httpcore._trace:atrace:87 - start_tls.started ssl_context=<ssl.SSLContext object at 0x10fc165b0> server_hostname='accounts.google.com' timeout=5.0
+2026-07-12 21:52:29.254 | DEBUG    | httpcore._trace:atrace:87 - start_tls.complete return_value=<httpcore._backends.anyio.AnyIOStream object at 0x112506210>
+2026-07-12 21:52:29.256 | DEBUG    | httpcore._trace:atrace:87 - send_request_headers.started request=<Request [b'GET']>
+2026-07-12 21:52:29.257 | DEBUG    | httpcore._trace:atrace:87 - send_request_headers.complete
+2026-07-12 21:52:29.258 | DEBUG    | httpcore._trace:atrace:87 - send_request_body.started request=<Request [b'GET']>
+2026-07-12 21:52:29.258 | DEBUG    | httpcore._trace:atrace:87 - send_request_body.complete
+2026-07-12 21:52:29.258 | DEBUG    | httpcore._trace:atrace:87 - receive_response_headers.started request=<Request [b'GET']>
+2026-07-12 21:52:29.315 | DEBUG    | httpcore._trace:atrace:87 - receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Accept-Ranges', b'bytes'), (b'Content-Encoding', b'gzip'), (b'Access-Control-Allow-Origin', b'*'), (b'Content-Security-Policy-Report-Only', b"require-trusted-types-for 'script'; report-uri https://csp.withgoogle.com/csp/federated-signon-mpm-access"), (b'Cross-Origin-Opener-Policy', b'same-origin; report-to="federated-signon-mpm-access"'), (b'Report-To', b'{"group":"federated-signon-mpm-access","max_age":2592000,"endpoints":[{"url":"https://csp.withgoogle.com/csp/report-to/federated-signon-mpm-access"}]}'), (b'Content-Length', b'496'), (b'X-Content-Type-Options', b'nosniff'), (b'Server', b'sffe'), (b'X-XSS-Protection', b'0'), (b'Date', b'Mon, 13 Jul 2026 03:23:48 GMT'), (b'Expires', b'Mon, 13 Jul 2026 04:23:48 GMT'), (b'Cache-Control', b'public, max-age=3600'), (b'Age', b'1721'), (b'Last-Modified', b'Tue, 17 Mar 2026 14:48:34 GMT'), (b'Content-Type', b'application/json'), (b'Vary', b'Accept-Encoding'), (b'Alt-Svc', b'h3=":443"; ma=2592000,h3-29=":443"; ma=2592000')])
+2026-07-12 21:52:29.316 | INFO     | httpx._client:_send_single_request:1740 - HTTP Request: GET https://accounts.google.com/.well-known/openid-configuration "HTTP/1.1 200 OK"
+2026-07-12 21:52:29.316 | DEBUG    | httpcore._trace:atrace:87 - receive_response_body.started request=<Request [b'GET']>
+2026-07-12 21:52:29.316 | DEBUG    | httpcore._trace:atrace:87 - receive_response_body.complete
+2026-07-12 21:52:29.317 | DEBUG    | httpcore._trace:atrace:87 - response_closed.started
+2026-07-12 21:52:29.317 | DEBUG    | httpcore._trace:atrace:87 - response_closed.complete
+2026-07-12 21:52:29.318 | DEBUG    | httpcore._trace:atrace:87 - close.started
+2026-07-12 21:52:29.318 | DEBUG    | httpcore._trace:atrace:87 - close.complete
+2026-07-12 21:52:32.609 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] Loss detection triggered
+2026-07-12 21:52:32.609 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] Loss detection triggered
+2026-07-12 21:52:32.610 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] Loss detection triggered
+2026-07-12 21:52:32.610 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] Sending PING (probe) in packet 15
+2026-07-12 21:52:37.615 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] Loss detection triggered
+2026-07-12 21:52:37.616 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] Loss detection triggered
+2026-07-12 21:52:37.617 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] Loss detection triggered
+2026-07-12 21:52:37.617 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] Sending PING (probe) in packet 17
+2026-07-12 21:52:42.106 | DEBUG    | httpcore._trace:atrace:87 - connect_tcp.started host='oauth2.googleapis.com' port=443 local_address=None timeout=5.0 socket_options=None
+2026-07-12 21:52:42.292 | DEBUG    | httpcore._trace:atrace:87 - connect_tcp.complete return_value=<httpcore._backends.anyio.AnyIOStream object at 0x11256d090>
+2026-07-12 21:52:42.292 | DEBUG    | httpcore._trace:atrace:87 - start_tls.started ssl_context=<ssl.SSLContext object at 0x10fbfaed0> server_hostname='oauth2.googleapis.com' timeout=5.0
+2026-07-12 21:52:42.355 | DEBUG    | httpcore._trace:atrace:87 - start_tls.complete return_value=<httpcore._backends.anyio.AnyIOStream object at 0x1124cafd0>
+2026-07-12 21:52:42.356 | DEBUG    | httpcore._trace:atrace:87 - send_request_headers.started request=<Request [b'POST']>
+2026-07-12 21:52:42.356 | DEBUG    | httpcore._trace:atrace:87 - send_request_headers.complete
+2026-07-12 21:52:42.356 | DEBUG    | httpcore._trace:atrace:87 - send_request_body.started request=<Request [b'POST']>
+2026-07-12 21:52:42.357 | DEBUG    | httpcore._trace:atrace:87 - send_request_body.complete
+2026-07-12 21:52:42.357 | DEBUG    | httpcore._trace:atrace:87 - receive_response_headers.started request=<Request [b'POST']>
+2026-07-12 21:52:42.448 | DEBUG    | httpcore._trace:atrace:87 - receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Date', b'Mon, 13 Jul 2026 03:52:42 GMT'), (b'Pragma', b'no-cache'), (b'Expires', b'Mon, 01 Jan 1990 00:00:00 GMT'), (b'Cache-Control', b'no-cache, no-store, max-age=0, must-revalidate'), (b'Content-Type', b'application/json; charset=utf-8'), (b'Vary', b'Origin'), (b'Vary', b'X-Origin'), (b'Vary', b'Referer'), (b'Content-Encoding', b'gzip'), (b'Server', b'scaffolding on HTTPServer2'), (b'X-XSS-Protection', b'0'), (b'X-Frame-Options', b'SAMEORIGIN'), (b'X-Content-Type-Options', b'nosniff'), (b'Alt-Svc', b'h3=":443"; ma=2592000,h3-29=":443"; ma=2592000'), (b'Transfer-Encoding', b'chunked')])
+2026-07-12 21:52:42.449 | INFO     | httpx._client:_send_single_request:1740 - HTTP Request: POST https://oauth2.googleapis.com/token "HTTP/1.1 200 OK"
+2026-07-12 21:52:42.450 | DEBUG    | httpcore._trace:atrace:87 - receive_response_body.started request=<Request [b'POST']>
+2026-07-12 21:52:42.452 | DEBUG    | httpcore._trace:atrace:87 - receive_response_body.complete
+2026-07-12 21:52:42.452 | DEBUG    | httpcore._trace:atrace:87 - response_closed.started
+2026-07-12 21:52:42.453 | DEBUG    | httpcore._trace:atrace:87 - response_closed.complete
+2026-07-12 21:52:42.454 | DEBUG    | httpcore._trace:atrace:87 - close.started
+2026-07-12 21:52:42.455 | DEBUG    | httpcore._trace:atrace:87 - close.complete
+2026-07-12 21:52:42.471 | DEBUG    | httpcore._trace:atrace:87 - connect_tcp.started host='www.googleapis.com' port=443 local_address=None timeout=5.0 socket_options=None
+2026-07-12 21:52:42.571 | DEBUG    | httpcore._trace:atrace:87 - connect_tcp.complete return_value=<httpcore._backends.anyio.AnyIOStream object at 0x1124cbce0>
+2026-07-12 21:52:42.571 | DEBUG    | httpcore._trace:atrace:87 - start_tls.started ssl_context=<ssl.SSLContext object at 0x112510330> server_hostname='www.googleapis.com' timeout=5.0
+2026-07-12 21:52:42.624 | DEBUG    | httpcore._trace:atrace:87 - start_tls.complete return_value=<httpcore._backends.anyio.AnyIOStream object at 0x11251d910>
+2026-07-12 21:52:42.624 | DEBUG    | httpcore._trace:atrace:87 - send_request_headers.started request=<Request [b'GET']>
+2026-07-12 21:52:42.625 | DEBUG    | httpcore._trace:atrace:87 - send_request_headers.complete
+2026-07-12 21:52:42.625 | DEBUG    | httpcore._trace:atrace:87 - send_request_body.started request=<Request [b'GET']>
+2026-07-12 21:52:42.625 | DEBUG    | httpcore._trace:atrace:87 - send_request_body.complete
+2026-07-12 21:52:42.625 | DEBUG    | httpcore._trace:atrace:87 - receive_response_headers.started request=<Request [b'GET']>
+2026-07-12 21:52:42.670 | DEBUG    | httpcore._trace:atrace:87 - receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Content-Encoding', b'gzip'), (b'Server', b'scaffolding on HTTPServer2'), (b'Content-Length', b'1345'), (b'X-XSS-Protection', b'0'), (b'X-Frame-Options', b'SAMEORIGIN'), (b'X-Content-Type-Options', b'nosniff'), (b'Date', b'Mon, 13 Jul 2026 03:52:19 GMT'), (b'Expires', b'Mon, 13 Jul 2026 09:21:42 GMT'), (b'Cache-Control', b'public, max-age=19763, must-revalidate, no-transform'), (b'Content-Type', b'application/json; charset=UTF-8'), (b'Vary', b'Origin,X-Origin,Referer'), (b'Age', b'23'), (b'Alt-Svc', b'h3=":443"; ma=2592000,h3-29=":443"; ma=2592000')])
+2026-07-12 21:52:42.670 | INFO     | httpx._client:_send_single_request:1740 - HTTP Request: GET https://www.googleapis.com/oauth2/v3/certs "HTTP/1.1 200 OK"
+2026-07-12 21:52:42.670 | DEBUG    | httpcore._trace:atrace:87 - receive_response_body.started request=<Request [b'GET']>
+2026-07-12 21:52:42.671 | DEBUG    | httpcore._trace:atrace:87 - receive_response_body.complete
+2026-07-12 21:52:42.671 | DEBUG    | httpcore._trace:atrace:87 - response_closed.started
+2026-07-12 21:52:42.671 | DEBUG    | httpcore._trace:atrace:87 - response_closed.complete
+2026-07-12 21:52:42.671 | DEBUG    | httpcore._trace:atrace:87 - close.started
+2026-07-12 21:52:42.672 | DEBUG    | httpcore._trace:atrace:87 - close.complete
+2026-07-12 21:53:07.643 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] Loss detection triggered
+2026-07-12 21:53:07.643 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] Loss detection triggered
+2026-07-12 21:53:07.644 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] Loss detection triggered
+2026-07-12 21:53:07.644 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] Sending PING (probe) in packet 21
+2026-07-12 21:53:22.478 | DEBUG    | apscheduler.schedulers.base:_process_jobs:1153 - Looking for jobs to run
+2026-07-12 21:53:22.478 | DEBUG    | apscheduler.schedulers.base:_process_jobs:1260 - Next wakeup is due at 2026-07-12 21:54:22.472096-06:00 (in 59.993339 seconds)
+2026-07-12 21:53:22.479 | INFO     | apscheduler.executors.base:run_job:129 - Running job "sync_notion_to_caldav (trigger: interval[0:01:00], next run at: 2026-07-12 21:54:22 MDT)" (scheduled at 2026-07-12 21:53:22.472096-06:00)
+2026-07-12 21:53:22.658 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] Remote max_streams_bidi raised to 130
+2026-07-12 21:53:23.138 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] TLS: Advertising to peer post-quantum algorithm using X25519ML768 (0x11EC)
+2026-07-12 21:53:23.138 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] ECH: GREASE extension added to ClientHello
+2026-07-12 21:53:23.139 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] TLS CLIENT_HANDSHAKE_START -> CLIENT_EXPECT_SERVER_HELLO
+2026-07-12 21:53:23.203 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] FIRSTFLIGHT -> CONNECTED
+2026-07-12 21:53:23.203 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] TLS: Post-quantum safety achieved using X25519ML768 (key-exchange)
+2026-07-12 21:53:23.204 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] Negotiated protocol version 0x00000001 (VERSION_1)
+2026-07-12 21:53:23.204 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] TLS CLIENT_EXPECT_SERVER_HELLO -> CLIENT_EXPECT_ENCRYPTED_EXTENSIONS
+2026-07-12 21:53:23.204 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] TLS CLIENT_EXPECT_ENCRYPTED_EXTENSIONS -> CLIENT_EXPECT_CERTIFICATE_REQUEST_OR_CERTIFICATE
+2026-07-12 21:53:23.204 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] Discarding epoch 0
+2026-07-12 21:53:23.206 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] TLS CLIENT_EXPECT_CERTIFICATE_REQUEST_OR_CERTIFICATE -> CLIENT_EXPECT_CERTIFICATE_VERIFY
+2026-07-12 21:53:23.208 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] TLS CLIENT_EXPECT_CERTIFICATE_VERIFY -> CLIENT_EXPECT_FINISHED
+2026-07-12 21:53:23.208 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] TLS CLIENT_EXPECT_FINISHED -> CLIENT_POST_HANDSHAKE
+2026-07-12 21:53:23.208 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] ALPN negotiated protocol h3
+2026-07-12 21:53:23.263 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] Discarding epoch 2
+2026-07-12 21:53:23.263 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] Stream 3 created by peer
+2026-07-12 21:53:23.263 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] Stream 7 created by peer
+2026-07-12 21:53:23.319 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] MTU probe ACK'd, datagram size now 1350
+2026-07-12 21:53:23.395 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] MTU probe ACK'd, datagram size now 1452
+2026-07-12 21:53:23.973 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] Stream 0 discarded
+2026-07-12 21:53:24.025 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] Remote max_streams_bidi raised to 129
+2026-07-12 21:53:24.428 | INFO     | backend.repo.caldav_repo:get_calendar_url:60 - Using calendar Calnio (https://caldav.icloud.com/21349328538/calendars/8C2EF912-7218-4E17-90B6-5E5B06665CC5/)
+2026-07-12 21:53:24.428 | INFO     | backend.repo.notion_repo:connect:91 - Connecting to Notion
+2026-07-12 21:53:24.434 | INFO     | backend.repo.notion_repo:connect:93 - Notion client ready
+2026-07-12 21:53:24.435 | INFO     | backend.repo.caldav_repo:connect:106 - Connecting to CalDAV at https://caldav.icloud.com/
+2026-07-12 21:53:24.435 | INFO     | backend.repo.caldav_repo:connect:113 - Loaded calendar https://caldav.icloud.com/21349328538/calendars/8C2EF912-7218-4E17-90B6-5E5B06665CC5/
+2026-07-12 21:53:24.435 | INFO     | backend.repo.notion_repo:query_database:124 - Querying data source e17a5558-72b4-8367-8c69-87a36a845e37
+2026-07-12 21:53:24.435 | DEBUG    | httpcore._trace:trace:47 - connect_tcp.started host='api.notion.com' port=443 local_address=None timeout=60.0 socket_options=None
+2026-07-12 21:53:24.501 | DEBUG    | httpcore._trace:trace:47 - connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x11256dbd0>
+2026-07-12 21:53:24.501 | DEBUG    | httpcore._trace:trace:47 - start_tls.started ssl_context=<ssl.SSLContext object at 0x10f697e20> server_hostname='api.notion.com' timeout=60.0
+2026-07-12 21:53:24.558 | DEBUG    | httpcore._trace:trace:47 - start_tls.complete return_value=<httpcore._backends.sync.SyncStream object at 0x1124cb100>
+2026-07-12 21:53:24.559 | DEBUG    | httpcore._trace:trace:47 - send_request_headers.started request=<Request [b'POST']>
+2026-07-12 21:53:24.559 | DEBUG    | httpcore._trace:trace:47 - send_request_headers.complete
+2026-07-12 21:53:24.560 | DEBUG    | httpcore._trace:trace:47 - send_request_body.started request=<Request [b'POST']>
+2026-07-12 21:53:24.560 | DEBUG    | httpcore._trace:trace:47 - send_request_body.complete
+2026-07-12 21:53:24.560 | DEBUG    | httpcore._trace:trace:47 - receive_response_headers.started request=<Request [b'POST']>
+2026-07-12 21:53:24.904 | DEBUG    | httpcore._trace:trace:47 - receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Date', b'Mon, 13 Jul 2026 03:53:24 GMT'), (b'Content-Type', b'application/json; charset=utf-8'), (b'Transfer-Encoding', b'chunked'), (b'Connection', b'keep-alive'), (b'CF-Ray', b'a1a557295c964f73-SEA'), (b'CF-Cache-Status', b'DYNAMIC'), (b'Content-Encoding', b'gzip'), (b'ETag', b'W/"bb23-ztOtwPfe7e+03QajuTFbHrDe8Tw"'), (b'Server', b'cloudflare'), (b'Strict-Transport-Security', b'max-age=31536000; includeSubDomains; preload'), (b'Vary', b'Accept-Encoding'), (b'content-security-policy', b"default-src 'none'"), (b'referrer-policy', b'strict-origin-when-cross-origin'), (b'x-content-type-options', b'nosniff'), (b'x-dns-prefetch-control', b'off'), (b'x-download-options', b'noopen'), (b'x-frame-options', b'SAMEORIGIN'), (b'x-notion-request-id', b'eeed7f77-ca1b-4871-b76d-a0ce45f8312b'), (b'x-permitted-cross-domain-policies', b'none'), (b'x-xss-protection', b'0'), (b'set-cookie', b'__cf_bm=xB.C6aY0m1G6gp7TAcZHjtM3NwJu4hckT3XgmdGZvTc-1783914804.6982481-1.0.1.1-VBt5YL6fTjFD_U11Oro69NWhtktqSQovYeCDtURfVTEP8qgApEmI2qpZE.F2KtThSfKe6XwsEuJyr0HOVbqzLaEbLD5eUNbfjP5b1z48.uym0PlHvwmcr9N9SoZU_AtV; HttpOnly; SameSite=None; Secure; Path=/; Domain=notion.com; Expires=Mon, 13 Jul 2026 04:23:24 GMT'), (b'alt-svc', b'h3=":443"; ma=86400')])
+2026-07-12 21:53:24.905 | INFO     | httpx._client:_send_single_request:1025 - HTTP Request: POST https://api.notion.com/v1/data_sources/e17a5558-72b4-8367-8c69-87a36a845e37/query "HTTP/1.1 200 OK"
+2026-07-12 21:53:24.906 | DEBUG    | httpcore._trace:trace:47 - receive_response_body.started request=<Request [b'POST']>
+2026-07-12 21:53:24.907 | DEBUG    | httpcore._trace:trace:47 - receive_response_body.complete
+2026-07-12 21:53:24.907 | DEBUG    | httpcore._trace:trace:47 - response_closed.started
+2026-07-12 21:53:24.907 | DEBUG    | httpcore._trace:trace:47 - response_closed.complete
+2026-07-12 21:53:24.908 | INFO     | backend.repo.notion_repo:query_database:138 - Found 18 pages in data source e17a5558-72b4-8367-8c69-87a36a845e37
+2026-07-12 21:53:24.909 | INFO     | backend.services.sync:sync_notion_to_caldav:85 - Sync started: 18 Notion pages
+2026-07-12 21:53:25.401 | INFO     | backend.services.sync:sync_notion_to_caldav:152 - Sync done: 0 created, 0 updated, 0 deleted
+2026-07-12 21:53:25.401 | INFO     | apscheduler.executors.base:run_job:156 - Job "sync_notion_to_caldav (trigger: interval[0:01:00], next run at: 2026-07-12 21:54:22 MDT)" executed successfully
+2026-07-12 21:53:27.485 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] Loss detection triggered
+2026-07-12 21:53:27.485 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] Loss detection triggered
+2026-07-12 21:53:27.486 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] Loss detection triggered
+2026-07-12 21:53:27.486 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] Sending PING (probe) in packet 13
+2026-07-12 21:53:32.491 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] Loss detection triggered
+2026-07-12 21:53:32.491 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] Loss detection triggered
+2026-07-12 21:53:32.491 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] Loss detection triggered
+2026-07-12 21:53:32.492 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] Sending PING (probe) in packet 15
+2026-07-12 21:53:37.492 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] Loss detection triggered
+2026-07-12 21:53:37.492 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] Loss detection triggered
+2026-07-12 21:53:37.493 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] Loss detection triggered
+2026-07-12 21:53:37.493 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] Sending PING (probe) in packet 17
+2026-07-12 21:53:57.516 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] Loss detection triggered
+2026-07-12 21:53:57.517 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] Loss detection triggered
+2026-07-12 21:53:57.518 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] Loss detection triggered
+2026-07-12 21:53:57.518 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] Sending PING (probe) in packet 21
+2026-07-12 21:54:22.477 | DEBUG    | apscheduler.schedulers.base:_process_jobs:1153 - Looking for jobs to run
+2026-07-12 21:54:22.478 | DEBUG    | apscheduler.schedulers.base:_process_jobs:1260 - Next wakeup is due at 2026-07-12 21:55:22.472096-06:00 (in 59.993510 seconds)
+2026-07-12 21:54:22.479 | INFO     | apscheduler.executors.base:run_job:129 - Running job "sync_notion_to_caldav (trigger: interval[0:01:00], next run at: 2026-07-12 21:55:22 MDT)" (scheduled at 2026-07-12 21:54:22.472096-06:00)
+2026-07-12 21:54:23.035 | DEBUG    | logging:log:1945 - [864e9b4a9252d1ab] TLS: Advertising to peer post-quantum algorithm using X25519ML768 (0x11EC)
+2026-07-12 21:54:23.036 | DEBUG    | logging:log:1945 - [864e9b4a9252d1ab] ECH: GREASE extension added to ClientHello
+2026-07-12 21:54:23.036 | DEBUG    | logging:log:1945 - [864e9b4a9252d1ab] TLS CLIENT_HANDSHAKE_START -> CLIENT_EXPECT_SERVER_HELLO
+2026-07-12 21:54:23.096 | DEBUG    | logging:log:1945 - [864e9b4a9252d1ab] FIRSTFLIGHT -> CONNECTED
+2026-07-12 21:54:23.096 | DEBUG    | logging:log:1945 - [864e9b4a9252d1ab] TLS: Post-quantum safety achieved using X25519ML768 (key-exchange)
+2026-07-12 21:54:23.096 | DEBUG    | logging:log:1945 - [864e9b4a9252d1ab] Negotiated protocol version 0x00000001 (VERSION_1)
+2026-07-12 21:54:23.096 | DEBUG    | logging:log:1945 - [864e9b4a9252d1ab] TLS CLIENT_EXPECT_SERVER_HELLO -> CLIENT_EXPECT_ENCRYPTED_EXTENSIONS
+2026-07-12 21:54:23.096 | DEBUG    | logging:log:1945 - [864e9b4a9252d1ab] TLS CLIENT_EXPECT_ENCRYPTED_EXTENSIONS -> CLIENT_EXPECT_CERTIFICATE_REQUEST_OR_CERTIFICATE
+2026-07-12 21:54:23.096 | DEBUG    | logging:log:1945 - [864e9b4a9252d1ab] Discarding epoch 0
+2026-07-12 21:54:23.098 | DEBUG    | logging:log:1945 - [864e9b4a9252d1ab] TLS CLIENT_EXPECT_CERTIFICATE_REQUEST_OR_CERTIFICATE -> CLIENT_EXPECT_CERTIFICATE_VERIFY
+2026-07-12 21:54:23.100 | DEBUG    | logging:log:1945 - [864e9b4a9252d1ab] TLS CLIENT_EXPECT_CERTIFICATE_VERIFY -> CLIENT_EXPECT_FINISHED
+2026-07-12 21:54:23.101 | DEBUG    | logging:log:1945 - [864e9b4a9252d1ab] TLS CLIENT_EXPECT_FINISHED -> CLIENT_POST_HANDSHAKE
+2026-07-12 21:54:23.101 | DEBUG    | logging:log:1945 - [864e9b4a9252d1ab] ALPN negotiated protocol h3
+2026-07-12 21:54:23.159 | DEBUG    | logging:log:1945 - [864e9b4a9252d1ab] Discarding epoch 2
+2026-07-12 21:54:23.160 | DEBUG    | logging:log:1945 - [864e9b4a9252d1ab] Stream 3 created by peer
+2026-07-12 21:54:23.160 | DEBUG    | logging:log:1945 - [864e9b4a9252d1ab] Stream 7 created by peer
+2026-07-12 21:54:23.219 | DEBUG    | logging:log:1945 - [864e9b4a9252d1ab] MTU probe ACK'd, datagram size now 1350
+2026-07-12 21:54:23.300 | DEBUG    | logging:log:1945 - [864e9b4a9252d1ab] MTU probe ACK'd, datagram size now 1452
+2026-07-12 21:54:23.671 | DEBUG    | logging:log:1945 - [864e9b4a9252d1ab] Stream 0 discarded
+2026-07-12 21:54:23.734 | DEBUG    | logging:log:1945 - [864e9b4a9252d1ab] Remote max_streams_bidi raised to 129
+2026-07-12 21:54:23.811 | DEBUG    | logging:log:1945 - [864e9b4a9252d1ab] Stream 4 discarded
+2026-07-12 21:54:24.149 | INFO     | backend.repo.caldav_repo:get_calendar_url:60 - Using calendar Calnio (https://caldav.icloud.com/21349328538/calendars/8C2EF912-7218-4E17-90B6-5E5B06665CC5/)
+2026-07-12 21:54:24.149 | INFO     | backend.repo.notion_repo:connect:91 - Connecting to Notion
+2026-07-12 21:54:24.159 | INFO     | backend.repo.notion_repo:connect:93 - Notion client ready
+2026-07-12 21:54:24.159 | INFO     | backend.repo.caldav_repo:connect:106 - Connecting to CalDAV at https://caldav.icloud.com/
+2026-07-12 21:54:24.160 | INFO     | backend.repo.caldav_repo:connect:113 - Loaded calendar https://caldav.icloud.com/21349328538/calendars/8C2EF912-7218-4E17-90B6-5E5B06665CC5/
+2026-07-12 21:54:24.160 | INFO     | backend.repo.notion_repo:query_database:124 - Querying data source e17a5558-72b4-8367-8c69-87a36a845e37
+2026-07-12 21:54:24.161 | DEBUG    | httpcore._trace:trace:47 - connect_tcp.started host='api.notion.com' port=443 local_address=None timeout=60.0 socket_options=None
+2026-07-12 21:54:24.214 | DEBUG    | httpcore._trace:trace:47 - connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x1124c9940>
+2026-07-12 21:54:24.214 | DEBUG    | httpcore._trace:trace:47 - start_tls.started ssl_context=<ssl.SSLContext object at 0x10fba3b70> server_hostname='api.notion.com' timeout=60.0
+2026-07-12 21:54:24.295 | DEBUG    | httpcore._trace:trace:47 - start_tls.complete return_value=<httpcore._backends.sync.SyncStream object at 0x11251e8d0>
+2026-07-12 21:54:24.296 | DEBUG    | httpcore._trace:trace:47 - send_request_headers.started request=<Request [b'POST']>
+2026-07-12 21:54:24.296 | DEBUG    | httpcore._trace:trace:47 - send_request_headers.complete
+2026-07-12 21:54:24.296 | DEBUG    | httpcore._trace:trace:47 - send_request_body.started request=<Request [b'POST']>
+2026-07-12 21:54:24.296 | DEBUG    | httpcore._trace:trace:47 - send_request_body.complete
+2026-07-12 21:54:24.296 | DEBUG    | httpcore._trace:trace:47 - receive_response_headers.started request=<Request [b'POST']>
+2026-07-12 21:54:24.618 | DEBUG    | httpcore._trace:trace:47 - receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Date', b'Mon, 13 Jul 2026 03:54:24 GMT'), (b'Content-Type', b'application/json; charset=utf-8'), (b'Transfer-Encoding', b'chunked'), (b'Connection', b'keep-alive'), (b'CF-Ray', b'a1a5589eca48e2d9-SEA'), (b'CF-Cache-Status', b'DYNAMIC'), (b'Content-Encoding', b'gzip'), (b'ETag', b'W/"baab-rzq6YwQ9RujZdYPDaU/bu+TmQvM"'), (b'Server', b'cloudflare'), (b'Strict-Transport-Security', b'max-age=31536000; includeSubDomains; preload'), (b'Vary', b'Accept-Encoding'), (b'content-security-policy', b"default-src 'none'"), (b'referrer-policy', b'strict-origin-when-cross-origin'), (b'x-content-type-options', b'nosniff'), (b'x-dns-prefetch-control', b'off'), (b'x-download-options', b'noopen'), (b'x-frame-options', b'SAMEORIGIN'), (b'x-notion-request-id', b'494fa480-afb5-4d66-b5f1-e0a1a344cdec'), (b'x-permitted-cross-domain-policies', b'none'), (b'x-xss-protection', b'0'), (b'set-cookie', b'__cf_bm=djVmK4kJCUqNBa5NeY18ng1r846w6TAZTMFGDsPAwAg-1783914864.4418285-1.0.1.1-CSBU8DwF2ycG_5w090M9eV_LkfUxsN5QbSVyfh_WwH5pqEZYRfXNA4Xxj.1U6ujQdii3XGDDnJbPEi5.m0YppVtwlYSuUhTJGI7c.IHb16g3FPteutKtquH7l1kKsvQh; HttpOnly; SameSite=None; Secure; Path=/; Domain=notion.com; Expires=Mon, 13 Jul 2026 04:24:24 GMT'), (b'alt-svc', b'h3=":443"; ma=86400')])
+2026-07-12 21:54:24.619 | INFO     | httpx._client:_send_single_request:1025 - HTTP Request: POST https://api.notion.com/v1/data_sources/e17a5558-72b4-8367-8c69-87a36a845e37/query "HTTP/1.1 200 OK"
+2026-07-12 21:54:24.619 | DEBUG    | httpcore._trace:trace:47 - receive_response_body.started request=<Request [b'POST']>
+2026-07-12 21:54:24.620 | DEBUG    | httpcore._trace:trace:47 - receive_response_body.complete
+2026-07-12 21:54:24.620 | DEBUG    | httpcore._trace:trace:47 - response_closed.started
+2026-07-12 21:54:24.620 | DEBUG    | httpcore._trace:trace:47 - response_closed.complete
+2026-07-12 21:54:24.620 | INFO     | backend.repo.notion_repo:query_database:138 - Found 18 pages in data source e17a5558-72b4-8367-8c69-87a36a845e37
+2026-07-12 21:54:24.620 | INFO     | backend.services.sync:sync_notion_to_caldav:85 - Sync started: 18 Notion pages
+2026-07-12 21:54:25.002 | INFO     | backend.services.sync:sync_notion_to_caldav:152 - Sync done: 0 created, 0 updated, 0 deleted
+2026-07-12 21:54:25.002 | INFO     | apscheduler.executors.base:run_job:156 - Job "sync_notion_to_caldav (trigger: interval[0:01:00], next run at: 2026-07-12 21:55:22 MDT)" executed successfully
+2026-07-12 21:54:32.723 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] Connection close received (code 0x100, reason keepalive timeout)
+2026-07-12 21:54:32.723 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] CONNECTED -> DRAINING
+2026-07-12 21:54:36.363 | DEBUG    | httpcore._trace:atrace:87 - connect_tcp.started host='oauth2.googleapis.com' port=443 local_address=None timeout=5.0 socket_options=None
+2026-07-12 21:54:36.534 | DEBUG    | httpcore._trace:atrace:87 - connect_tcp.complete return_value=<httpcore._backends.anyio.AnyIOStream object at 0x1126a5f20>
+2026-07-12 21:54:36.535 | DEBUG    | httpcore._trace:atrace:87 - start_tls.started ssl_context=<ssl.SSLContext object at 0x11249f230> server_hostname='oauth2.googleapis.com' timeout=5.0
+2026-07-12 21:54:36.595 | DEBUG    | httpcore._trace:atrace:87 - start_tls.complete return_value=<httpcore._backends.anyio.AnyIOStream object at 0x1126a6030>
+2026-07-12 21:54:36.595 | DEBUG    | httpcore._trace:atrace:87 - send_request_headers.started request=<Request [b'POST']>
+2026-07-12 21:54:36.595 | DEBUG    | httpcore._trace:atrace:87 - send_request_headers.complete
+2026-07-12 21:54:36.596 | DEBUG    | httpcore._trace:atrace:87 - send_request_body.started request=<Request [b'POST']>
+2026-07-12 21:54:36.596 | DEBUG    | httpcore._trace:atrace:87 - send_request_body.complete
+2026-07-12 21:54:36.596 | DEBUG    | httpcore._trace:atrace:87 - receive_response_headers.started request=<Request [b'POST']>
+2026-07-12 21:54:36.688 | DEBUG    | httpcore._trace:atrace:87 - receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Expires', b'Mon, 01 Jan 1990 00:00:00 GMT'), (b'Date', b'Mon, 13 Jul 2026 03:54:36 GMT'), (b'Pragma', b'no-cache'), (b'Cache-Control', b'no-cache, no-store, max-age=0, must-revalidate'), (b'Content-Type', b'application/json; charset=utf-8'), (b'Vary', b'Origin'), (b'Vary', b'X-Origin'), (b'Vary', b'Referer'), (b'Content-Encoding', b'gzip'), (b'Server', b'scaffolding on HTTPServer2'), (b'X-XSS-Protection', b'0'), (b'X-Frame-Options', b'SAMEORIGIN'), (b'X-Content-Type-Options', b'nosniff'), (b'Alt-Svc', b'h3=":443"; ma=2592000,h3-29=":443"; ma=2592000'), (b'Transfer-Encoding', b'chunked')])
+2026-07-12 21:54:36.689 | INFO     | httpx._client:_send_single_request:1740 - HTTP Request: POST https://oauth2.googleapis.com/token "HTTP/1.1 200 OK"
+2026-07-12 21:54:36.690 | DEBUG    | httpcore._trace:atrace:87 - receive_response_body.started request=<Request [b'POST']>
+2026-07-12 21:54:36.691 | DEBUG    | httpcore._trace:atrace:87 - receive_response_body.complete
+2026-07-12 21:54:36.692 | DEBUG    | httpcore._trace:atrace:87 - response_closed.started
+2026-07-12 21:54:36.692 | DEBUG    | httpcore._trace:atrace:87 - response_closed.complete
+2026-07-12 21:54:36.693 | DEBUG    | httpcore._trace:atrace:87 - close.started
+2026-07-12 21:54:36.693 | DEBUG    | httpcore._trace:atrace:87 - close.complete
+2026-07-12 21:54:37.553 | DEBUG    | logging:log:1945 - [c78be0f0fc11acb8] Remote max_streams_bidi raised to 130
+2026-07-12 21:54:37.729 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] Discarding epoch 3
+2026-07-12 21:54:37.729 | DEBUG    | logging:log:1945 - [b3fa21ae8feca931] DRAINING -> TERMINATED
+2026-07-12 21:55:07.534 | DEBUG    | logging:log:1945 - [864e9b4a9252d1ab] Remote max_streams_bidi raised to 130
+2026-07-12 21:55:22.478 | DEBUG    | apscheduler.schedulers.base:_process_jobs:1153 - Looking for jobs to run
+2026-07-12 21:55:22.478 | DEBUG    | apscheduler.schedulers.base:_process_jobs:1260 - Next wakeup is due at 2026-07-12 21:56:22.472096-06:00 (in 59.993341 seconds)
+2026-07-12 21:55:22.478 | INFO     | apscheduler.executors.base:run_job:129 - Running job "sync_notion_to_caldav (trigger: interval[0:01:00], next run at: 2026-07-12 21:56:22 MDT)" (scheduled at 2026-07-12 21:55:22.472096-06:00)
+2026-07-12 21:55:22.548 | DEBUG    | logging:log:1945 - [864e9b4a9252d1ab] Connection close received (code 0x100, reason keepalive timeout)
+2026-07-12 21:55:22.548 | DEBUG    | logging:log:1945 - [864e9b4a9252d1ab] CONNECTED -> DRAINING
+2026-07-12 21:55:22.961 | DEBUG    | logging:log:1945 - [7e94b84f00d54a11] TLS: Advertising to peer post-quantum algorithm using X25519ML768 (0x11EC)
+2026-07-12 21:55:22.961 | DEBUG    | logging:log:1945 - [7e94b84f00d54a11] ECH: GREASE extension added to ClientHello
+2026-07-12 21:55:22.962 | DEBUG    | logging:log:1945 - [7e94b84f00d54a11] TLS CLIENT_HANDSHAKE_START -> CLIENT_EXPECT_SERVER_HELLO
+2026-07-12 21:55:23.020 | DEBUG    | logging:log:1945 - [7e94b84f00d54a11] FIRSTFLIGHT -> CONNECTED
+2026-07-12 21:55:23.035 | DEBUG    | logging:log:1945 - [7e94b84f00d54a11] TLS: Post-quantum safety achieved using X25519ML768 (key-exchange)
+2026-07-12 21:55:23.035 | DEBUG    | logging:log:1945 - [7e94b84f00d54a11] Negotiated protocol version 0x00000001 (VERSION_1)
+2026-07-12 21:55:23.035 | DEBUG    | logging:log:1945 - [7e94b84f00d54a11] TLS CLIENT_EXPECT_SERVER_HELLO -> CLIENT_EXPECT_ENCRYPTED_EXTENSIONS
+2026-07-12 21:55:23.035 | DEBUG    | logging:log:1945 - [7e94b84f00d54a11] TLS CLIENT_EXPECT_ENCRYPTED_EXTENSIONS -> CLIENT_EXPECT_CERTIFICATE_REQUEST_OR_CERTIFICATE
+2026-07-12 21:55:23.035 | DEBUG    | logging:log:1945 - [7e94b84f00d54a11] Discarding epoch 0
+2026-07-12 21:55:23.036 | DEBUG    | logging:log:1945 - [7e94b84f00d54a11] TLS CLIENT_EXPECT_CERTIFICATE_REQUEST_OR_CERTIFICATE -> CLIENT_EXPECT_CERTIFICATE_VERIFY
+2026-07-12 21:55:23.039 | DEBUG    | logging:log:1945 - [7e94b84f00d54a11] TLS CLIENT_EXPECT_CERTIFICATE_VERIFY -> CLIENT_EXPECT_FINISHED
+2026-07-12 21:55:23.039 | DEBUG    | logging:log:1945 - [7e94b84f00d54a11] TLS CLIENT_EXPECT_FINISHED -> CLIENT_POST_HANDSHAKE
+2026-07-12 21:55:23.039 | DEBUG    | logging:log:1945 - [7e94b84f00d54a11] ALPN negotiated protocol h3
+2026-07-12 21:55:23.101 | DEBUG    | logging:log:1945 - [7e94b84f00d54a11] Discarding epoch 2
+2026-07-12 21:55:23.102 | DEBUG    | logging:log:1945 - [7e94b84f00d54a11] Stream 3 created by peer
+2026-07-12 21:55:23.102 | DEBUG    | logging:log:1945 - [7e94b84f00d54a11] Stream 7 created by peer
+2026-07-12 21:55:23.265 | DEBUG    | logging:log:1945 - [7e94b84f00d54a11] MTU probe ACK'd, datagram size now 1350
+2026-07-12 21:55:23.353 | DEBUG    | logging:log:1945 - [7e94b84f00d54a11] MTU probe ACK'd, datagram size now 1452
+2026-07-12 21:55:23.720 | DEBUG    | logging:log:1945 - [7e94b84f00d54a11] Stream 0 discarded
+2026-07-12 21:55:23.777 | DEBUG    | logging:log:1945 - [7e94b84f00d54a11] Remote max_streams_bidi raised to 129
+2026-07-12 21:55:24.123 | INFO     | backend.repo.caldav_repo:get_calendar_url:60 - Using calendar Calnio (https://caldav.icloud.com/21349328538/calendars/8C2EF912-7218-4E17-90B6-5E5B06665CC5/)
+2026-07-12 21:55:24.123 | INFO     | backend.repo.notion_repo:connect:91 - Connecting to Notion
+2026-07-12 21:55:24.128 | INFO     | backend.repo.notion_repo:connect:93 - Notion client ready
+2026-07-12 21:55:24.128 | INFO     | backend.repo.caldav_repo:connect:106 - Connecting to CalDAV at https://caldav.icloud.com/
+2026-07-12 21:55:24.128 | INFO     | backend.repo.caldav_repo:connect:113 - Loaded calendar https://caldav.icloud.com/21349328538/calendars/8C2EF912-7218-4E17-90B6-5E5B06665CC5/
+2026-07-12 21:55:24.128 | INFO     | backend.repo.notion_repo:query_database:124 - Querying data source e17a5558-72b4-8367-8c69-87a36a845e37
+2026-07-12 21:55:24.128 | DEBUG    | httpcore._trace:trace:47 - connect_tcp.started host='api.notion.com' port=443 local_address=None timeout=60.0 socket_options=None
+2026-07-12 21:55:24.243 | DEBUG    | httpcore._trace:trace:47 - connect_tcp.complete return_value=<httpcore._backends.sync.SyncStream object at 0x1126a7680>
+2026-07-12 21:55:24.243 | DEBUG    | httpcore._trace:trace:47 - start_tls.started ssl_context=<ssl.SSLContext object at 0x10b139e80> server_hostname='api.notion.com' timeout=60.0
+2026-07-12 21:55:24.370 | DEBUG    | httpcore._trace:trace:47 - start_tls.complete return_value=<httpcore._backends.sync.SyncStream object at 0x1126a7790>
+2026-07-12 21:55:24.370 | DEBUG    | httpcore._trace:trace:47 - send_request_headers.started request=<Request [b'POST']>
+2026-07-12 21:55:24.386 | DEBUG    | httpcore._trace:trace:47 - send_request_headers.complete
+2026-07-12 21:55:24.386 | DEBUG    | httpcore._trace:trace:47 - send_request_body.started request=<Request [b'POST']>
+2026-07-12 21:55:24.388 | DEBUG    | httpcore._trace:trace:47 - send_request_body.complete
+2026-07-12 21:55:24.389 | DEBUG    | httpcore._trace:trace:47 - receive_response_headers.started request=<Request [b'POST']>
+2026-07-12 21:55:24.769 | DEBUG    | httpcore._trace:trace:47 - receive_response_headers.complete return_value=(b'HTTP/1.1', 200, b'OK', [(b'Date', b'Mon, 13 Jul 2026 03:55:24 GMT'), (b'Content-Type', b'application/json; charset=utf-8'), (b'Transfer-Encoding', b'chunked'), (b'Connection', b'keep-alive'), (b'CF-Ray', b'a1a55a164ebcec30-SEA'), (b'CF-Cache-Status', b'DYNAMIC'), (b'Content-Encoding', b'gzip'), (b'ETag', b'W/"ba33-A6KmyNKfodEPCp4PlUfxBhMmfK0"'), (b'Server', b'cloudflare'), (b'Strict-Transport-Security', b'max-age=31536000; includeSubDomains; preload'), (b'Vary', b'Accept-Encoding'), (b'content-security-policy', b"default-src 'none'"), (b'referrer-policy', b'strict-origin-when-cross-origin'), (b'x-content-type-options', b'nosniff'), (b'x-dns-prefetch-control', b'off'), (b'x-download-options', b'noopen'), (b'x-frame-options', b'SAMEORIGIN'), (b'x-notion-request-id', b'b703d0cc-f0a8-430e-af9a-af39605e21c7'), (b'x-permitted-cross-domain-policies', b'none'), (b'x-xss-protection', b'0'), (b'set-cookie', b'__cf_bm=GXwsKqPWzk2tWgSdFA5CUmbFqcIhNjbmvd9qlYvQo5c-1783914924.5258968-1.0.1.1-W8qpP9bRkqqA8D8Py0jMLiMBHivsHImD4cyf0nchGq64Js.vVUOtzsZjBoPrrwxU0N4GmMSnWZid_wmC86x2ZXuYluX8AgqfxZTy_8q7J7NQGUQH4rsLri532HUHq6u9; HttpOnly; SameSite=None; Secure; Path=/; Domain=notion.com; Expires=Mon, 13 Jul 2026 04:25:24 GMT'), (b'alt-svc', b'h3=":443"; ma=86400')])
+2026-07-12 21:55:24.772 | INFO     | httpx._client:_send_single_request:1025 - HTTP Request: POST https://api.notion.com/v1/data_sources/e17a5558-72b4-8367-8c69-87a36a845e37/query "HTTP/1.1 200 OK"
+2026-07-12 21:55:24.773 | DEBUG    | httpcore._trace:trace:47 - receive_response_body.started request=<Request [b'POST']>
+2026-07-12 21:55:24.775 | DEBUG    | httpcore._trace:trace:47 - receive_response_body.complete
+2026-07-12 21:55:24.775 | DEBUG    | httpcore._trace:trace:47 - response_closed.started
+2026-07-12 21:55:24.776 | DEBUG    | httpcore._trace:trace:47 - response_closed.complete
+2026-07-12 21:55:24.778 | INFO     | backend.repo.notion_repo:query_database:138 - Found 18 pages in data source e17a5558-72b4-8367-8c69-87a36a845e37
+2026-07-12 21:55:24.778 | INFO     | backend.services.sync:sync_notion_to_caldav:85 - Sync started: 18 Notion pages
+2026-07-12 21:55:25.291 | INFO     | backend.services.sync:sync_notion_to_caldav:152 - Sync done: 0 created, 0 updated, 0 deleted
+2026-07-12 21:55:25.291 | INFO     | apscheduler.executors.base:run_job:156 - Job "sync_notion_to_caldav (trigger: interval[0:01:00], next run at: 2026-07-12 21:56:22 MDT)" executed successfully
+2026-07-12 21:55:27.553 | DEBUG    | logging:log:1945 - [864e9b4a9252d1ab] Discarding epoch 3
+2026-07-12 21:55:27.553 | DEBUG    | logging:log:1945 - [864e9b4a9252d1ab] DRAINING -> TERMINATED
+2026-07-12 21:55:49.137 | INFO     | apscheduler.schedulers.base:shutdown:245 - Scheduler has been shut down
+2026-07-12 21:55:49.138 | DEBUG    | apscheduler.schedulers.base:_process_jobs:1153 - Looking for jobs to run
+2026-07-12 22:15:00.394 | INFO     | backend.core.logging:setup_logging:57 - Logging initialized
