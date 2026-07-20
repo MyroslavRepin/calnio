@@ -71,3 +71,43 @@ Notion parsing rules (real payload shapes): title = the property whose `type == 
 ## README.md
 
 README holds the working plan: sync model detail, roadmap phases, auth flow + todo checklist, frontend integration plan (Vue/Vite dev on :5173, prod served by FastAPI `StaticFiles`). Check it before starting auth or frontend work — it tracks what's done vs todo.
+
+# Calnio — Design System
+
+Calnio is a one-way sync service (Notion → Apple Calendar), free while in beta because the developer hosts it himself. It is **not** open source and there is nothing for the user to install. Built by one indie dev, for a technical audience. Voice: plain, honest, quietly confident — never markety, no hype.
+
+**Aesthetic:** Apple-clean × README. Oversized black-on-white grotesk headlines, monospace for labels/meta/code, generous whitespace, hairline dividers instead of boxes and shadows. Monochrome by default. No AI-slop: no gradient backgrounds, no colored cards with left-border accents, no decorative icons, no emoji, no ASCII art, no heavy drop shadows or big border radii.
+
+## Color
+- Background: `#fff`
+- Ink / primary text & buttons: `#0a0a0a`
+- Body / secondary text: `#57554e`
+- Muted / meta / mono labels: `#8a877e`
+- Hairline dividers & borders: `#ededea` (use `#e4e2da` / `#f0eee8` for slightly stronger frames)
+- Selection: bg `#0a0a0a`, text `#fff`
+- Accent: monochrome `#0a0a0a` by default; optional single accent via `--accent` CSS var, chosen from `#a4670f` (amber), `#3f6bd6` (blue), `#2f7d5b` (green). Never more than one accent on screen, low saturation only.
+
+## Type
+- **Display / UI:** `-apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif`
+- **Mono (labels, meta, code, step numbers):** `'IBM Plex Mono'` for UI meta, `'JetBrains Mono'` for code blocks
+- Scale: hero h1 ~84px / line-height 0.94 / weight 700 / letter-spacing -0.045em; section h2 ~40px / -0.03em / 700; card h3 19–21px / 600 / -0.01em; body 15–20px / line-height 1.5–1.6 / color `#57554e`.
+- Mono labels: 12px, uppercase, letter-spacing 0.16em, color `#8a877e`, used as eyebrow/section kickers.
+- Never use Inter, Roboto, Fraunces, or stylized display fonts.
+
+## Layout & spacing
+- Content max-width `1080px`, horizontal padding `40px`, centered.
+- Section vertical padding `96px` (top/bottom); hero `64px 40px 72px`.
+- Sections separated by full-width `1px solid #ededea` top borders — no cards, no shadows.
+- Multi-column blocks use CSS grid with hairline internal dividers (`border-left`/`border-bottom: 1px solid #ededea`), not boxed cards.
+- Feature/step lists: grid or flex with `gap`; numbered items use mono `01`/`02` markers.
+
+## Components
+- **Buttons:** primary = solid `#0a0a0a` (or `var(--accent)`), white text, `border-radius: 8px`, padding `14px 28px`, weight 500. Secondary = plain text link in mono `#8a877e`, or a text link underlined with a 1px bottom border.
+- **Nav:** wordmark `calnio` (700, -0.02em) left; plain text links right, the primary link underlined with 1px bottom border.
+- **Code block:** dark `#0a0a0a` bg, `#e9e7e1` text, JetBrains Mono 14px, radius 8px, prompt `$` in green `#7fbf7f`, comments in `#6f7166`. Only for real code, never decorative.
+- **Data / sync illustration:** plain text rows with hairline top/bottom borders, mono column labels — no fake app chrome, no boxes-as-art.
+
+## Rules
+- Recreate the real product truthfully: one-way sync only (for now); free during beta because the dev self-hosts it; hosted (nothing to install); not open source (no GitHub/MIT/Docker/pip references in marketing copy).
+- Prefer flex/grid + `gap` over inline spacing.
+- Use imagery placeholders (subtly striped, mono caption) when a real asset is missing — never hand-draw SVG imagery.
