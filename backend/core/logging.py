@@ -37,15 +37,6 @@ def setup_logging() -> None:
         ),
     )
 
-    logger.add(
-        "logs/calnio.log",
-        rotation="10 MB",
-        retention="30 days",
-        level="DEBUG",
-        compression="zip",
-        enqueue=True,
-    )
-
     # Bridge stdlib logging -> loguru so HTTP logs show up.
     logging.basicConfig(handlers=[_InterceptHandler()], level=logging.DEBUG, force=True)
 

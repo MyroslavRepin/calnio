@@ -8,6 +8,7 @@ __pycache__/
 .idea/
 .vscode/
 .claude
+logs/
 
 # local API testing (Posting)
 collections/
