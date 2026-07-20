@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from backend.api.oauth import router as oauth_router
@@ -28,6 +29,17 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+# CORS: the Vue dev app (frontend_url) calls the API cross-origin and must send
+# the refresh cookie, so credentials must be allowed and the origin explicit
+# (a wildcard origin is rejected by browsers when credentials are included).
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[settings.frontend_url],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # SessionMiddleware: stores the OAuth `state` in a signed cookie (CSRF protection).
 app.add_middleware(SessionMiddleware, secret_key=settings.session_secret)
