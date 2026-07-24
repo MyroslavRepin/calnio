@@ -8,6 +8,7 @@ dependencies = [
     "apscheduler>=3.11.3",
     "authlib>=1.7.2",
     "caldav>=3.2.1",
+    "cryptography>=49.0.0",
     "fastapi>=0.137.2",
     "greenlet>=3.5.2",
     "icalendar>=7.1.3",

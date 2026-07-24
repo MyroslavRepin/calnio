@@ -55,13 +55,42 @@ Login via Google. **No separate registration** — first login creates the user 
 3. `api/oauth.py` — `login` + `callback` (callback returns JSON for now).
 4. `models/user.py`, `models/oauth_account.py` + Alembic migration `673af4d22aca` (applied).
 
+5. `core/security.py` — `JWTService` (PyJWT, HS256): access + refresh pair, rotation on refresh.
+6. `api/oauth.py` — `/auth/refresh`, `/auth/logout`, `/auth/me`. Both tokens in httpOnly cookies (**not** `Authorization: Bearer` — JS never holds a token). Refresh cookie scoped to path `/auth`.
+7. `deps/auth.py` — `get_current_user` dependency: reads the access cookie, decodes, loads the `User` row, else 401. `/auth/me` uses it.
+8. `CORSMiddleware` with `allow_credentials` + explicit origin (a wildcard is rejected when credentials are sent).
+
 ### Todo
-1. `core/security.py` — `JWTManager` class (PyJWT, HS256): `create(user_id)`, `decode(token)`. Singleton `jwt_manager`.
-2. `repo/user_repo.py` — `get_user_by_oauth(db, provider, sub)`, `create_user_with_oauth(db, ...)`. Plain functions taking `Session`.
-3. `services/auth.py` — `login_with_google(db, userinfo)` = get-or-create (registration + login in one).
-4. `api/oauth.py` callback — call service, issue JWT, `RedirectResponse` to frontend (restore `FRONTEND_URL`).
-5. `deps/auth.py` — `get_current_user(token)` dependency: decode JWT, load user, else 401. Protects API routes.
-6. Restore `CORSMiddleware` once Vue calls the API with `Authorization: Bearer`.
+1. `services/auth.py` — only if the flow grows past one repo call; it hasn't yet.
+
+## Apple Calendar connection (per-user iCloud credentials)
+
+Each user connects their own iCloud account with an app-specific password. The `.env` `ICLOUD_EMAIL` / `APP_SPECIFIC_PASSWORD` remain the **single-user dev path** the scheduler still runs on — per-user sync is a later phase.
+
+### Model
+`caldav_credentials` — one row per user (unique `user_id`): `icloud_email`, `password_encrypted` (Fernet), `calendar_url` (NULL until the user picks one), `last_verified_at`. A row only exists if iCloud accepted the credential, so "row exists" == "credentials worked".
+
+### API (`backend/api/apple_calendar.py`, prefix `/api/v1`)
+| Method | Path | |
+|---|---|---|
+| `PUT` | `/me/apple-calendar` | verify against iCloud → encrypt → upsert. `201` new / `200` replace. Returns status + the calendar list (saves the wizard a round trip). |
+| `GET` | `/me/apple-calendar` | status only, never the password. `404` if not connected. |
+| `DELETE` | `/me/apple-calendar` | forgets the credential; leaves iCloud events and calendars alone. `204`. |
+| `GET` | `/me/apple-calendar/calendars` | list the account's calendars. |
+| `POST` | `/me/apple-calendar/calendars` | create one (default name `Calnio`). `201`. |
+| `PUT` | `/me/apple-calendar/calendar` | select a calendar; rejects a URL the account doesn't own. |
+
+### Rules
+- **`401` means our auth only, never iCloud's.** The frontend's `apiFetch` auto-refreshes and retries on 401 — returning it for a bad iCloud password would resubmit that password to Apple and risk locking the Apple ID. iCloud rejection is `400`; iCloud unreachable is `502`.
+- The plaintext password never appears in a response body (not even masked), a log line, or an exception message. Raw CalDAV exception text is logged, never forwarded.
+- `/me` only — no `{user_id}` in any path, so IDOR is unrepresentable.
+- `CREDENTIALS_ENCRYPTION_KEY` (Fernet) is required at boot. **Back it up with the database** — losing it makes every stored credential unreadable and forces all users to reconnect.
+
+### Known gaps (deliberate)
+- Disconnect orphans events already pushed; cleaning them needs `synced_events.user_id`, which doesn't exist yet.
+- `calendar_url` on the credential row is a placeholder for a real Notion-DB→calendar mapping table.
+- `reset_all()` / `delete_all()` are unscoped and would destroy foreign events in a user-picked calendar. No callers today (REPL-only) — fix before anything can trigger them.
+- Route handlers hold the logic inline; extract to `services/apple_calendar.py` when the per-user sync loop needs to share the decrypt path.
 
 ### Frontend integration
 - **Dev:** Vue on Vite `:5173`, API on `:8080`. Login start = top-level nav (no CORS). Callback redirects back to `:5173` with JWT. API calls need CORS.

@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
+from backend.api.apple_calendar import router as apple_calendar_router
 from backend.api.oauth import router as oauth_router
 from backend.core.config import settings
 from backend.core.logging import setup_logging
@@ -45,3 +46,4 @@ app.add_middleware(
 app.add_middleware(SessionMiddleware, secret_key=settings.session_secret)
 
 app.include_router(oauth_router)
+app.include_router(apple_calendar_router)

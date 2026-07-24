@@ -5,6 +5,7 @@ from icalendar import Calendar as ICalendar
 from icalendar import Event as IEvent
 from loguru import logger
 
+from backend.schemas.caldav_calendar import CalDavCalendar
 from backend.schemas.caldav_event import CalDavEvent
 
 
@@ -38,6 +39,41 @@ def _as_datetime(value: date | datetime) -> tuple[datetime, bool]:
     return datetime(value.year, value.month, value.day), True
 
 
+def _principal(caldav_url: str, username: str, password: str) -> "caldav.Principal":  # pyright: ignore[reportGeneralTypeIssues]
+    """Authenticate and return the account principal.
+
+    Raises caldav.lib.error.AuthorizationError on bad credentials — that is how
+    a credential gets verified.
+    """
+    client = caldav.DAVClient(  # pyright: ignore[reportCallIssue]
+        url=caldav_url,
+        username=username,
+        password=password,
+    )
+    return client.principal()
+
+
+def list_calendars(
+    caldav_url: str, username: str, password: str
+) -> list[CalDavCalendar]:
+    """List every calendar on the account. Doubles as the credential check."""
+    calendars = _principal(caldav_url, username, password).calendars()
+    logger.info("Found {} calendars for {}", len(calendars), username)
+    return [
+        CalDavCalendar(name=cal.get_display_name() or "(unnamed)", url=str(cal.url))
+        for cal in calendars
+    ]
+
+
+def create_calendar(
+    caldav_url: str, username: str, password: str, name: str
+) -> CalDavCalendar:
+    """Create a calendar in the account and return it."""
+    logger.info("Creating calendar {!r} for {}", name, username)
+    calendar = _principal(caldav_url, username, password).make_calendar(name=name)
+    return CalDavCalendar(name=name, url=str(calendar.url))
+
+
 def get_calendar_url(
     caldav_url: str,
     username: str,
@@ -45,12 +81,7 @@ def get_calendar_url(
     name: str | None = None,
 ) -> str:
     """Find an iCloud calendar URL — by display name, else the first one."""
-    client = caldav.DAVClient(  # pyright: ignore[reportCallIssue]
-        url=caldav_url,
-        username=username,
-        password=password,
-    )
-    calendars = client.principal().calendars()
+    calendars = _principal(caldav_url, username, password).calendars()
     if not calendars:
         raise RuntimeError("no calendars found on iCloud account")
     if name is not None:

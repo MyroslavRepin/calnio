@@ -18,6 +18,13 @@ class Settings(BaseSettings):
     session_secret: str
     jwt_secret: str
 
+    # Fernet key encrypting per-user iCloud app-specific passwords at rest.
+    # Generate with:
+    #   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+    # Losing it makes every stored credential permanently unreadable — users
+    # would have to re-enter their app-specific password.
+    credentials_encryption_key: str
+
     # Frontend origin the callback redirects back to (and the CORS allow-origin).
     frontend_url: str = "http://localhost:5173"
 

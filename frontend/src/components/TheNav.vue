@@ -6,11 +6,12 @@ const { state, login, logout } = useAuth()
 
 <template>
   <nav class="nav">
-    <a href="#" class="wordmark">calnio</a>
+    <router-link to="/" class="wordmark">calnio</router-link>
     <div class="links">
-      <a href="#how">How it works</a>
+      <a v-if="$route.name === 'landing'" href="#how">How it works</a>
 
       <template v-if="state.ready && state.user">
+        <router-link v-if="$route.name !== 'me'" to="/me">Setup</router-link>
         <span class="user">{{ state.user.name || state.user.email }}</span>
         <button type="button" class="linkbtn" @click="logout">Log out</button>
       </template>

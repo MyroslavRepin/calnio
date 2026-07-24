@@ -8,7 +8,9 @@ from backend.core.config import settings
 from backend.core.logging import logger
 from backend.core.oauth import oauth
 from backend.core.security import JWTService
+from backend.deps.auth import ACCESS_COOKIE, get_current_user
 from backend.deps.db import get_session
+from backend.models.user import User
 from backend.repo.user_repo import UserRepo
 
 router = APIRouter()
@@ -16,9 +18,9 @@ router = APIRouter()
 jwt_service = JWTService(settings.jwt_secret)
 
 # Both tokens ride in httpOnly cookies (never readable by JS).
-# access_token  — sent to every route (path "/"), short-lived.
+# access_token  — sent to every route (path "/"), short-lived. Its name lives
+# in deps/auth.py, which is what reads it back.
 # refresh_tokens — sent only to /auth/* (path "/auth"), long-lived.
-ACCESS_COOKIE = "access_token"
 REFRESH_COOKIE = "refresh_token"
 ACCESS_COOKIE_PATH = "/"
 REFRESH_COOKIE_PATH = "/auth"
@@ -93,8 +95,10 @@ async def oauth_google_callback(request: Request, db: Session = Depends(get_sess
 
     # Both tokens land in httpOnly cookies; the browser sends them on every
     # subsequent request. No token in the URL.
+    # Land on the dashboard, not the marketing page — a first-time user needs
+    # the Apple Calendar setup, and a returning one wants their status.
     access_token, refresh_token = jwt_service.create_token_pair(str(user.id))
-    response = RedirectResponse(f"{settings.frontend_url}/")
+    response = RedirectResponse(f"{settings.frontend_url}/me")
     _set_auth_cookies(response, access_token, refresh_token)
     return response
 
@@ -136,28 +140,7 @@ async def logout():
 
 
 @router.get("/auth/me")
-async def get_me(request: Request, db: Session = Depends(get_session)):
-    # Access token comes from the httpOnly cookie the browser sends automatically.
-    token = request.cookies.get(ACCESS_COOKIE)
-    if not token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="missing access cookie"
-        )
-
-    try:
-        user_id = jwt_service.verify(token, expected_type="access")
-    except jwt.InvalidTokenError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="invalid or expired token",
-        )
-
-    user = UserRepo(db).get(int(user_id))
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="user not found"
-        )
-
+async def get_me(user: User = Depends(get_current_user)):
     return {
         "user_id": user.id,
         "email": user.email,

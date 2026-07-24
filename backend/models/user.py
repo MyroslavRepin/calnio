@@ -4,6 +4,7 @@ from sqlalchemy import DateTime, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.core.base import Base
+from backend.models.caldav_credential import CaldavCredential
 from backend.models.oauth_account import OAuthAccount
 
 
@@ -27,4 +28,8 @@ class User(Base):
 
     oauth_accounts: Mapped[list["OAuthAccount"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
+    )
+
+    caldav_credential: Mapped["CaldavCredential | None"] = relationship(
+        back_populates="user", cascade="all, delete-orphan", uselist=False
     )

@@ -26,13 +26,13 @@ FastAPI app in `main.py`: lifespan starts an APScheduler `BackgroundScheduler` t
 
 Layers under `backend/` (import modules directly — **no `__init__.py` anywhere**, e.g. `from backend.schemas.notion_page import NotionPage`):
 
-- `core/` — stateless infra, no DB access: `config.py` (`Settings` from `.env`, singleton `settings`), `db.py` (engine + `SessionLocal`), `base.py` (ORM `Base`), `oauth.py` (authlib Google client), `security.py` (`JWTService`, PyJWT HS256, access + refresh tokens), `scheduler.py`, `logging.py` (loguru).
-- `models/` — SQLAlchemy ORM, one per file: `user.py`, `oauth_account.py` (N per user, unique `(provider, provider_account_id)`, lookup by Google `sub` never email), `synced_event.py`.
+- `core/` — stateless infra, no DB access: `config.py` (`Settings` from `.env`, singleton `settings`), `db.py` (engine + `SessionLocal`), `base.py` (ORM `Base`), `oauth.py` (authlib Google client), `security.py` (`JWTService`, PyJWT HS256, access + refresh tokens), `crypto.py` (Fernet `encrypt`/`decrypt` — **the only module importing Fernet**), `scheduler.py`, `logging.py` (loguru).
+- `models/` — SQLAlchemy ORM, one per file: `user.py`, `oauth_account.py` (N per user, unique `(provider, provider_account_id)`, lookup by Google `sub` never email), `caldav_credential.py` (1 per user, iCloud password Fernet-encrypted), `synced_event.py`.
 - `schemas/` — pydantic v2 domain models: `caldav_event.py`, `notion_page.py`, `notion_database.py` (both read-only projections of raw Notion payloads), `synced_event.py`.
 - `repo/` — data access. `caldav_repo.py` (`CalDavEventRepo`, write side, plus `get_calendar_url`), `notion_repo.py` (`NotionPageRepo`, read-only — no create/update/delete, keep it that way), `user_repo.py` (`UserRepo(db: Session)`, `get_or_create_user_oauth` = login and registration in one). Repos take a `Session`/credentials in the constructor; **caller owns the transaction and the commit** (exception: `sync.py` commits per event deliberately — see below).
 - `services/` — flows composing multiple repos: `sync.py` only. Auth is thin enough to live in the route; add a service only when a flow really composes repos with logic.
-- `api/` — route handlers: `oauth.py` (`/auth/oauth/google/login` + `/callback`).
-- `deps/` — FastAPI dependencies: `db.py` (`get_session`).
+- `api/` — route handlers: `oauth.py` (`/auth/*`, no prefix — Google's registered redirect URI depends on it), `apple_calendar.py` (`/api/v1/me/apple-calendar*`, per-user iCloud credentials; logic inline in the routes by decision, extract to a service when sync needs to share it). New API routers get the `/api/v1` prefix so they don't collide with the SPA served at `/` in prod.
+- `deps/` — FastAPI dependencies: `db.py` (`get_session`), `auth.py` (`get_current_user` — reads the access cookie, returns the `User` row; every protected route uses it).
 
 ### Sync model (core of the app)
 
@@ -64,9 +64,11 @@ Notion parsing rules (real payload shapes): title = the property whose `type == 
 
 ## Config
 
-`.env` (all required by `Settings`): `ICLOUD_EMAIL`, `APP_SPECIFIC_PASSWORD`, `NOTION_TOKEN`, `DB_URL` (postgresql+psycopg://), `CALDAV_URL`, `TASKS_DATA_SOURCE`, `SYNCING_INTERVAL_MINUTES`, `EVENT_DUE_DATE_FIELD_NAME`, `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URI`, `SESSION_SECRET`.
+`.env` (all required by `Settings`): `ICLOUD_EMAIL`, `APP_SPECIFIC_PASSWORD`, `NOTION_TOKEN`, `DB_URL` (postgresql+psycopg://), `CALDAV_URL`, `TASKS_DATA_SOURCE`, `SYNCING_INTERVAL_MINUTES`, `EVENT_DUE_DATE_FIELD_NAME`, `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URI`, `SESSION_SECRET`, `JWT_SECRET`, `CREDENTIALS_ENCRYPTION_KEY`.
 
-`.env.example` is stale (lists only the first three keys).
+`ICLOUD_EMAIL` / `APP_SPECIFIC_PASSWORD` are the **single-user dev path** the scheduler still runs on; real users' credentials live per-row in `caldav_credentials`.
+
+`.env.example` is current — keep it that way when adding a setting.
 
 ## README.md
 
