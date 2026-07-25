@@ -3,7 +3,7 @@
 <template>
   <footer class="footer">
     <div class="wrap inner">
-      <span class="wordmark">calnio</span>
+      <span class="wordmark">calnio<span class="dot" aria-hidden="true"></span></span>
       <span class="center">one-way sync · free while in beta</span>
       <div class="links">
         <a href="#how">How it works</a>
@@ -31,7 +31,9 @@
 }
 
 .wordmark {
-  font-weight: 500;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
   color: var(--ink);
 }
 

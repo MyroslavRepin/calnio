@@ -98,7 +98,7 @@ async def oauth_google_callback(request: Request, db: Session = Depends(get_sess
     # Land on the dashboard, not the marketing page — a first-time user needs
     # the Apple Calendar setup, and a returning one wants their status.
     access_token, refresh_token = jwt_service.create_token_pair(str(user.id))
-    response = RedirectResponse(f"{settings.frontend_url}/me")
+    response = RedirectResponse(f"{settings.frontend_url}/dashboard")
     _set_auth_cookies(response, access_token, refresh_token)
     return response
 

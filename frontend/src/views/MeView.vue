@@ -1,67 +1,66 @@
 <script setup>
-import { computed, onMounted, watch } from 'vue'
-import AppleCalendarSetup from '../components/AppleCalendarSetup.vue'
-import AppleCalendarStatus from '../components/AppleCalendarStatus.vue'
+import { useRouter } from 'vue-router'
 import TheNav from '../components/TheNav.vue'
-import { useAppleCalendar } from '../composables/useAppleCalendar'
 import { useAuth } from '../composables/useAuth'
 
-const { state: auth, login } = useAuth()
-const { state: apple, load } = useAppleCalendar()
+// Read-only account page. Everything shown here comes from /auth/me — there is
+// no account-mutation endpoint yet, so nothing on this page is editable.
+const { state: auth, login, logout } = useAuth()
+const router = useRouter()
 
-// Setup is finished only when credentials are stored *and* a calendar is picked.
-const configured = computed(() => Boolean(apple.connection?.calendar_url))
-
-// App.vue bootstraps auth; wait for a user before asking for their connection,
-// otherwise the first call 401s during a page refresh.
-function loadIfAuthed() {
-  if (auth.ready && auth.user) load()
+async function signOut() {
+  await logout()
+  router.push('/')
 }
-
-onMounted(loadIfAuthed)
-watch(() => [auth.ready, auth.user], loadIfAuthed)
 </script>
 
 <template>
   <TheNav />
 
-  <main class="wrap dash">
+  <main class="wrap page">
     <template v-if="!auth.ready">
       <p class="muted">Loading…</p>
     </template>
 
     <template v-else-if="!auth.user">
       <p class="eyebrow">Not signed in</p>
-      <h1>Log in to set up your sync</h1>
-      <button class="btn-primary" type="button" @click="login">Continue with Google</button>
+      <h1>Log in to see your account</h1>
+      <button class="btn-primary signin" type="button" @click="login">
+        Continue with Google
+      </button>
     </template>
 
     <template v-else>
       <header class="head">
-        <p class="eyebrow">Setup</p>
-        <h1 v-if="configured">Your sync is set up</h1>
-        <h1 v-else>Connect Apple Calendar</h1>
-        <p class="lede">
-          <template v-if="configured">
-            Calnio pushes your Notion due dates into this calendar on a schedule.
-            Notion stays the source of truth — nothing is written back to it.
-          </template>
-          <template v-else>
-            Two steps, once. After this your Notion due dates show up in Apple
-            Calendar on their own.
-          </template>
-        </p>
+        <p class="eyebrow">Account</p>
+        <h1>{{ auth.user.name || auth.user.email }}</h1>
       </header>
 
-      <p v-if="!apple.ready" class="muted">Loading…</p>
-      <AppleCalendarStatus v-else-if="configured" />
-      <AppleCalendarSetup v-else />
+      <dl class="rows">
+        <div class="row">
+          <dt>Name</dt>
+          <dd>{{ auth.user.name || '—' }}</dd>
+        </div>
+        <div class="row">
+          <dt>Email</dt>
+          <dd>{{ auth.user.email }}</dd>
+        </div>
+        <div class="row">
+          <dt>Signed in with</dt>
+          <dd>Google</dd>
+        </div>
+      </dl>
+
+      <div class="actions">
+        <router-link class="linkbtn" to="/dashboard">Dashboard</router-link>
+        <button class="linkbtn" type="button" @click="signOut">Log out</button>
+      </div>
     </template>
   </main>
 </template>
 
 <style scoped>
-.dash {
+.page {
   padding-top: 48px;
   padding-bottom: 96px;
 }
@@ -81,10 +80,61 @@ h1 {
   line-height: 1.05;
 }
 
-.lede {
-  font-size: 17px;
-  line-height: 1.6;
-  color: var(--body);
+.signin {
+  margin-top: 24px;
+  align-self: flex-start;
+}
+
+.rows {
+  margin: 0;
+  border-top: 1px solid var(--hairline);
+  max-width: 640px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 24px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+
+dt {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+}
+
+dd {
+  margin: 0;
+  font-size: 15px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding-top: 32px;
+}
+
+.linkbtn {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--hairline);
+  padding: 0 0 2px;
+  cursor: pointer;
+}
+
+.linkbtn:hover {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
 }
 
 .muted {
@@ -92,6 +142,5 @@ h1 {
   font-size: 13px;
   color: var(--muted);
   padding: 40px 0;
-  border-top: 1px solid var(--hairline);
 }
 </style>

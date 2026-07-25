@@ -6,6 +6,8 @@
   --hairline: #ededea;
   --frame: #e4e2da;
   --accent: #0a0a0a;
+  /* The wordmark's trailing square — the one spot of colour in the whole UI. */
+  --dot: #ff006e;
 
   --font-ui: -apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -88,4 +90,17 @@ p {
   font-family: var(--font-mono);
   font-size: 13px;
   color: var(--muted);
+}
+
+/* Wordmark: grotesk name + a solid square block for the full stop. Defined
+   globally so the nav and the footer cannot drift apart. Sized in em so it
+   scales with whatever font-size the wordmark uses. */
+.wordmark .dot {
+  display: inline-block;
+  width: 0.3em;
+  height: 0.3em;
+  background: var(--dot);
+  /* Sits on the baseline like a period would. */
+  vertical-align: baseline;
+  margin-left: 0.06em;
 }
