@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,14 +13,24 @@ class Settings(BaseSettings):
     caldav_url: str
     tasks_data_source: str
     syncing_interval_minutes: str
+    active_sync: bool
     event_due_date_field_name: str
     google_oauth_client_id: str
     google_oauth_client_secret: str
     google_oauth_redirect_uri: str
+
+    # Notion OAuth — a *public* integration (notion.so/my-integrations), not the
+    # internal one `notion_token` belongs to. Redirect URI must match the value
+    # registered there exactly.
+    notion_oauth_client_id: str
+    notion_oauth_client_secret: str
+    notion_oauth_redirect_uri: str
+
     session_secret: str
     jwt_secret: str
 
-    # Fernet key encrypting per-user iCloud app-specific passwords at rest.
+    # Fernet key encrypting per-user secrets at rest: iCloud app-specific
+    # passwords and Notion access tokens.
     # Generate with:
     #   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
     # Losing it makes every stored credential permanently unreadable — users
@@ -33,8 +45,10 @@ class Settings(BaseSettings):
     # Secure (Chrome treats localhost as a secure context, so Secure works over
     # http://localhost). For prod same-origin (FastAPI StaticFiles serving the
     # built Vue app) set cookie_samesite=lax.
+    # Literal, not str: Starlette's set_cookie and SessionMiddleware both take
+    # this as a Literal, and it makes a typo in .env fail at boot.
     cookie_secure: bool = True
-    cookie_samesite: str = "none"
+    cookie_samesite: Literal["lax", "strict", "none"] = "none"
     cookie_domain: str | None = None
 
 

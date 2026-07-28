@@ -5,6 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.core.base import Base
 from backend.models.caldav_credential import CaldavCredential
+from backend.models.notion_connection import NotionConnection
 from backend.models.oauth_account import OAuthAccount
 
 
@@ -31,5 +32,9 @@ class User(Base):
     )
 
     caldav_credential: Mapped["CaldavCredential | None"] = relationship(
+        back_populates="user", cascade="all, delete-orphan", uselist=False
+    )
+
+    notion_connection: Mapped["NotionConnection | None"] = relationship(
         back_populates="user", cascade="all, delete-orphan", uselist=False
     )

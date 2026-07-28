@@ -3,11 +3,13 @@ import { onMounted, watch } from 'vue'
 import TheNav from '../../components/TheNav.vue'
 import { useAppleCalendar } from '../../composables/useAppleCalendar'
 import { useAuth } from '../../composables/useAuth'
+import { useNotion } from '../../composables/useNotion'
 
 // App shell for every /dashboard/* page: top nav, sidebar menu, content.
 // Auth branching lives here so child views can assume a signed-in user.
 const { state: auth, login } = useAuth()
-const { load } = useAppleCalendar()
+const { load: loadApple } = useAppleCalendar()
+const { load: loadNotion } = useNotion()
 
 const menu = [
   { to: { name: 'dashboard' }, label: 'Overview' },
@@ -15,11 +17,13 @@ const menu = [
   { to: { name: 'settings' }, label: 'Settings' },
 ]
 
-// App.vue bootstraps auth; wait for a user before asking for their connection,
+// App.vue bootstraps auth; wait for a user before asking for their connections,
 // otherwise the first call 401s during a page refresh. Loaded once here rather
 // than per child view — the composable state is shared.
 function loadIfAuthed() {
-  if (auth.ready && auth.user) load()
+  if (!auth.ready || !auth.user) return
+  loadApple()
+  loadNotion()
 }
 
 onMounted(loadIfAuthed)

@@ -1,26 +1,43 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, reactive } from 'vue'
 import AppleCalendarSetup from '../../components/AppleCalendarSetup.vue'
 import AppleCalendarStatus from '../../components/AppleCalendarStatus.vue'
 import ConnectionRow from '../../components/ConnectionRow.vue'
+import NotionSetup from '../../components/NotionSetup.vue'
+import NotionStatus from '../../components/NotionStatus.vue'
 import { useAppleCalendar } from '../../composables/useAppleCalendar'
+import { useNotion } from '../../composables/useNotion'
 
 const { state: apple } = useAppleCalendar()
+const { state: notion } = useNotion()
 
-const connected = computed(() => Boolean(apple.connection))
-const configured = computed(() => Boolean(apple.connection?.calendar_url))
+// Both connections are two-stage: a stored credential/grant, then the target
+// the user picked inside it. "Configured" is the second stage.
+const appleConfigured = computed(() => Boolean(apple.connection?.calendar_url))
+const notionConfigured = computed(() => Boolean(notion.connection?.data_source_id))
 
-// Open by default until setup is finished, so a first-time user lands straight
-// in the wizard. Clicking sets an explicit override.
-const override = ref(null)
+// Rows open by default until their setup is finished, so a first-time user
+// lands straight in the wizard. Clicking sets an explicit override, per row.
+const overrides = reactive({ apple: null, notion: null })
+
 const appleOpen = computed(() =>
-  override.value === null ? !configured.value : override.value,
+  overrides.apple === null ? !appleConfigured.value : overrides.apple,
+)
+const notionOpen = computed(() =>
+  overrides.notion === null ? !notionConfigured.value : overrides.notion,
 )
 
 const appleStatus = computed(() => {
   if (!apple.ready) return 'checking…'
-  if (configured.value) return apple.connection.icloud_email
-  if (connected.value) return 'no calendar selected'
+  if (appleConfigured.value) return apple.connection.icloud_email
+  if (apple.connection) return 'no calendar selected'
+  return 'not connected'
+})
+
+const notionStatus = computed(() => {
+  if (!notion.ready) return 'checking…'
+  if (notionConfigured.value) return notion.connection.data_source_name
+  if (notion.connection) return 'no database selected'
   return 'not connected'
 })
 </script>
@@ -36,23 +53,34 @@ const appleStatus = computed(() => {
 
   <div class="rows">
     <ConnectionRow
-      name="Apple Calendar"
-      :status="appleStatus"
-      :action="configured ? 'manage' : 'connect'"
-      :open="appleOpen"
-      @toggle="override = !appleOpen"
+      name="Notion"
+      :status="notionStatus"
+      :action="notionConfigured ? 'manage' : 'connect'"
+      :open="notionOpen"
+      @toggle="overrides.notion = !notionOpen"
     >
-      <p v-if="!apple.ready" class="muted">Loading…</p>
-      <AppleCalendarStatus v-else-if="configured" />
-      <AppleCalendarSetup v-else />
+      <p v-if="!notion.ready" class="muted">Loading…</p>
+      <NotionStatus v-else-if="notionConfigured" />
+      <NotionSetup v-else />
     </ConnectionRow>
 
-    <ConnectionRow name="Notion" status="managed by calnio during beta" />
+    <ConnectionRow
+      name="Apple Calendar"
+      :status="appleStatus"
+      :action="appleConfigured ? 'manage' : 'connect'"
+      :open="appleOpen"
+      @toggle="overrides.apple = !appleOpen"
+    >
+      <p v-if="!apple.ready" class="muted">Loading…</p>
+      <AppleCalendarStatus v-else-if="appleConfigured" />
+      <AppleCalendarSetup v-else />
+    </ConnectionRow>
   </div>
 
   <p class="note">
-    Notion is connected on Calnio's side during beta — per-workspace Notion
-    connections arrive with per-user syncing.
+    Connecting Notion links your workspace and records which database Calnio
+    should read. Syncing still runs on Calnio's own workspace during beta — your
+    database is not being read yet.
   </p>
 </template>
 

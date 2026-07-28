@@ -14,9 +14,7 @@ ACCESS_COOKIE = "access_token"
 jwt_service = JWTService(settings.jwt_secret)
 
 
-def get_current_user(
-    request: Request, db: Session = Depends(get_session)
-) -> User:
+def get_current_user(request: Request, db: Session = Depends(get_session)) -> User:
     """Authenticate the request from the access cookie, or 401.
 
     The token rides in an httpOnly cookie the browser sends automatically — JS

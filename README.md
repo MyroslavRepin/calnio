@@ -92,6 +92,80 @@ Each user connects their own iCloud account with an app-specific password. The `
 - `reset_all()` / `delete_all()` are unscoped and would destroy foreign events in a user-picked calendar. No callers today (REPL-only) — fix before anything can trigger them.
 - Route handlers hold the logic inline; extract to `services/apple_calendar.py` when the per-user sync loop needs to share the decrypt path.
 
+## Notion connection (per-user OAuth)
+
+Each user authorizes Calnio against their own Notion workspace and picks the
+database Calnio should read. The `.env` `NOTION_TOKEN` / `TASKS_DATA_SOURCE`
+remain the **single-user dev path** the scheduler still runs on — per-user sync
+is a later phase, so connecting today records the link and nothing more.
+
+Needs a **public** integration at notion.so/my-integrations (separate from the
+internal one `NOTION_TOKEN` belongs to), with the callback registered as
+`NOTION_OAUTH_REDIRECT_URI`.
+
+### Model
+`notion_connections` — one row per user (unique `user_id`, `ON DELETE CASCADE`):
+`access_token_encrypted` (Fernet), `bot_id`, `workspace_id`, `workspace_name`,
+`workspace_icon`, `data_source_id` + `data_source_name` (NULL until the user
+picks one), `last_verified_at`. Row exists == the grant worked;
+`data_source_id` set == fully configured.
+
+Deliberately **not** `oauth_accounts`: that table answers "who is this user" (a
+login identity keyed by Google `sub`, N per user). This answers "what does this
+user connect to" — a resource grant, 1 per user, with workspace metadata that
+has no column there.
+
+Under API 2025-09-03 the stored id is a **data source** id, not a database id —
+that is what `data_sources.query` takes, and what `list_databases()` already
+returns.
+
+### API (`backend/api/notion.py`, no router prefix)
+| Method | Path | |
+|---|---|---|
+| `GET` | `/auth/oauth/notion/login` | returns `{"authorize_url": …}` as JSON, does not redirect |
+| `GET` | `/auth/oauth/notion/callback` | exchange → encrypt → upsert → 302 to `/dashboard/connections` |
+| `GET` | `/api/v1/me/notion` | status only, never the token. `404` if not connected. |
+| `DELETE` | `/api/v1/me/notion` | best-effort revoke at Notion, then forget the row. `204`. |
+| `GET` | `/api/v1/me/notion/databases` | the data sources shared with us; legitimately empty. |
+| `PUT` | `/api/v1/me/notion/database` | select one; verified with a single `retrieve`. |
+
+Two path families in one file on purpose: the OAuth dance belongs beside
+Google's, the resource routes belong under `/api/v1`, and one feature belongs in
+one file.
+
+### Rules
+- **`/auth/oauth/notion/login` returns JSON instead of a 302.** The access token
+  lives 5 minutes and this route needs it; a plain link would 401 for anyone who
+  left the dashboard open, with no `apiFetch` in the loop to refresh silently.
+  The frontend fetches the URL through `apiFetch`, then navigates — so the
+  callback seconds later still has a valid cookie.
+- **`SessionMiddleware` must not use Starlette's `SameSite=Lax` default.** The
+  login call above is a cross-origin XHR in dev, and the OAuth `state` cookie set
+  on that response is only usable cross-site as `SameSite=None; Secure`. It now
+  follows `COOKIE_SAMESITE` / `COOKIE_SECURE`. Google's flow never hit this — its
+  state cookie is set during a top-level navigation.
+- **`401` means our auth only, never Notion's** — same reasoning as iCloud.
+  Notion 401/403/404 → `400`; rate limits, 5xx and network failures → `502`.
+- The callback authenticates by calling `get_current_user` by hand rather than as
+  a dependency: its 401 is a JSON body, and a browser navigation has to end on a
+  page. It bounces to `/dashboard/connections?notion_error=session` instead.
+- Disconnect revokes at Notion **best effort** — a Notion outage must never trap a
+  user in a connection they asked to end. This differs from the iCloud
+  disconnect, which leaves Apple alone: events there are the user's data, whereas
+  the Notion grant is ours.
+
+### Known gaps (deliberate)
+- No `refresh_token` / `expires_at` columns. Notion access tokens do not expire;
+  token rotation is opt-in per integration and is not enabled. Enabling it later
+  is a migration.
+- Nothing reads the selected data source yet — `services/sync.py` is untouched
+  and still runs on `NOTION_TOKEN` + `TASKS_DATA_SOURCE`.
+- The due-date property is still the global `EVENT_DUE_DATE_FIELD_NAME`; per-user
+  property mapping is the next phase.
+- Route handlers hold the logic inline, like `apple_calendar.py`. `_repo()` is the
+  single decrypt path — lift it to `services/notion.py` when per-user sync needs
+  it.
+
 ### Frontend integration
 - **Dev:** Vue on Vite `:5173`, API on `:8080`. Login start = top-level nav (no CORS). Callback redirects back to `:5173` with JWT. API calls need CORS.
 - **Prod:** Vue built to `/dist`, served by FastAPI via `StaticFiles(html=True)` — same origin, no CORS. Google `redirect_uri` becomes the prod domain callback.

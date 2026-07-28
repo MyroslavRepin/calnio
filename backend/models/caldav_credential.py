@@ -27,17 +27,10 @@ class CaldavCredential(Base):
 
     icloud_email: Mapped[str] = mapped_column(String)
 
-    # Fernet ciphertext, never plaintext. Only backend/core/crypto.py reads it.
     password_encrypted: Mapped[str] = mapped_column(String)
 
-    # Target calendar, picked by the user after the credential is verified.
-    # NULL between step 1 (connect) and step 2 (pick a calendar). Caching it
-    # here also skips the slow iCloud calendar-home discovery on every sync.
     calendar_url: Mapped[str | None] = mapped_column(String, nullable=True)
 
-    # Last time iCloud accepted this credential — the dashboard shows it, and
-    # sync can mark the row stale when the user revokes the password in their
-    # Apple ID settings.
     last_verified_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
