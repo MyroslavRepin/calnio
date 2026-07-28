@@ -51,109 +51,105 @@ async function submitCalendar() {
 <template>
   <div class="setup">
     <!-- Step 01 — credentials ------------------------------------------->
-    <section class="step" :class="{ past: step > 1 }">
-      <p class="num">{{ numbers[0] }}</p>
-      <div class="body">
-        <h3>Connect your iCloud account</h3>
+    <section class="step">
+      <span class="num">{{ numbers[0] }}</span>
+      <h3>Connect your iCloud account</h3>
 
-        <template v-if="step === 1">
-          <!-- The short version, for a Connections row. The welcome page fills
-               the slot with the full walkthrough instead of repeating this. -->
-          <p v-if="!$slots.help" class="lede">
-            Apple requires an app-specific password — your normal Apple ID password
-            will not work. Create one at
-            <a href="https://account.apple.com" target="_blank" rel="noreferrer"
-              >account.apple.com</a
-            >
-            under Sign-In and Security → App-Specific Passwords.
-          </p>
-          <slot name="help" />
-
-          <form class="form" @submit.prevent="submitCredentials">
-            <label>
-              <span class="label">Apple ID email</span>
-              <input
-                v-model="email"
-                type="email"
-                required
-                autocomplete="username"
-                placeholder="you@icloud.com"
-              />
-            </label>
-
-            <label>
-              <span class="label">App-specific password</span>
-              <input
-                v-model="password"
-                type="password"
-                required
-                autocomplete="off"
-                placeholder="xxxx-xxxx-xxxx-xxxx"
-              />
-            </label>
-
-            <button class="btn-primary" type="submit" :disabled="state.busy">
-              {{ state.busy ? 'Checking with iCloud…' : 'Connect' }}
-            </button>
-          </form>
-
-          <p class="note">
-            Calnio stores this password encrypted and uses it only to write events
-            into the calendar you choose. You can revoke it at any time from your
-            Apple ID settings, which disconnects Calnio immediately.
-          </p>
-        </template>
-
-        <p v-else class="done-line">
-          Connected as <strong>{{ state.connection.icloud_email }}</strong>
+      <template v-if="step === 1">
+        <!-- The short version, for a Connections row. The welcome page fills
+             the slot with the full walkthrough instead of repeating this. -->
+        <p v-if="!$slots.help" class="body">
+          Apple requires an app-specific password — your normal Apple Account
+          password will not work. Create one at
+          <a href="https://account.apple.com" target="_blank" rel="noreferrer"
+            >account.apple.com</a
+          >
+          under Sign-In and Security → App-Specific Passwords.
         </p>
-      </div>
+        <slot name="help" />
+
+        <form class="form" @submit.prevent="submitCredentials">
+          <label class="field">
+            <span>Apple Account email</span>
+            <input
+              v-model="email"
+              type="email"
+              required
+              autocomplete="username"
+              placeholder="you@icloud.com"
+            />
+          </label>
+
+          <label class="field">
+            <span>App-specific password</span>
+            <input
+              v-model="password"
+              type="password"
+              required
+              autocomplete="off"
+              placeholder="xxxx-xxxx-xxxx-xxxx"
+            />
+          </label>
+
+          <button class="btn" type="submit" :disabled="state.busy">
+            {{ state.busy ? 'Checking with iCloud…' : 'Connect' }}
+          </button>
+        </form>
+
+        <p class="note">
+          Calnio stores this password encrypted and uses it only to write events
+          into the calendar you choose. Revoking it in your Apple Account
+          settings disconnects Calnio immediately.
+        </p>
+      </template>
+
+      <p v-else class="body">
+        Connected as <strong>{{ state.connection.icloud_email }}</strong>
+      </p>
     </section>
 
     <!-- Step 02 — calendar ---------------------------------------------->
     <section class="step" :class="{ ahead: step < 2 }">
-      <p class="num">{{ numbers[1] }}</p>
-      <div class="body">
-        <h3>Choose a calendar</h3>
+      <span class="num">{{ numbers[1] }}</span>
+      <h3>Choose a calendar</h3>
 
-        <template v-if="step === 2">
-          <p class="lede">
-            Calnio writes your Notion due dates here. A dedicated calendar is
-            easiest to live with — you can hide it in the Calendar app without
-            touching anything else.
-          </p>
+      <template v-if="step === 2">
+        <p class="body">
+          Calnio writes your Notion due dates here. A dedicated calendar is
+          easiest to live with — you can hide it in the Calendar app without
+          touching anything else.
+        </p>
 
-          <ul class="calendars">
-            <li v-for="cal in state.calendars" :key="cal.url">
-              <label>
-                <input type="radio" :value="cal.url" v-model="picked" />
-                <span>{{ cal.name }}</span>
-              </label>
-            </li>
-          </ul>
+        <ul class="picklist">
+          <li v-for="cal in state.calendars" :key="cal.url">
+            <label>
+              <input type="radio" :value="cal.url" v-model="picked" />
+              <span>{{ cal.name }}</span>
+            </label>
+          </li>
+        </ul>
 
-          <div class="create">
-            <input v-model="newName" type="text" placeholder="Calnio" />
-            <button
-              type="button"
-              class="linkbtn"
-              :disabled="state.busy || !newName.trim()"
-              @click="submitNewCalendar"
-            >
-              Create a new calendar
-            </button>
-          </div>
-
+        <div class="create">
+          <input v-model="newName" class="text" type="text" placeholder="Calnio" />
           <button
-            class="btn-primary"
             type="button"
-            :disabled="state.busy || !picked"
-            @click="submitCalendar"
+            class="link-mono quiet"
+            :disabled="state.busy || !newName.trim()"
+            @click="submitNewCalendar"
           >
-            {{ state.busy ? 'Saving…' : 'Use this calendar' }}
+            <span>Create a new calendar</span>
           </button>
-        </template>
-      </div>
+        </div>
+
+        <button
+          class="btn"
+          type="button"
+          :disabled="state.busy || !picked"
+          @click="submitCalendar"
+        >
+          {{ state.busy ? 'Saving…' : 'Use this calendar' }}
+        </button>
+      </template>
     </section>
 
     <p v-if="error" class="error">{{ error }}</p>
@@ -167,10 +163,11 @@ async function submitCalendar() {
 }
 
 .step {
-  display: grid;
-  grid-template-columns: 64px 1fr;
-  gap: 24px;
-  padding: 40px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: clamp(28px, 5vw, 40px) 0;
   border-top: 1px solid var(--hairline);
 }
 
@@ -180,141 +177,54 @@ async function submitCalendar() {
 
 .num {
   font-family: var(--font-mono);
-  font-size: 12px;
-  letter-spacing: 0.16em;
-  color: var(--muted);
-  padding-top: 4px;
-}
-
-.body {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  max-width: 520px;
+  font-size: clamp(30px, 6vw, 40px);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--accent, #0b63f6);
 }
 
 h3 {
-  font-size: 20px;
+  font-size: clamp(19px, 4.6vw, 21px);
   font-weight: 600;
   letter-spacing: -0.01em;
+  color: var(--ink);
 }
 
-.lede,
-.note,
-.done-line {
+.body {
   font-size: 15px;
   line-height: 1.6;
   color: var(--body);
+  max-width: 52ch;
 }
 
-.note {
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.done-line strong {
+.body strong {
   font-weight: 500;
   color: var(--ink);
 }
 
-a {
-  border-bottom: 1px solid var(--hairline);
+.body a {
+  border-bottom: 1px solid var(--field-line);
+  color: var(--ink);
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
   align-items: flex-start;
-}
-
-label {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  gap: 20px;
   width: 100%;
-}
-
-.label {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: var(--muted);
-}
-
-input[type='email'],
-input[type='password'],
-input[type='text'] {
-  font-family: var(--font-ui);
-  font-size: 15px;
-  color: var(--ink);
-  background: none;
-  border: none;
-  border-bottom: 1px solid var(--frame);
-  border-radius: 0;
   padding: 8px 0;
-  width: 100%;
-}
-
-input:focus {
-  outline: none;
-  border-bottom-color: var(--ink);
-}
-
-.calendars {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  border-top: 1px solid var(--hairline);
-}
-
-.calendars li {
-  border-bottom: 1px solid var(--hairline);
-}
-
-.calendars label {
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 0;
-  font-size: 15px;
-  cursor: pointer;
 }
 
 .create {
   display: flex;
-  align-items: baseline;
-  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px 24px;
 }
 
-.create input {
-  max-width: 200px;
-}
-
-.linkbtn {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--muted);
-  background: none;
-  border: none;
-  border-bottom: 1px solid var(--hairline);
-  padding: 0 0 2px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.btn-primary:disabled,
-.linkbtn:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.error {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--ink);
-  border-top: 1px solid var(--hairline);
-  padding-top: 20px;
+.create .text {
+  max-width: 220px;
 }
 </style>

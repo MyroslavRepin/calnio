@@ -45,8 +45,8 @@ const notionStatus = computed(() => {
 <template>
   <header class="head">
     <p class="eyebrow">Connections</p>
-    <h1>Connections</h1>
-    <p class="lede">
+    <h1 class="title">Connections</h1>
+    <p class="lead">
       Where Calnio reads your tasks from, and where it writes your events to.
     </p>
   </header>
@@ -59,7 +59,7 @@ const notionStatus = computed(() => {
       :open="notionOpen"
       @toggle="overrides.notion = !notionOpen"
     >
-      <p v-if="!notion.ready" class="muted">Loading…</p>
+      <p v-if="!notion.ready" class="loading">Loading…</p>
       <NotionStatus v-else-if="notionConfigured" />
       <NotionSetup v-else />
     </ConnectionRow>
@@ -71,7 +71,7 @@ const notionStatus = computed(() => {
       :open="appleOpen"
       @toggle="overrides.apple = !appleOpen"
     >
-      <p v-if="!apple.ready" class="muted">Loading…</p>
+      <p v-if="!apple.ready" class="loading">Loading…</p>
       <AppleCalendarStatus v-else-if="appleConfigured" />
       <AppleCalendarSetup v-else />
     </ConnectionRow>
@@ -79,8 +79,8 @@ const notionStatus = computed(() => {
 
   <p class="note">
     Connecting Notion links your workspace and records which database Calnio
-    should read. Syncing still runs on Calnio's own workspace during beta — your
-    database is not being read yet.
+    should read. During beta the sync still runs on Calnio's own workspace —
+    your database is not being read yet.
   </p>
 </template>
 
@@ -89,21 +89,7 @@ const notionStatus = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding-bottom: 32px;
-  max-width: 640px;
-}
-
-h1 {
-  font-size: 40px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
-}
-
-.lede {
-  font-size: 17px;
-  line-height: 1.6;
-  color: var(--body);
+  padding-bottom: clamp(24px, 4vw, 32px);
 }
 
 .rows {
@@ -111,17 +97,6 @@ h1 {
 }
 
 .note {
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--muted);
-  max-width: 520px;
   padding-top: 24px;
-}
-
-.muted {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--muted);
-  padding: 20px 0;
 }
 </style>

@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, watch } from 'vue'
 import AppleCalendarSetup from '../components/AppleCalendarSetup.vue'
+import AtmosphereField from '../components/AtmosphereField.vue'
 import NotionSetup from '../components/NotionSetup.vue'
 import { useAppleCalendar } from '../composables/useAppleCalendar'
 import { useAuth } from '../composables/useAuth'
@@ -41,70 +42,73 @@ watch(() => [auth.ready, auth.user], loadIfAuthed)
 
 <template>
   <div class="page">
+    <AtmosphereField variant="short" />
+
     <!-- Sticky progress ---------------------------------------------------->
     <header class="bar">
       <div class="wrap barinner">
-        <router-link to="/" class="mark">calnio</router-link>
+        <router-link to="/" class="wordmark">calnio</router-link>
         <p class="count">
           <template v-if="ready">{{ doneCount }} of {{ stages.length }}</template>
           <template v-else>setup</template>
         </p>
       </div>
+      <!-- No transition on the fill: the design system has no motion. -->
       <div class="track" role="presentation">
         <div class="fill" :style="{ width: ready ? `${percent}%` : '0%' }" />
       </div>
     </header>
 
     <main class="wrap main">
-      <p v-if="!auth.ready" class="muted">Loading…</p>
+      <p v-if="!auth.ready" class="loading">Loading…</p>
 
       <!-- Signed out ------------------------------------------------------->
       <section v-else-if="!auth.user" class="hero">
         <p class="eyebrow">Welcome</p>
-        <h1>Set up Calnio</h1>
-        <p class="lede">Log in first — your setup is stored against your account.</p>
-        <button class="btn-primary" type="button" @click="login">
-          Continue with Google
-        </button>
+        <h1 class="title">Set up Calnio.</h1>
+        <p class="lead">Log in first — your setup is stored against your account.</p>
+        <button class="btn" type="button" @click="login">Continue with Google</button>
       </section>
 
       <template v-else>
         <section class="hero">
           <p class="eyebrow">Welcome</p>
-          <h1>{{ allDone ? 'You are all set' : 'Set up Calnio' }}</h1>
-          <p class="lede">
+          <h1 class="title">{{ allDone ? 'You are all set.' : 'Set up Calnio.' }}</h1>
+          <p class="lead">
             <template v-if="allDone">
               Both connections are in place. Syncing your own workspace switches
               on later in beta — nothing else is needed from you until then.
             </template>
             <template v-else>
-              Four steps, once. You are connecting your accounts now — syncing
+              Four steps, once. You are connecting your accounts now; syncing
               your own workspace switches on later in beta, and everything you
               set up here carries over when it does.
             </template>
           </p>
 
-          <router-link v-if="allDone" class="btn-primary" :to="{ name: 'dashboard' }">
+          <router-link v-if="allDone" class="btn" :to="{ name: 'dashboard' }">
             Go to your dashboard
           </router-link>
         </section>
 
-        <p v-if="!ready" class="muted">Loading your connections…</p>
+        <p v-if="!ready" class="loading">Loading your connections…</p>
 
-        <template v-else>
+        <!-- The wizards carry forms and small print, so they ride on a
+             surface rather than sitting straight on the atmosphere. -->
+        <div v-else class="wizards surface">
           <!-- Steps 01–02 ------------------------------------------------->
           <NotionSetup :numbers="['01', '02']" />
 
           <!-- Steps 03–04 ------------------------------------------------->
           <AppleCalendarSetup :numbers="['03', '04']">
             <template #help>
-              <p class="lede">
+              <p class="help">
                 Apple requires an <strong>app-specific password</strong>. Your
                 Apple Account password will not work here.
               </p>
-              <p class="lede">
-                Your Apple Account needs two-factor authentication turned on —
-                without it, Apple does not offer app-specific passwords at all.
+              <p class="help">
+                Your Apple Account also needs two-factor authentication turned on
+                — without it, Apple does not offer app-specific passwords at all.
               </p>
 
               <ol class="sub">
@@ -129,45 +133,53 @@ watch(() => [auth.ready, auth.user], loadIfAuthed)
           </AppleCalendarSetup>
 
           <footer class="foot">
-            <router-link class="link-mono" :to="{ name: 'dashboard' }">
-              {{ allDone ? 'Go to your dashboard' : 'Skip for now' }}
+            <router-link class="link-mono quiet" :to="{ name: 'dashboard' }">
+              <span>{{ allDone ? 'Go to your dashboard' : 'Skip for now' }}</span>
             </router-link>
           </footer>
-        </template>
+        </div>
       </template>
     </main>
   </div>
 </template>
 
 <style scoped>
+/* `clip`, not `hidden`: hidden would make this a scroll container and the
+   progress bar would stop sticking. */
 .page {
+  position: relative;
   min-height: 100vh;
+  overflow: clip;
   display: flex;
   flex-direction: column;
-  background: #fff;
 }
 
 /* Progress ------------------------------------------------------------- */
 .bar {
   position: sticky;
   top: 0;
-  z-index: 10;
-  background: #fff;
+  z-index: 2;
+  /* Translucent because the atmosphere layer runs underneath it. */
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(10px);
 }
 
 .barinner {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding-top: 24px;
-  padding-bottom: 20px;
+  padding-top: 8px;
+  padding-bottom: 8px;
 }
 
-.mark {
-  font-size: 17px;
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 19px;
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   color: var(--ink);
 }
 
@@ -187,42 +199,48 @@ watch(() => [auth.ready, auth.user], loadIfAuthed)
 .fill {
   height: 2px;
   background: var(--ink);
-  transition: width 240ms ease;
 }
 
 /* Content -------------------------------------------------------------- */
 .main {
+  position: relative;
+  z-index: 1;
   flex: 1;
-  padding-bottom: 96px;
+  padding-bottom: var(--sec-bottom);
 }
 
 .hero {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 16px;
-  padding: 72px 0 56px;
+  gap: clamp(16px, 2.5vw, 24px);
+  padding: clamp(40px, 9vw, 84px) 0 clamp(32px, 6vw, 56px);
   max-width: 640px;
 }
 
-h1 {
-  font-size: 56px;
-  font-weight: 700;
-  letter-spacing: -0.04em;
-  line-height: 1;
+.wizards {
+  max-width: 760px;
 }
 
-.lede {
-  font-size: 17px;
-  line-height: 1.6;
-  color: var(--body);
-}
-
-.hero .btn-primary {
-  margin-top: 8px;
+/* The panel already opens the block; the first step's own rule would double it. */
+.wizards > :first-child :deep(.step:first-child) {
+  border-top: none;
+  padding-top: 0;
 }
 
 /* Apple instructions, injected into the wizard's slot ------------------- */
+.help {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--body);
+  max-width: 52ch;
+}
+
+.help strong {
+  font-weight: 500;
+  color: var(--ink);
+}
+
 .sub {
   list-style: none;
   margin: 0;
@@ -231,12 +249,13 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  max-width: 52ch;
 }
 
 .sub li {
   counter-increment: substep;
   display: grid;
-  grid-template-columns: 28px 1fr;
+  grid-template-columns: 24px 1fr;
   gap: 12px;
   font-size: 15px;
   line-height: 1.6;
@@ -249,7 +268,12 @@ h1 {
   font-size: 12px;
   letter-spacing: 0.16em;
   color: var(--muted);
-  padding-top: 4px;
+  padding-top: 3px;
+}
+
+.sub a {
+  border-bottom: 1px solid var(--field-line);
+  color: var(--ink);
 }
 
 .mono {
@@ -258,51 +282,9 @@ h1 {
   color: var(--ink);
 }
 
-.lede strong {
-  font-weight: 500;
-  color: var(--ink);
-}
-
-.note {
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--muted);
-}
-
 .foot {
   display: flex;
-  padding: 40px 0 0;
+  padding-top: clamp(24px, 4vw, 40px);
   border-top: 1px solid var(--hairline);
-}
-
-.link-mono {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--muted);
-  border-bottom: 1px solid var(--hairline);
-  padding-bottom: 2px;
-}
-
-.link-mono:hover {
-  color: var(--ink);
-  border-bottom-color: var(--ink);
-}
-
-.muted {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--muted);
-  padding: 40px 0;
-}
-
-@media (max-width: 720px) {
-  h1 {
-    font-size: 40px;
-    letter-spacing: -0.03em;
-  }
-
-  .hero {
-    padding: 48px 0 40px;
-  }
 }
 </style>

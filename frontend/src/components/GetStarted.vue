@@ -4,47 +4,45 @@ import GoogleButton from './GoogleButton.vue'
 const steps = [
   {
     n: '01',
-    title: 'Get an app-specific password',
-    body: 'On account.apple.com, generate an app-specific password for iCloud.',
+    title: 'Log in with Google',
+    body: 'Your setup is stored against your account. That is the only thing the login is for.',
   },
   {
     n: '02',
-    title: 'Add it to Calnio',
-    body: 'Paste the password in and Calnio connects to your iCloud calendar.',
+    title: 'Connect Notion',
+    body: 'Notion asks which pages Calnio may read. Tick the database that holds your tasks.',
   },
   {
     n: '03',
-    title: 'Connect Notion',
-    body: 'Link the database you plan in.',
+    title: 'Add an app-specific password',
+    body: 'Apple requires one for calendar access. Generate it at account.apple.com and paste it in.',
   },
   {
     n: '04',
-    title: 'Choose your calendar',
-    body: 'Pick which Apple calendar Calnio writes your due dates into.',
+    title: 'Pick a calendar',
+    body: 'Choose the Apple calendar Calnio writes into, or let it make a new one.',
   },
 ]
 </script>
 
 <template>
-  <section id="dev" class="get">
-    <div class="wrap grid">
-      <div class="left">
+  <section id="start" class="section">
+    <div class="wrap inner">
+      <div class="head">
         <p class="eyebrow">Get started</p>
-        <h2>Connect once,<br />then forget it.</h2>
-        <p class="body">
-          No downloads, no server to run. Link your Notion database and your
-          iCloud calendar, Calnio does the rest on my machine, on a loop.
+        <h2 class="title">Connect once,<br />then forget it.</h2>
+        <p class="lead">
+          No downloads and no server to run. Link Notion and your iCloud
+          calendar, and Calnio keeps them in step on a schedule.
         </p>
-        <GoogleButton label="Join the beta with Google" />
+        <GoogleButton label="Start syncing" />
       </div>
 
       <ol class="steps">
         <li v-for="s in steps" :key="s.n" class="step">
           <span class="num">{{ s.n }}</span>
-          <div class="text">
-            <p class="title">{{ s.title }}</p>
-            <p class="desc">{{ s.body }}</p>
-          </div>
+          <h3>{{ s.title }}</h3>
+          <p class="body">{{ s.body }}</p>
         </li>
       </ol>
     </div>
@@ -52,81 +50,56 @@ const steps = [
 </template>
 
 <style scoped>
-.get {
-  border-top: 1px solid var(--hairline);
-  padding: 96px 0;
+#start {
+  scroll-margin-top: 24px;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 64px;
-  align-items: center;
-}
-
-.left {
+.inner {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: clamp(40px, 7vw, 72px);
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
   align-items: flex-start;
-}
-
-h2 {
-  font-family: var(--font-ui);
-  font-size: 40px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.02;
-  color: var(--ink);
-}
-
-.body {
-  font-size: 17px;
-  line-height: 1.55;
-  color: var(--body);
+  gap: clamp(16px, 2.5vw, 24px);
 }
 
 .steps {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: clamp(28px, 5vw, 44px);
 }
 
 .step {
   display: flex;
-  gap: 20px;
-  padding: 20px 0;
-  border-top: 1px solid var(--hairline);
-}
-
-.step:last-child {
-  border-bottom: 1px solid var(--hairline);
+  flex-direction: column;
+  gap: 12px;
 }
 
 .num {
   font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--muted);
-  padding-top: 2px;
+  font-size: clamp(30px, 6vw, 40px);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--accent, #0b63f6);
 }
 
-.text {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.title {
-  font-size: 16px;
+h3 {
+  font-size: 17px;
   font-weight: 600;
   color: var(--ink);
 }
 
-.desc {
-  font-size: 15px;
-  line-height: 1.5;
+.body {
+  font-size: 14.5px;
+  line-height: 1.6;
   color: var(--body);
 }
 </style>

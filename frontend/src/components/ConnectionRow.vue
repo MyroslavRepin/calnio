@@ -19,11 +19,11 @@ defineEmits(['toggle'])
       <p class="status">{{ status }}</p>
       <button
         v-if="action"
-        class="linkbtn"
+        class="link-mono quiet"
         type="button"
         @click="$emit('toggle')"
       >
-        {{ open ? 'close' : action }}
+        <span>{{ open ? 'close' : action }}</span>
       </button>
       <span v-else />
     </div>
@@ -39,56 +39,32 @@ defineEmits(['toggle'])
   border-bottom: 1px solid var(--hairline);
 }
 
+/* Flex-wrap rather than a fixed grid: the status drops to its own line on a
+   narrow screen without a breakpoint. */
 .head {
-  display: grid;
-  grid-template-columns: 220px 1fr auto;
-  gap: 24px;
-  align-items: baseline;
-  padding: 18px 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+  padding: 8px 0;
 }
 
 .name {
+  flex: 0 0 min(220px, 100%);
   font-size: 16px;
   font-weight: 500;
   color: var(--ink);
 }
 
 .status {
+  flex: 1 1 min(200px, 100%);
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 12.5px;
   color: var(--muted);
   overflow-wrap: anywhere;
 }
 
 .body {
   padding-bottom: 8px;
-}
-
-.linkbtn {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--muted);
-  background: none;
-  border: none;
-  border-bottom: 1px solid var(--hairline);
-  padding: 0 0 2px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.linkbtn:hover {
-  color: var(--ink);
-  border-bottom-color: var(--ink);
-}
-
-@media (max-width: 720px) {
-  .head {
-    grid-template-columns: 1fr auto;
-    gap: 8px 24px;
-  }
-
-  .status {
-    grid-column: 1 / -1;
-  }
 }
 </style>

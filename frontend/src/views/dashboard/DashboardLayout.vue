@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted, watch } from 'vue'
+import AtmosphereField from '../../components/AtmosphereField.vue'
 import TheNav from '../../components/TheNav.vue'
 import { useAppleCalendar } from '../../composables/useAppleCalendar'
 import { useAuth } from '../../composables/useAuth'
@@ -31,66 +32,76 @@ watch(() => [auth.ready, auth.user], loadIfAuthed)
 </script>
 
 <template>
-  <TheNav />
+  <div class="page">
+    <!-- Washed-out circles behind the page; every block of content rides on a
+         .surface panel so nothing small is ever read against blue. -->
+    <AtmosphereField variant="short" />
 
-  <main class="wrap shell">
-    <p v-if="!auth.ready" class="muted">Loading…</p>
+    <TheNav />
 
-    <div v-else-if="!auth.user" class="signedout">
-      <p class="eyebrow">Not signed in</p>
-      <h1>Log in to see your dashboard</h1>
-      <button class="btn-primary" type="button" @click="login">
-        Continue with Google
-      </button>
-    </div>
+    <main class="wrap shell">
+      <p v-if="!auth.ready" class="loading">Loading…</p>
 
-    <div v-else class="grid">
-      <aside class="side">
-        <p class="eyebrow">Menu</p>
-        <nav class="menu">
-          <router-link v-for="item in menu" :key="item.label" :to="item.to">
-            {{ item.label }}
-          </router-link>
-        </nav>
+      <div v-else-if="!auth.user" class="signedout">
+        <p class="eyebrow">Not signed in</p>
+        <h1 class="title">Log in to see<br />your dashboard.</h1>
+        <button class="btn" type="button" @click="login">Continue with Google</button>
+      </div>
 
-        <p class="eyebrow">Account</p>
-        <nav class="menu">
-          <router-link to="/me">Profile</router-link>
-        </nav>
-      </aside>
+      <div v-else class="grid">
+        <aside class="side surface">
+          <p class="eyebrow">Menu</p>
+          <nav class="menu">
+            <router-link v-for="item in menu" :key="item.label" :to="item.to">
+              {{ item.label }}
+            </router-link>
+          </nav>
 
-      <section class="content">
-        <router-view />
-      </section>
-    </div>
-  </main>
+          <p class="eyebrow group">Account</p>
+          <nav class="menu">
+            <router-link to="/me">Profile</router-link>
+          </nav>
+        </aside>
+
+        <section class="content surface">
+          <router-view />
+        </section>
+      </div>
+    </main>
+  </div>
 </template>
 
 <style scoped>
-.shell {
-  padding-top: 40px;
-  padding-bottom: 96px;
+.page {
+  position: relative;
+  min-height: 100vh;
+  overflow: clip;
 }
 
+.shell {
+  position: relative;
+  z-index: 1;
+  padding-top: clamp(24px, 4vw, 40px);
+  padding-bottom: var(--sec-bottom);
+}
+
+/* No breakpoint: the content column asks for min(560px, 100%), so once the two
+   columns no longer fit side by side the sidebar wraps onto its own row. */
 .grid {
-  display: grid;
-  grid-template-columns: 180px 1fr;
-  gap: 48px;
-  align-items: start;
-  border-top: 1px solid var(--hairline);
-  padding-top: 32px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(16px, 2vw, 24px);
+  align-items: flex-start;
 }
 
 .side {
+  flex: 1 1 160px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  position: sticky;
-  top: 32px;
+  gap: 8px;
 }
 
-/* Space between the two menu groups, without a divider. */
-.side .eyebrow:not(:first-child) {
+.group {
   padding-top: 20px;
 }
 
@@ -100,9 +111,11 @@ watch(() => [auth.ready, auth.user], loadIfAuthed)
 }
 
 .menu a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   font-size: 15px;
-  color: var(--muted);
-  padding: 8px 0;
+  color: var(--link);
 }
 
 .menu a:hover {
@@ -117,8 +130,7 @@ watch(() => [auth.ready, auth.user], loadIfAuthed)
 }
 
 .content {
-  border-left: 1px solid var(--hairline);
-  padding-left: 48px;
+  flex: 999 1 min(560px, 100%);
   min-width: 0;
 }
 
@@ -126,45 +138,7 @@ watch(() => [auth.ready, auth.user], loadIfAuthed)
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 16px;
-  padding-top: 24px;
-}
-
-.signedout h1 {
-  font-size: 40px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
-  padding-bottom: 8px;
-}
-
-.muted {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--muted);
-  padding: 40px 0;
-}
-
-@media (max-width: 720px) {
-  .grid {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-
-  .side {
-    position: static;
-  }
-
-  .menu {
-    flex-direction: row;
-    gap: 24px;
-  }
-
-  .content {
-    border-left: none;
-    border-top: 1px solid var(--hairline);
-    padding-left: 0;
-    padding-top: 24px;
-  }
+  gap: clamp(16px, 2.5vw, 24px);
+  padding-top: clamp(32px, 6vw, 64px);
 }
 </style>

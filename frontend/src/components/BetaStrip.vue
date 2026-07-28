@@ -1,12 +1,14 @@
 <script setup></script>
 
 <template>
+  <!-- One line, not a bordered strip: the pill is here because this row can
+       cross the atmosphere layer. -->
   <section class="beta">
     <div class="wrap inner">
-      <span class="label">Free while in beta</span>
+      <span class="pill">Free while in beta</span>
       <p class="body">
-        I host Calnio myself, so during the beta it's free, nothing to install,
-        nothing to pay.
+        I host Calnio myself. While it is in beta there is nothing to install,
+        nothing to run, and nothing to pay.
       </p>
     </div>
   </section>
@@ -14,29 +16,22 @@
 
 <style scoped>
 .beta {
-  border-top: 1px solid var(--hairline);
-  border-bottom: 1px solid var(--hairline);
+  position: relative;
+  z-index: 1;
+  padding-bottom: clamp(40px, 8vw, 80px);
 }
 
 .inner {
-  padding: 26px var(--pad);
   display: flex;
-  align-items: baseline;
-  gap: 28px;
+  align-items: center;
   flex-wrap: wrap;
-}
-
-.label {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: var(--accent);
-  white-space: nowrap;
+  gap: clamp(14px, 3vw, 24px);
 }
 
 .body {
   font-size: 15px;
-  color: var(--body);
+  line-height: 1.6;
+  max-width: 52ch;
+  color: var(--body-cool);
 }
 </style>

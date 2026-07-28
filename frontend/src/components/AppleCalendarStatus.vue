@@ -52,23 +52,23 @@ async function confirmDisconnect() {
 
 <template>
   <div class="status">
-    <dl class="rows">
-      <div class="row">
-        <dt>Apple ID</dt>
+    <dl class="datarows">
+      <div>
+        <dt>Apple Account</dt>
         <dd>{{ state.connection.icloud_email }}</dd>
       </div>
-      <div class="row">
+      <div>
         <dt>Calendar</dt>
         <dd>{{ calendarName || state.connection.calendar_url }}</dd>
       </div>
-      <div class="row">
+      <div>
         <dt>Last verified</dt>
         <dd>{{ verified }}</dd>
       </div>
     </dl>
 
     <template v-if="changing">
-      <ul class="calendars">
+      <ul class="picklist">
         <li v-for="cal in state.calendars" :key="cal.url">
           <label>
             <input type="radio" :value="cal.url" v-model="picked" />
@@ -78,40 +78,46 @@ async function confirmDisconnect() {
       </ul>
       <div class="actions">
         <button
-          class="btn-primary"
+          class="btn"
           type="button"
           :disabled="state.busy || !picked"
           @click="saveChange"
         >
           {{ state.busy ? 'Saving…' : 'Save' }}
         </button>
-        <button class="linkbtn" type="button" @click="changing = false">Cancel</button>
+        <button class="link-mono quiet" type="button" @click="changing = false">
+          <span>Cancel</span>
+        </button>
       </div>
     </template>
 
     <template v-else-if="confirming">
-      <p class="warn">
-        Disconnecting forgets your Apple ID password. Events Calnio already wrote
-        stay in your calendar — delete them yourself if you want them gone.
+      <p class="body">
+        Disconnecting forgets your app-specific password. Events Calnio already
+        wrote stay in your calendar — delete them yourself if you want them gone.
       </p>
       <div class="actions">
-        <button
-          class="btn-primary"
-          type="button"
-          :disabled="state.busy"
-          @click="confirmDisconnect"
-        >
+        <button class="btn" type="button" :disabled="state.busy" @click="confirmDisconnect">
           {{ state.busy ? 'Disconnecting…' : 'Disconnect' }}
         </button>
-        <button class="linkbtn" type="button" @click="confirming = false">Cancel</button>
+        <button class="link-mono quiet" type="button" @click="confirming = false">
+          <span>Cancel</span>
+        </button>
       </div>
     </template>
 
     <div v-else class="actions">
-      <button class="linkbtn" type="button" :disabled="state.busy" @click="startChange">
-        {{ state.busy ? 'Loading calendars…' : 'Change calendar' }}
+      <button
+        class="link-mono quiet"
+        type="button"
+        :disabled="state.busy"
+        @click="startChange"
+      >
+        <span>{{ state.busy ? 'Loading calendars…' : 'Change calendar' }}</span>
       </button>
-      <button class="linkbtn" type="button" @click="confirming = true">Disconnect</button>
+      <button class="link-mono quiet" type="button" @click="confirming = true">
+        <span>Disconnect</span>
+      </button>
     </div>
 
     <p v-if="error" class="error">{{ error }}</p>
@@ -122,94 +128,23 @@ async function confirmDisconnect() {
 .status {
   display: flex;
   flex-direction: column;
-  gap: 28px;
-  padding: 40px 0;
+  align-items: flex-start;
+  gap: clamp(20px, 3vw, 28px);
+  padding: clamp(28px, 5vw, 40px) 0;
   border-top: 1px solid var(--hairline);
-}
-
-.rows {
-  margin: 0;
-  border-top: 1px solid var(--hairline);
-  max-width: 640px;
-}
-
-.row {
-  display: grid;
-  grid-template-columns: 160px 1fr;
-  gap: 24px;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--hairline);
-}
-
-dt {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: var(--muted);
-}
-
-dd {
-  margin: 0;
-  font-size: 15px;
-  color: var(--ink);
-  overflow-wrap: anywhere;
-}
-
-.calendars {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  border-top: 1px solid var(--hairline);
-  max-width: 520px;
-}
-
-.calendars li {
-  border-bottom: 1px solid var(--hairline);
-}
-
-.calendars label {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 0;
-  font-size: 15px;
-  cursor: pointer;
 }
 
 .actions {
   display: flex;
   align-items: center;
-  gap: 24px;
+  flex-wrap: wrap;
+  gap: 16px 24px;
 }
 
-.warn {
+.body {
   font-size: 15px;
   line-height: 1.6;
   color: var(--body);
-  max-width: 520px;
-}
-
-.linkbtn {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--muted);
-  background: none;
-  border: none;
-  border-bottom: 1px solid var(--hairline);
-  padding: 0 0 2px;
-  cursor: pointer;
-}
-
-.btn-primary:disabled,
-.linkbtn:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.error {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--ink);
+  max-width: 52ch;
 }
 </style>

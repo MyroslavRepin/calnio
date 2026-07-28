@@ -30,13 +30,13 @@ const calendarName = computed(() => {
 </script>
 
 <template>
-  <p v-if="!ready" class="muted">Loading…</p>
+  <p v-if="!ready" class="loading">Loading…</p>
 
   <template v-else>
     <header class="head">
       <p class="eyebrow">Overview</p>
-      <h1>{{ allDone ? 'Your sync is set up' : 'Finish your setup' }}</h1>
-      <p class="lede">
+      <h1 class="title">{{ allDone ? 'Your sync is set up.' : 'Finish your setup.' }}</h1>
+      <p class="lead">
         Calnio pushes your Notion due dates into Apple Calendar. Notion stays the
         source of truth — nothing is ever written back to it.
       </p>
@@ -44,34 +44,31 @@ const calendarName = computed(() => {
 
     <!-- Unfinished: point at the walkthrough, do not repeat it here. -->
     <section v-if="!allDone" class="block">
-      <h2 class="eyebrow">Setup — {{ doneCount }} of {{ stages.length }}</h2>
-      <p class="note">
-        Your setup is not finished, so nothing is connected end to end yet. The
-        walkthrough takes four steps and covers the app-specific password Apple
-        requires.
+      <p class="eyebrow">Setup — {{ doneCount }} of {{ stages.length }}</p>
+      <p class="body">
+        Nothing is connected end to end yet. The walkthrough takes four steps and
+        covers the app-specific password Apple requires.
       </p>
-      <router-link class="btn-primary" :to="{ name: 'welcome' }">
-        Continue setup
-      </router-link>
+      <router-link class="btn" :to="{ name: 'welcome' }">Continue setup</router-link>
     </section>
 
     <template v-else>
       <section class="block">
-        <h2 class="eyebrow">Notion</h2>
-        <dl class="rows">
-          <div class="row">
+        <p class="eyebrow">Notion</p>
+        <dl class="datarows">
+          <div>
             <dt>Workspace</dt>
             <dd>{{ notion.connection.workspace_name || '—' }}</dd>
           </div>
-          <div class="row">
+          <div>
             <dt>Database</dt>
             <dd>{{ notion.connection.data_source_name }}</dd>
           </div>
-          <div class="row">
+          <div>
             <dt>Pages</dt>
             <dd>—</dd>
           </div>
-          <div class="row">
+          <div>
             <dt>With a due date</dt>
             <dd>—</dd>
           </div>
@@ -79,17 +76,17 @@ const calendarName = computed(() => {
       </section>
 
       <section class="block">
-        <h2 class="eyebrow">Apple Calendar</h2>
-        <dl class="rows">
-          <div class="row">
+        <p class="eyebrow">Apple Calendar</p>
+        <dl class="datarows">
+          <div>
             <dt>Apple Account</dt>
             <dd>{{ apple.connection.icloud_email }}</dd>
           </div>
-          <div class="row">
+          <div>
             <dt>Calendar</dt>
             <dd>{{ calendarName }}</dd>
           </div>
-          <div class="row">
+          <div>
             <dt>Events synced</dt>
             <dd>—</dd>
           </div>
@@ -97,21 +94,21 @@ const calendarName = computed(() => {
       </section>
 
       <section class="block">
-        <h2 class="eyebrow">Sync activity</h2>
-        <dl class="rows">
-          <div class="row">
+        <p class="eyebrow">Sync activity</p>
+        <dl class="datarows">
+          <div>
             <dt>Last run</dt>
             <dd>—</dd>
           </div>
-          <div class="row">
+          <div>
             <dt>Created</dt>
             <dd>—</dd>
           </div>
-          <div class="row">
+          <div>
             <dt>Updated</dt>
             <dd>—</dd>
           </div>
-          <div class="row">
+          <div>
             <dt>Deleted</dt>
             <dd>—</dd>
           </div>
@@ -122,8 +119,8 @@ const calendarName = computed(() => {
           beta. Your setup carries over when it lands.
         </p>
 
-        <router-link class="link-mono" :to="{ name: 'connections' }">
-          Manage connections
+        <router-link class="link-mono quiet" :to="{ name: 'connections' }">
+          <span>Manage connections</span>
         </router-link>
       </section>
     </template>
@@ -135,86 +132,22 @@ const calendarName = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding-bottom: 40px;
-  max-width: 640px;
-}
-
-h1 {
-  font-size: 40px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
-}
-
-.lede {
-  font-size: 17px;
-  line-height: 1.6;
-  color: var(--body);
+  padding-bottom: clamp(28px, 5vw, 40px);
 }
 
 .block {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 20px;
-  padding: 32px 0 40px;
+  gap: clamp(16px, 2.5vw, 20px);
+  padding: clamp(24px, 4vw, 32px) 0 clamp(28px, 5vw, 40px);
   border-top: 1px solid var(--hairline);
 }
 
-.rows {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  border-top: 1px solid var(--hairline);
-  width: 100%;
-  max-width: 640px;
-}
-
-.row {
-  display: grid;
-  grid-template-columns: 180px 1fr;
-  gap: 24px;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--hairline);
-}
-
-dt {
-  font-size: 15px;
-  color: var(--ink);
-}
-
-dd {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--muted);
-  overflow-wrap: anywhere;
-}
-
-.note {
+.body {
   font-size: 15px;
   line-height: 1.6;
   color: var(--body);
-  max-width: 520px;
-}
-
-.link-mono {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--muted);
-  border-bottom: 1px solid var(--hairline);
-  padding-bottom: 2px;
-}
-
-.link-mono:hover {
-  color: var(--ink);
-  border-bottom-color: var(--ink);
-}
-
-.muted {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--muted);
-  padding: 20px 0;
+  max-width: 52ch;
 }
 </style>

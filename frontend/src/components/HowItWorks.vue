@@ -3,23 +3,23 @@ const steps = [
   {
     n: '01',
     title: 'Notion is the truth',
-    body: 'Calnio recomputes your events from Notion on every run. Change something there and the calendar follows.',
+    body: 'Calnio recomputes your events from Notion on every run. Change something there and the calendar follows. Nothing is ever written back to Notion.',
   },
   {
     n: '02',
     title: 'One page, one event',
-    body: 'Each Notion page id maps to a single calendar UID, so events never duplicate and foreign calendar entries are never touched.',
+    body: 'Each Notion page id maps to a single calendar UID, so events do not pile up and anything Calnio did not create is left alone.',
   },
   {
     n: '03',
     title: 'Last edit wins',
-    body: 'Move a due date and the next reconcile loop updates the calendar. Deletes in Notion remove the matching event.',
+    body: 'Move a due date and the next run updates the event. Delete the page in Notion and the event goes with it.',
   },
 ]
 </script>
 
 <template>
-  <section id="how" class="how">
+  <section id="how" class="section">
     <div class="wrap inner">
       <p class="eyebrow">How sync works</p>
 
@@ -32,62 +32,55 @@ const steps = [
       </div>
 
       <p class="note">
-        Today Calnio writes one way: Notion → Apple Calendar. Two-way sync is
-        next on the roadmap.
+        Calnio writes one way: Notion → Apple Calendar. Two-way sync does not
+        exist yet, and I would rather say so than imply it.
       </p>
     </div>
   </section>
 </template>
 
 <style scoped>
-.how {
-  border-top: 1px solid var(--hairline);
+#how {
+  scroll-margin-top: 24px;
 }
 
 .inner {
-  padding: 96px 0;
   display: flex;
   flex-direction: column;
-  gap: 48px;
+  gap: clamp(32px, 5vw, 48px);
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 56px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: clamp(28px, 5vw, 56px);
 }
 
 .step {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .num {
   font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--muted);
+  font-size: clamp(30px, 6vw, 40px);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--accent, #0b63f6);
 }
 
 h3 {
-  font-family: var(--font-ui);
-  font-size: 20px;
+  font-size: clamp(19px, 4.6vw, 21px);
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--ink);
 }
 
 .body {
-  font-size: 16px;
-  line-height: 1.55;
-  color: var(--body);
-}
-
-.note {
-  font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.6;
-  color: var(--muted);
-  max-width: 560px;
+  color: var(--body);
 }
 </style>

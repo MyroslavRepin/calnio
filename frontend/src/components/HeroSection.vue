@@ -5,22 +5,24 @@ import GoogleButton from './GoogleButton.vue'
 <template>
   <section class="hero">
     <div class="wrap inner">
-      <p class="eyebrow">Notion → Apple Calendar · one-way, for now</p>
+      <p class="eyebrow">Notion → Apple Calendar · one way, for now</p>
 
-      <h1>
+      <!-- The breaks are authored, not wrapped: they set the rhythm. -->
+      <h1 class="display">
         Plan it once.<br />
-        See it everywhere.
+        See it<br />
+        everywhere.
       </h1>
 
-      <p class="sub">
-        Calnio keeps your Apple Calendar in step with Notion. Notion is the
-        source of truth, every task with a due date lands on your calendar
-        automatically.
+      <p class="lead">
+        Calnio keeps your Apple Calendar in step with Notion. Notion stays the
+        source of truth, and every task with a due date lands on your calendar
+        on its own.
       </p>
 
-      <div class="cta-row">
-        <GoogleButton label="Start syncing with Google" />
-        <a href="#dev" class="link-mono">free while in beta →</a>
+      <div class="cta">
+        <GoogleButton label="Start syncing" />
+        <a href="#start" class="link-mono"><span>See what setup takes</span></a>
       </div>
     </div>
   </section>
@@ -28,35 +30,27 @@ import GoogleButton from './GoogleButton.vue'
 
 <style scoped>
 .hero {
-  padding: 64px 0 72px;
+  position: relative;
+  z-index: 1;
+  padding-top: clamp(40px, 9vw, 84px);
+  padding-bottom: var(--sec-bottom);
 }
 
 .inner {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  align-items: flex-start;
+  gap: clamp(20px, 3vw, 28px);
 }
 
-h1 {
-  font-family: var(--font-ui);
-  font-size: 84px;
-  line-height: 0.94;
-  font-weight: 700;
-  letter-spacing: -0.045em;
-  color: var(--ink);
+.lead {
+  max-width: 44ch;
 }
 
-.sub {
-  max-width: 560px;
-  font-size: 20px;
-  line-height: 1.55;
-  color: var(--body);
-}
-
-.cta-row {
+.cta {
   display: flex;
   align-items: center;
-  gap: 26px;
-  margin-top: 8px;
+  flex-wrap: wrap;
+  gap: clamp(16px, 3vw, 28px);
 }
 </style>
