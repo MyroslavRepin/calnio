@@ -2,6 +2,13 @@
 import { computed, ref, watch } from 'vue'
 import { useNotion } from '../composables/useNotion'
 
+// The step numbers are a prop so the welcome page can run this and the Apple
+// wizard as one 01–04 sequence. Inside a Connections row each wizard stands
+// alone, so the default is its own 01/02.
+defineProps({
+  numbers: { type: Array, default: () => ['01', '02'] },
+})
+
 const { state, connect, fetchDatabases, selectDatabase } = useNotion()
 
 const picked = ref('')
@@ -50,7 +57,7 @@ async function submitDatabase() {
   <div class="setup">
     <!-- Step 01 — authorize --------------------------------------------->
     <section class="step" :class="{ past: step > 1 }">
-      <p class="num">01</p>
+      <p class="num">{{ numbers[0] }}</p>
       <div class="body">
         <h3>Authorize Calnio in your Notion workspace</h3>
 
@@ -83,7 +90,7 @@ async function submitDatabase() {
 
     <!-- Step 02 — database ---------------------------------------------->
     <section class="step" :class="{ ahead: step < 2 }">
-      <p class="num">02</p>
+      <p class="num">{{ numbers[1] }}</p>
       <div class="body">
         <h3>Choose the database with your tasks</h3>
 

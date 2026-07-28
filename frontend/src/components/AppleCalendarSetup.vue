@@ -2,6 +2,12 @@
 import { computed, ref } from 'vue'
 import { useAppleCalendar } from '../composables/useAppleCalendar'
 
+// See NotionSetup: numbered 03/04 when the welcome page runs both wizards as one
+// sequence, 01/02 when it stands alone in a Connections row.
+defineProps({
+  numbers: { type: Array, default: () => ['01', '02'] },
+})
+
 const { state, connect, createCalendar, selectCalendar } = useAppleCalendar()
 
 const email = ref('')
@@ -46,19 +52,22 @@ async function submitCalendar() {
   <div class="setup">
     <!-- Step 01 — credentials ------------------------------------------->
     <section class="step" :class="{ past: step > 1 }">
-      <p class="num">01</p>
+      <p class="num">{{ numbers[0] }}</p>
       <div class="body">
         <h3>Connect your iCloud account</h3>
 
         <template v-if="step === 1">
-          <p class="lede">
+          <!-- The short version, for a Connections row. The welcome page fills
+               the slot with the full walkthrough instead of repeating this. -->
+          <p v-if="!$slots.help" class="lede">
             Apple requires an app-specific password — your normal Apple ID password
             will not work. Create one at
-            <a href="https://appleid.apple.com" target="_blank" rel="noreferrer"
-              >appleid.apple.com</a
+            <a href="https://account.apple.com" target="_blank" rel="noreferrer"
+              >account.apple.com</a
             >
             under Sign-In and Security → App-Specific Passwords.
           </p>
+          <slot name="help" />
 
           <form class="form" @submit.prevent="submitCredentials">
             <label>
@@ -103,7 +112,7 @@ async function submitCalendar() {
 
     <!-- Step 02 — calendar ---------------------------------------------->
     <section class="step" :class="{ ahead: step < 2 }">
-      <p class="num">02</p>
+      <p class="num">{{ numbers[1] }}</p>
       <div class="body">
         <h3>Choose a calendar</h3>
 

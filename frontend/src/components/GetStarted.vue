@@ -5,7 +5,7 @@ const steps = [
   {
     n: '01',
     title: 'Get an app-specific password',
-    body: 'On appleid.apple.com, generate an app-specific password for iCloud.',
+    body: 'On account.apple.com, generate an app-specific password for iCloud.',
   },
   {
     n: '02',
@@ -19,8 +19,8 @@ const steps = [
   },
   {
     n: '04',
-    title: 'Set your relations',
-    body: "Map the due-date field to your calendar, and that's all.",
+    title: 'Choose your calendar',
+    body: 'Pick which Apple calendar Calnio writes your due dates into.',
   },
 ]
 </script>
