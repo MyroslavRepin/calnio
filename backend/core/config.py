@@ -13,7 +13,12 @@ class Settings(BaseSettings):
     caldav_url: str
     tasks_data_source: str
     syncing_interval_minutes: str
-    active_sync: bool
+
+    # Global off-switch for background syncing: false registers no interval job
+    # and refuses one-off runs, so a dev instance pointed at the real database
+    # never writes into a user's calendar. Per-user `enabled` is the other,
+    # finer switch.
+    scheduler_enabled: bool
     event_due_date_field_name: str
     google_oauth_client_id: str
     google_oauth_client_secret: str

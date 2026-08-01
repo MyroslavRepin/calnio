@@ -20,25 +20,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
-FastAPI app in `main.py`: lifespan starts an APScheduler `BackgroundScheduler` that runs `sync_notion_to_caldav` every `SYNCING_INTERVAL_MINUTES` (and once at startup); `SessionMiddleware` holds the OAuth `state` cookie; mounts `backend/api/oauth.py` router.
+FastAPI app in `main.py`: lifespan starts an APScheduler `BackgroundScheduler` that runs `run_all_users` every `SYNCING_INTERVAL_MINUTES` (and once at startup) when `SCHEDULER_ENABLED`; the scheduler itself always starts, because turning a user's sync on queues a one-off job through it. `SessionMiddleware` holds the OAuth `state` cookie; mounts the `oauth`, `apple_calendar`, `notion` and `sync` routers.
 
 **Everything DB is synchronous** — `create_engine` + `sessionmaker` (`core/db.py`), sync `Session` everywhere, psycopg3 driver. Routes are `async def` only because authlib requires `await`; don't introduce `AsyncSession` — that decision was made deliberately (scheduler thread + blocking CalDAV/Notion IO gain nothing from async).
 
 Layers under `backend/` (import modules directly — **no `__init__.py` anywhere**, e.g. `from backend.schemas.notion_page import NotionPage`):
 
 - `core/` — stateless infra, no DB access: `config.py` (`Settings` from `.env`, singleton `settings`), `db.py` (engine + `SessionLocal`), `base.py` (ORM `Base`), `oauth.py` (authlib Google client), `security.py` (`JWTService`, PyJWT HS256, access + refresh tokens), `crypto.py` (Fernet `encrypt`/`decrypt` — **the only module importing Fernet**), `scheduler.py`, `logging.py` (loguru).
-- `models/` — SQLAlchemy ORM, one per file: `user.py`, `oauth_account.py` (N per user, unique `(provider, provider_account_id)`, lookup by Google `sub` never email), `caldav_credential.py` (1 per user, iCloud password Fernet-encrypted), `synced_event.py`.
+- `models/` — SQLAlchemy ORM, one per file: `user.py`, `sync_settings.py` (1 per user: the sync switch, the chosen Notion date column, last run + status), `oauth_account.py` (N per user, unique `(provider, provider_account_id)`, lookup by Google `sub` never email), `caldav_credential.py` (1 per user, iCloud password Fernet-encrypted), `synced_event.py`.
 - `schemas/` — pydantic v2 domain models: `caldav_event.py`, `notion_page.py`, `notion_database.py` (both read-only projections of raw Notion payloads), `synced_event.py`.
 - `repo/` — data access. `caldav_repo.py` (`CalDavEventRepo`, write side, plus `get_calendar_url`), `notion_repo.py` (`NotionPageRepo`, read-only — no create/update/delete, keep it that way), `user_repo.py` (`UserRepo(db: Session)`, `get_or_create_user_oauth` = login and registration in one). Repos take a `Session`/credentials in the constructor; **caller owns the transaction and the commit** (exception: `sync.py` commits per event deliberately — see below).
 - `services/` — flows composing multiple repos: `sync.py` only. Auth is thin enough to live in the route; add a service only when a flow really composes repos with logic.
-- `api/` — route handlers: `oauth.py` (`/auth/*`, no prefix — Google's registered redirect URI depends on it), `apple_calendar.py` (`/api/v1/me/apple-calendar*`, per-user iCloud credentials; logic inline in the routes by decision, extract to a service when sync needs to share it). New API routers get the `/api/v1` prefix so they don't collide with the SPA served at `/` in prod.
+- `api/` — route handlers: `oauth.py` (`/auth/*`, no prefix — Google's registered redirect URI depends on it), `apple_calendar.py` (`/api/v1/me/apple-calendar*`, per-user iCloud credentials; logic inline in the routes by decision, extract to a service when sync needs to share it), `notion.py` (`/auth/oauth/notion/*` + `/api/v1/me/notion*`; `notion_errors` / `notion_repo_for` / `date_property_names` are shared with the sync router), `sync.py` (`/api/v1/me/sync`, the per-user switch), `account.py` (`DELETE /api/v1/me` — hard delete: the `users` row goes, children cascade, the Notion grant is revoked, a queued one-off sync job is cancelled, auth cookies are cleared; **iCloud is deliberately untouched** — pushed events are the user's data and stay, same as an Apple Calendar disconnect. Body must echo the signed-in email). New API routers get the `/api/v1` prefix so they don't collide with the SPA served at `/` in prod.
 - `deps/` — FastAPI dependencies: `db.py` (`get_session`), `auth.py` (`get_current_user` — reads the access cookie, returns the `User` row; every protected route uses it).
 
 ### Sync model (core of the app)
 
 - Source of truth: Notion; events recomputed from Notion every run. Mapping key: Notion page id == iCal `uid`.
-- `synced_events` table is a **link index** (`notion_page_id -> caldav_href`), not an event mirror. Only rows Calnio owns; foreign Apple Calendar events (no row) are never touched.
-- `services/sync.py` reconcile loop: query Notion data source → map pages to events (skip archived / no Due Date) → create/update in CalDAV per diff against `synced_events` → delete CalDAV events whose Notion page disappeared. **Commits per event on purpose** — a failure mid-batch must not orphan CalDAV events (uncommitted row → next run re-creates → iCloud 412 duplicate).
+- `synced_events` table is a **link index** (`(user_id, notion_page_id) -> caldav_href`), not an event mirror. Only rows Calnio owns; foreign Apple Calendar events (no row) are never touched. Every query in the loop is scoped by `user_id`.
+- `services/sync.py` reconcile loop: query Notion data source → map pages to events (skip archived / no date in the user's chosen column) → create/update in CalDAV per diff against `synced_events` → delete CalDAV events whose Notion page disappeared. **Commits per event on purpose** — a failure mid-batch must not orphan CalDAV events (uncommitted row → next run re-creates → iCloud 412 duplicate).
+- **Per-user:** `sync_user(user_id)` runs one user off their stored Notion grant + iCloud credential + `sync_settings` row; `run_all_users()` is the scheduled job and syncs every eligible user sequentially. Auth failures disable the user (`last_status="auth_error"`); everything else retries next tick. Old `sync_notion_to_caldav` is kept unscheduled and can no longer run (`user_id` is required).
 - Change detection: compare title directly, then last-edited timestamp LWW — Notion's `last_edited_time` is minute-rounded, so a pure timestamp check misses same-minute edits.
 - `reset_all()` in `sync.py` wipes every CalDAV event + all `synced_events` rows — destructive, never call casually.
 
@@ -64,7 +65,7 @@ Notion parsing rules (real payload shapes): title = the property whose `type == 
 
 ## Config
 
-`.env` (all required by `Settings`): `ICLOUD_EMAIL`, `APP_SPECIFIC_PASSWORD`, `NOTION_TOKEN`, `DB_URL` (postgresql+psycopg://), `CALDAV_URL`, `TASKS_DATA_SOURCE`, `SYNCING_INTERVAL_MINUTES`, `EVENT_DUE_DATE_FIELD_NAME`, `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URI`, `SESSION_SECRET`, `JWT_SECRET`, `CREDENTIALS_ENCRYPTION_KEY`.
+`.env` (all required by `Settings`): `ICLOUD_EMAIL`, `APP_SPECIFIC_PASSWORD`, `NOTION_TOKEN`, `DB_URL` (postgresql+psycopg://), `CALDAV_URL`, `TASKS_DATA_SOURCE`, `SYNCING_INTERVAL_MINUTES`, `SCHEDULER_ENABLED`, `EVENT_DUE_DATE_FIELD_NAME`, `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URI`, `SESSION_SECRET`, `JWT_SECRET`, `CREDENTIALS_ENCRYPTION_KEY`.
 
 `ICLOUD_EMAIL` / `APP_SPECIFIC_PASSWORD` are the **single-user dev path** the scheduler still runs on; real users' credentials live per-row in `caldav_credentials`.
 

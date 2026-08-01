@@ -5,26 +5,30 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
+from backend.api.account import router as account_router
 from backend.api.apple_calendar import router as apple_calendar_router
 from backend.api.notion import router as notion_router
 from backend.api.oauth import router as oauth_router
+from backend.api.sync import router as sync_router
 from backend.core.config import settings
 from backend.core.logging import setup_logging
 from backend.core.scheduler import init_scheduler
-from backend.services.sync import sync_notion_to_caldav
+from backend.services.sync import run_all_users
 
 setup_logging()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # The scheduler starts either way: turning a user's sync on queues a
+    # one-off job through it, and that path is gated separately.
     scheduler = init_scheduler()
-    if settings.active_sync:
+    if settings.scheduler_enabled:
         scheduler.add_job(
-            sync_notion_to_caldav,
+            run_all_users,
             "interval",
             minutes=int(settings.syncing_interval_minutes),
-            max_instances=1,  # never overlap two syncs
+            max_instances=1,  # never overlap two ticks
             next_run_time=datetime.now(),  # run once immediately on startup
         )
     yield  # must run on both paths — a lifespan that never yields fails startup
@@ -60,3 +64,5 @@ app.add_middleware(
 app.include_router(oauth_router)
 app.include_router(apple_calendar_router)
 app.include_router(notion_router)
+app.include_router(sync_router)
+app.include_router(account_router)

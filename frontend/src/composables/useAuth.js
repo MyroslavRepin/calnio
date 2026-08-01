@@ -88,6 +88,28 @@ async function logout() {
   state.user = null
 }
 
+// Irreversible. The typed-back email is sent so the server can check it too —
+// the input in the UI is a guard against a stray click, not against a stray
+// request. The caller does the redirect: a full page load is what clears the
+// state the other composables hold at module level.
+async function deleteAccount(email) {
+  try {
+    const res = await apiFetch('/api/v1/me', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => null)
+      return { error: body?.detail || 'could not delete your account' }
+    }
+  } catch {
+    return { error: 'could not reach the server' }
+  }
+  state.user = null
+  return {}
+}
+
 export function useAuth() {
   return {
     state: readonly(state),
@@ -96,5 +118,6 @@ export function useAuth() {
     login,
     logout,
     fetchMe,
+    deleteAccount,
   }
 }

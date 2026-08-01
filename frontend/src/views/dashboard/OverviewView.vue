@@ -2,9 +2,11 @@
 import { computed } from 'vue'
 import { useAppleCalendar } from '../../composables/useAppleCalendar'
 import { useNotion } from '../../composables/useNotion'
+import { useSync } from '../../composables/useSync'
 
 const { state: apple } = useAppleCalendar()
 const { state: notion } = useNotion()
+const { state: sync } = useSync()
 
 // The four setup stages, same definitions the welcome page counts: a grant
 // stored, then a target picked, for each connection. The walkthrough itself
@@ -16,7 +18,7 @@ const stages = computed(() => [
   Boolean(apple.connection?.calendar_url),
 ])
 
-const ready = computed(() => notion.ready && apple.ready)
+const ready = computed(() => notion.ready && apple.ready && sync.ready)
 const doneCount = computed(() => stages.value.filter(Boolean).length)
 const allDone = computed(() => doneCount.value === stages.value.length)
 
@@ -26,6 +28,31 @@ const calendarName = computed(() => {
   const url = apple.connection?.calendar_url
   if (!url) return '—'
   return apple.calendars.find((c) => c.url === url)?.name || url
+})
+
+const lastRun = computed(() => {
+  const at = sync.settings?.last_run_at
+  return at ? new Date(at).toLocaleString() : '—'
+})
+
+// Reporting only — the switch itself lives in Settings, so this never shows a
+// second control for the same state.
+const syncState = computed(() => {
+  if (sync.pending) return 'Syncing now'
+  return sync.settings?.enabled ? 'On' : 'Off'
+})
+
+const lastResult = computed(() => {
+  switch (sync.settings?.last_status) {
+    case 'ok':
+      return 'Finished normally'
+    case 'error':
+      return 'Failed — retrying on the next run'
+    case 'auth_error':
+      return 'A connection was rejected — reconnect it'
+    default:
+      return '—'
+  }
 })
 </script>
 
@@ -97,31 +124,36 @@ const calendarName = computed(() => {
         <p class="eyebrow">Sync activity</p>
         <dl class="datarows">
           <div>
+            <dt>Syncing</dt>
+            <dd>{{ syncState }}</dd>
+          </div>
+          <div>
+            <dt>Due date column</dt>
+            <dd>{{ sync.settings?.due_date_property || '—' }}</dd>
+          </div>
+          <div>
             <dt>Last run</dt>
-            <dd>—</dd>
+            <dd>{{ lastRun }}</dd>
           </div>
           <div>
-            <dt>Created</dt>
-            <dd>—</dd>
-          </div>
-          <div>
-            <dt>Updated</dt>
-            <dd>—</dd>
-          </div>
-          <div>
-            <dt>Deleted</dt>
-            <dd>—</dd>
+            <dt>Result</dt>
+            <dd>{{ lastResult }}</dd>
           </div>
         </dl>
 
-        <p class="note">
-          These numbers switch on when syncing your own workspace does, later in
-          beta. Your setup carries over when it lands.
+        <p v-if="!sync.settings?.enabled" class="note">
+          Syncing is off, so nothing is being pushed to your calendar. Turn it
+          on in Settings.
         </p>
 
-        <router-link class="link-mono quiet" :to="{ name: 'connections' }">
-          <span>Manage connections</span>
-        </router-link>
+        <div class="actions">
+          <router-link class="link-mono quiet" :to="{ name: 'settings' }">
+            <span>Sync settings</span>
+          </router-link>
+          <router-link class="link-mono quiet" :to="{ name: 'connections' }">
+            <span>Manage connections</span>
+          </router-link>
+        </div>
       </section>
     </template>
   </template>
@@ -149,5 +181,11 @@ const calendarName = computed(() => {
   line-height: 1.6;
   color: var(--body);
   max-width: 52ch;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 28px;
 }
 </style>

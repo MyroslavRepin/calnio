@@ -11,12 +11,73 @@
 
 ### `synced_events` columns
 - `id` — int PK
-- `notion_page_id` — str, unique, index (mapping key)
+- `user_id` — int FK -> `users.id` (cascade), index; unique together with `notion_page_id`
+- `notion_page_id` — str, index (mapping key, unique *per user*)
 - `caldav_href` — str (address in iCloud, for update/delete)
 - `caldav_uid` — str (iCal uid, = notion id for now)
 - `etag` — str, nullable (detect external CalDAV changes)
 - `notion_last_edited` — datetime(tz), nullable (LWW change detection)
 - `row_created_at` / `row_updated_at` — datetime(tz), db-managed
+
+## Per-user sync (done)
+
+Sync runs on each user's own stored connections, not on `.env`. One switch per
+user, off until they turn it on.
+
+### Model — `sync_settings` (1 per user)
+- `enabled` — bool, default **false**. Nothing is written to anybody's calendar
+  until they ask.
+- `due_date_property` — the Notion date column to read. No default: guessing
+  "Due Date" would let a user see a successful run that created nothing.
+  Cleared automatically when they switch to a different database.
+- `last_run_at` / `last_status` — `ok` | `error` | `auth_error`. No counts and
+  no history table.
+
+### Engine — `services/sync.py`
+- `sync_user(user_id)` — one user's reconcile loop, own session, never raises.
+  Uses the `calendar_url` stored at setup, so it skips iCloud's slow
+  calendar-home discovery.
+- `run_all_users()` — the scheduled job. One interval job, `max_instances=1`,
+  users synced sequentially, each isolated by its own try/except.
+- Eligible = `enabled` AND `due_date_property` AND `data_source_id` AND
+  `calendar_url`.
+- **Failure policy:** Notion 401/403 or CalDAV `AuthorizationError` →
+  `enabled=false`, status `auth_error`. Anything else (network, 502, timeout) →
+  status `error`, retried next tick. Re-sending a rejected app-specific
+  password every interval is how an Apple ID gets locked.
+- `sync_notion_to_caldav` (the old single-user loop) is kept for reference and
+  never scheduled. It cannot run any more: `synced_events.user_id` is required
+  and it has no user to attribute rows to. `reset_all()` still works and is
+  still `.env`-based.
+
+### API (`backend/api/sync.py`, prefix `/api/v1`)
+- `GET /me/sync` — `{enabled, eligible, due_date_property, last_run_at, last_status}`.
+  Also the poll target while a queued run finishes.
+- `PUT /me/sync` — `{enabled?, due_date_property?}`. Turning it on queues a
+  one-off job (id `sync-user-<id>`, so a double click cannot stack two runs);
+  the request never waits for iCloud. A due-date name is validated against the
+  live Notion schema.
+- `GET /me/notion/date-properties` — the picker's options (lives with the
+  Notion router because it is a schema read).
+
+### Config
+`SCHEDULER_ENABLED` (renamed from `ACTIVE_SYNC`) is the global off-switch: no
+interval job and no on-demand runs, so an instance pointed at the real database
+never writes to a user's calendar.
+
+### Frontend
+`composables/useSync.js`; Settings holds the switch + due-date picker, Overview
+reports status read-only. After turning it on the client polls `GET /me/sync`
+every 3s (≤60s) until `last_run_at` moves.
+
+### Known gaps (deliberate)
+- No per-run counts and no run history — Overview's "Pages", "With a due date"
+  and "Events synced" rows are still `—`.
+- No manual "sync now" button; a run is only triggered by the interval or by
+  turning the switch on.
+- Turning sync off leaves existing events and link rows alone. There is no
+  per-user "remove my synced events" action.
+- Sequential loop: N users cost N × (Notion + iCloud) round trips per tick.
 
 ## Roadmap
 

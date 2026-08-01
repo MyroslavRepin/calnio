@@ -1,16 +1,17 @@
 <script setup>
 import { onMounted, watch } from 'vue'
-import AtmosphereField from '../../components/AtmosphereField.vue'
 import TheNav from '../../components/TheNav.vue'
 import { useAppleCalendar } from '../../composables/useAppleCalendar'
 import { useAuth } from '../../composables/useAuth'
 import { useNotion } from '../../composables/useNotion'
+import { useSync } from '../../composables/useSync'
 
 // App shell for every /dashboard/* page: top nav, sidebar menu, content.
 // Auth branching lives here so child views can assume a signed-in user.
 const { state: auth, login } = useAuth()
 const { load: loadApple } = useAppleCalendar()
 const { load: loadNotion } = useNotion()
+const { load: loadSync } = useSync()
 
 const menu = [
   { to: { name: 'dashboard' }, label: 'Overview' },
@@ -25,6 +26,7 @@ function loadIfAuthed() {
   if (!auth.ready || !auth.user) return
   loadApple()
   loadNotion()
+  loadSync()
 }
 
 onMounted(loadIfAuthed)
@@ -33,10 +35,6 @@ watch(() => [auth.ready, auth.user], loadIfAuthed)
 
 <template>
   <div class="page">
-    <!-- Washed-out circles behind the page; every block of content rides on a
-         .surface panel so nothing small is ever read against blue. -->
-    <AtmosphereField variant="short" />
-
     <TheNav />
 
     <main class="wrap shell">
@@ -75,7 +73,6 @@ watch(() => [auth.ready, auth.user], loadIfAuthed)
 .page {
   position: relative;
   min-height: 100vh;
-  overflow: clip;
 }
 
 .shell {

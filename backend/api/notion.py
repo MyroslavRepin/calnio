@@ -24,6 +24,7 @@ from backend.models.notion_connection import NotionConnection
 from backend.models.user import User
 from backend.repo.notion_connection_repo import NotionConnectionRepo
 from backend.repo.notion_repo import NotionPageRepo
+from backend.repo.sync_settings_repo import SyncSettingsRepo
 
 # Two path families in one router on purpose. The OAuth dance sits under
 # /auth/oauth/* next to Google's, because that is what a reader looking for an
@@ -82,7 +83,7 @@ def _status(row: NotionConnection) -> ConnectionStatus:
 
 
 @contextmanager
-def _notion_errors() -> Iterator[None]:
+def notion_errors() -> Iterator[None]:
     """Map Notion API failures onto HTTP status codes.
 
     Never 401 — the frontend's apiFetch auto-refreshes and retries on 401, and
@@ -134,11 +135,11 @@ def get_connection(
     return row
 
 
-def _repo(row: NotionConnection) -> NotionPageRepo:
+def notion_repo_for(row: NotionConnection) -> NotionPageRepo:
     """An authenticated Notion repo for this user's grant.
 
-    The only place a stored Notion token is decrypted. Lift this into
-    services/notion.py when the per-user sync loop needs the same path.
+    The one request-path place a stored Notion token is decrypted — the sync
+    loop does its own, off the request path, in services/sync.py.
     """
     repo = NotionPageRepo(decrypt(row.access_token_encrypted))
     repo.connect()
@@ -260,11 +261,42 @@ async def list_notion_databases(row: NotionConnection = Depends(get_connection))
     database — an easy thing to do in Notion's dialog — so the client renders
     an empty state rather than treating it as an error.
     """
-    with _notion_errors():
-        databases = _repo(row).list_databases()
+    with notion_errors():
+        databases = notion_repo_for(row).list_databases()
     return [
         NotionDatabaseOption(id=d.id, title=d.title, url=d.url) for d in databases
     ]
+
+
+def date_property_names(row: NotionConnection) -> list[str]:
+    """The date columns on the user's selected data source, in schema order.
+
+    Notion property keys *are* the column names, so these strings are exactly
+    what sync looks up on a page. Shared with the sync settings route, which
+    validates a chosen name against this same list.
+    """
+    if row.data_source_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="pick a notion database first",
+        )
+    with notion_errors():
+        database = notion_repo_for(row).get_database(row.data_source_id)
+    return [
+        name
+        for name, prop in database.properties.items()
+        if prop.get("type") == "date"
+    ]
+
+
+@router.get(f"{BASE}/date-properties", response_model=list[str])
+async def list_date_properties(row: NotionConnection = Depends(get_connection)):
+    """Candidates for the due-date setting.
+
+    Legitimately empty — a database with no date column cannot be synced, and
+    the client says so rather than showing an empty picker.
+    """
+    return date_property_names(row)
 
 
 @router.put(f"{BASE}/database", response_model=ConnectionStatus)
@@ -278,10 +310,20 @@ async def select_notion_database(
     Verified with a single retrieve rather than by scanning the whole list: it
     proves the data source is still shared with us, costs one call instead of a
     paginated search, and hands back the authoritative title to store. An id we
-    cannot see comes back as a Notion 404, which _notion_errors turns into 400.
+    cannot see comes back as a Notion 404, which notion_errors turns into 400.
     """
-    with _notion_errors():
-        database = _repo(row).get_database(body.data_source_id)
+    with notion_errors():
+        database = notion_repo_for(row).get_database(body.data_source_id)
+
+    # A different database means a different schema: the due-date column the
+    # user picked on the old one may not exist here, and syncing against a
+    # name that is gone finds nothing while reporting success. Drop it and
+    # make them pick again — eligibility requires it, so sync pauses until
+    # they do.
+    if row.data_source_id != database.id:
+        sync_settings = SyncSettingsRepo(db).get(row.user_id)
+        if sync_settings is not None:
+            sync_settings.due_date_property = None
 
     NotionConnectionRepo(db).set_data_source(row, database.id, database.title)
     db.commit()

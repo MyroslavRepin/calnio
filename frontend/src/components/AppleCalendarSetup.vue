@@ -82,11 +82,17 @@ async function submitCalendar() {
 
           <label class="field">
             <span>App-specific password</span>
+            <!-- Plain text on purpose: an app-specific password is a
+                 four-group string nobody can type blind, and a typo costs a
+                 round trip to iCloud that rejects it. -->
             <input
               v-model="password"
-              type="password"
+              type="text"
               required
               autocomplete="off"
+              autocapitalize="none"
+              autocorrect="off"
+              spellcheck="false"
               placeholder="xxxx-xxxx-xxxx-xxxx"
             />
           </label>
