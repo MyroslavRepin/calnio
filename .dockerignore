@@ -1,0 +1,21 @@
+# Build context hygiene. Config never enters the image — compose injects it at
+# run time via env_file, so secrets stay on the host instead of freezing into a
+# layer. frontend/.env matters most: it holds the dev VITE_API_URL
+# (http://localhost:8080), which would otherwise be baked into the prod bundle.
+.git
+.gitignore
+.venv
+__pycache__/
+*.pyc
+.idea/
+.vscode/
+.claude/
+logs/
+collections/
+openapi.json
+
+.env
+.env.prod
+frontend/.env
+frontend/node_modules
+frontend/dist

@@ -2,7 +2,8 @@ import { reactive, readonly } from 'vue'
 
 // API origin. Dev: Vite :5173 → API :8080 (cross-origin, cookies via CORS).
 // Prod: same origin, so an empty base ('') keeps requests relative.
-const API = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
+// Prod builds set nothing, so the base is '' and every request stays relative.
+const API = import.meta.env.VITE_API_URL ?? ''
 
 // Both tokens live in httpOnly cookies the browser sends automatically — the
 // JS never holds a token. We only track derived UI state here.

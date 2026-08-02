@@ -1,8 +1,11 @@
 from contextlib import asynccontextmanager
 from datetime import datetime
+from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
 from backend.api.account import router as account_router
@@ -66,3 +69,26 @@ app.include_router(apple_calendar_router)
 app.include_router(notion_router)
 app.include_router(sync_router)
 app.include_router(account_router)
+
+# The built Vue app, served same-origin in prod. Resolved from this file, not the
+# working directory, so uvicorn started from anywhere still finds it. The
+# directory only exists in the Docker image (Dockerfile's build stage puts it
+# there); in dev it is absent and the app stays a bare API, exactly as before.
+DIST = Path(__file__).parent / "frontend" / "dist"
+
+if DIST.is_dir():
+    app.mount("/assets", StaticFiles(directory=DIST / "assets"), name="assets")
+
+    # Catch-all, declared after every router so real endpoints win. The Vue
+    # router runs in history mode: /dashboard/connections is not a file, but a
+    # hard refresh still asks the server for it, and the answer has to be
+    # index.html so the router can take over on the client.
+    @app.get("/{spa_path:path}", include_in_schema=False)
+    async def spa(spa_path: str) -> FileResponse:
+        # An unmatched API path must stay JSON — returning HTML with a 200 would
+        # make a typo'd endpoint look like a successful request to the client.
+        if spa_path.startswith(("api/", "auth/")):
+            raise HTTPException(status_code=404, detail="Not Found")
+        # index.html must not be cached: it references hashed bundle filenames
+        # that a redeploy replaces, and a stale copy points at files that are gone.
+        return FileResponse(DIST / "index.html", headers={"Cache-Control": "no-cache"})

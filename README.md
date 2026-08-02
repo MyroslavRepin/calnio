@@ -228,5 +228,22 @@ one file.
   it.
 
 ### Frontend integration
-- **Dev:** Vue on Vite `:5173`, API on `:8080`. Login start = top-level nav (no CORS). Callback redirects back to `:5173` with JWT. API calls need CORS.
-- **Prod:** Vue built to `/dist`, served by FastAPI via `StaticFiles(html=True)` — same origin, no CORS. Google `redirect_uri` becomes the prod domain callback.
+- **Dev:** two local processes — Vue on Vite `:5173`, API on `:8080`. Two origins, so CORS is on and the auth cookies are `SameSite=None; Secure`. `frontend/.env` sets `VITE_API_URL=http://localhost:8080`; the callback redirects back to `:5173`.
+- **Prod:** one origin. The image contains the built app and FastAPI serves it, so there is no CORS and the cookies are plain `lax`. `VITE_API_URL` is unset at build time, which makes the client's base `''` and every request relative.
+
+## Deployment
+
+Docker Compose is **production only** — dev runs the two processes above, not a container.
+
+```bash
+cp .env.prod.example .env.prod    # fill in; gitignored, never enters the image
+uv run alembic upgrade head       # migrations stay manual, run them before deploying
+docker compose up --build
+```
+
+- **Image:** two stages. `node:22-slim` runs `npm ci && npm run build`, then the Python stage copies `dist/` in. Node is not in the final image, and nothing has to be built by hand.
+- **One worker, deliberately.** The lifespan starts an APScheduler; a second worker would be a second scheduler syncing every user twice.
+- **Static serving** (`main.py`): `StaticFiles` on `/assets`, then a catch-all declared after every router that returns `index.html` — the Vue router is in history mode, so a hard refresh on `/dashboard/connections` reaches the server and must get the app back. Paths under `api/` and `auth/` raise 404 instead, so a wrong endpoint stays JSON. `index.html` is sent `Cache-Control: no-cache`; the bundle filenames are hashed, so a stale copy would point at files a redeploy removed.
+- The mount is skipped when `frontend/dist` is missing, which is the normal dev case — the app then starts as a bare API, as it always did.
+- **Public access** is a Cloudflare tunnel on the same host (not containerised), ingress → `http://localhost:8080`. TLS terminates at the edge, so `COOKIE_SECURE=true` is correct. Both OAuth redirect URIs must be re-registered on the tunnel hostname — Google Cloud console and notion.so/my-integrations.
+- **`SCHEDULER_ENABLED`:** only one instance may have it on. Dev and prod share the same Neon database, so a local run alongside the container syncs everyone twice and duplicates iCloud events.

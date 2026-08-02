@@ -14,13 +14,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Add dep: `uv add <package>` (dev: `uv add --dev <package>`)
 - Dev server: `uv run uvicorn main:app --reload --port 8080`
 - Migrations: `uv run alembic upgrade head`; new one: `uv run alembic revision --autogenerate -m "..."` (autogenerate works — `alembic/env.py` imports all models and uses `Base.metadata`; a new model must be imported there or autogenerate won't see it)
-- Docker: `docker compose up --build` (serves on 8080)
+- Frontend dev server: `cd frontend && npm run dev` (Vite on 5173, cross-origin to the API on 8080 — that setup works, leave it alone)
+- Docker: `docker compose up --build` — **production only**, serves on 8080. Reads `.env.prod` (not `.env`), builds the Vue app in a `node:22-slim` stage, one uvicorn worker, no `--reload`. Migrations are **not** run by the container.
 - Type check: pyright (config in `pyrightconfig.json`, venv-aware)
 - No tests and no linter configured yet.
 
 ## Architecture
 
-FastAPI app in `main.py`: lifespan starts an APScheduler `BackgroundScheduler` that runs `run_all_users` every `SYNCING_INTERVAL_MINUTES` (and once at startup) when `SCHEDULER_ENABLED`; the scheduler itself always starts, because turning a user's sync on queues a one-off job through it. `SessionMiddleware` holds the OAuth `state` cookie; mounts the `oauth`, `apple_calendar`, `notion` and `sync` routers.
+FastAPI app in `main.py`: lifespan starts an APScheduler `BackgroundScheduler` that runs `run_all_users` every `SYNCING_INTERVAL_MINUTES` (and once at startup) when `SCHEDULER_ENABLED`; the scheduler itself always starts, because turning a user's sync on queues a one-off job through it. **Because of that scheduler the app runs on exactly one uvicorn worker** — a second worker is a second scheduler and doubles every user's sync. `SessionMiddleware` holds the OAuth `state` cookie; mounts the `oauth`, `apple_calendar`, `notion` and `sync` routers.
+
+**Serving the SPA** (bottom of `main.py`, after every router): if `frontend/dist` exists — it only does inside the Docker image — `StaticFiles` is mounted on `/assets` and a catch-all `GET /{spa_path:path}` returns `index.html` with `Cache-Control: no-cache`. The Vue router uses history mode, so deep links must be answered by the server with the app itself. Paths starting `api/` or `auth/` raise 404 from that handler so a mistyped endpoint never returns HTML. In dev the directory is absent, the block is skipped, and the app is a bare API exactly as before.
 
 **Everything DB is synchronous** — `create_engine` + `sessionmaker` (`core/db.py`), sync `Session` everywhere, psycopg3 driver. Routes are `async def` only because authlib requires `await`; don't introduce `AsyncSession` — that decision was made deliberately (scheduler thread + blocking CalDAV/Notion IO gain nothing from async).
 
@@ -69,7 +72,9 @@ Notion parsing rules (real payload shapes): title = the property whose `type == 
 
 `ICLOUD_EMAIL` / `APP_SPECIFIC_PASSWORD` are the **single-user dev path** the scheduler still runs on; real users' credentials live per-row in `caldav_credentials`.
 
-`.env.example` is current — keep it that way when adding a setting.
+`.env` is the **dev** file; `.env.prod` (gitignored, loaded by `docker-compose.yml`) is production and differs in three keys: `FRONTEND_URL` + both OAuth redirect URIs point at the tunnel hostname, and `COOKIE_SAMESITE=lax` because prod is one origin. Neither file enters the image — see `.dockerignore`, which also excludes `frontend/.env` so the dev `VITE_API_URL` cannot be baked into the prod bundle.
+
+`.env.example` and `.env.prod.example` are current — keep them that way when adding a setting.
 
 ## README.md
 
