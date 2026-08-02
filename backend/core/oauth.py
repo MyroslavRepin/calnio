@@ -11,12 +11,9 @@ oauth.register(
     client_kwargs={"scope": "openid email profile"},
 )
 
-# Notion is plain OAuth2 — no OIDC discovery, so both endpoints are explicit.
-# `owner=user` is required by Notion and is not part of the OAuth spec, hence
-# authorize_params. There is deliberately no `scope`: Notion's capabilities are
-# configured on the integration's settings page, and sending a scope param is
-# rejected. The default token-endpoint auth (client_secret_basic) is what
-# Notion's /v1/oauth/token expects.
+# Notion is plain OAuth2, no OIDC discovery, so both endpoints are explicit.
+# owner=user is required by Notion and is not part of the OAuth spec. Sending a
+# scope param is rejected: capabilities are set on the integration's page.
 oauth.register(
     name="notion",
     client_id=settings.notion_oauth_client_id,

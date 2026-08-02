@@ -14,19 +14,17 @@ class Settings(BaseSettings):
     tasks_data_source: str
     syncing_interval_minutes: str
 
-    # Global off-switch for background syncing: false registers no interval job
-    # and refuses one-off runs, so a dev instance pointed at the real database
-    # never writes into a user's calendar. Per-user `enabled` is the other,
-    # finer switch.
+    # Global off-switch: false registers no interval job and refuses one-off
+    # runs, so a dev instance pointed at the real database never writes into a
+    # user's calendar. Per-user enabled is the finer switch.
     scheduler_enabled: bool
     event_due_date_field_name: str
     google_oauth_client_id: str
     google_oauth_client_secret: str
     google_oauth_redirect_uri: str
 
-    # Notion OAuth — a *public* integration (notion.so/my-integrations), not the
-    # internal one `notion_token` belongs to. Redirect URI must match the value
-    # registered there exactly.
+    # A public integration (notion.so/my-integrations), not the internal one
+    # notion_token belongs to. The redirect URI must match it exactly.
     notion_oauth_client_id: str
     notion_oauth_client_secret: str
     notion_oauth_redirect_uri: str
@@ -34,24 +32,18 @@ class Settings(BaseSettings):
     session_secret: str
     jwt_secret: str
 
-    # Fernet key encrypting per-user secrets at rest: iCloud app-specific
-    # passwords and Notion access tokens.
-    # Generate with:
-    #   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-    # Losing it makes every stored credential permanently unreadable — users
-    # would have to re-enter their app-specific password.
+    # Encrypts per-user secrets at rest. Losing it makes every stored
+    # credential unreadable and every user has to reconnect.
+    # python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
     credentials_encryption_key: str
 
-    # Frontend origin the callback redirects back to (and the CORS allow-origin).
+    # Where the OAuth callback redirects back to, and the CORS allow-origin.
     frontend_url: str = "http://localhost:5173"
 
-    # Refresh-token cookie policy. Defaults suit dev cross-origin
-    # (Vite :5173 → API :8080): a cross-site cookie must be SameSite=None and
-    # Secure (Chrome treats localhost as a secure context, so Secure works over
-    # http://localhost). For prod same-origin (FastAPI StaticFiles serving the
-    # built Vue app) set cookie_samesite=lax.
-    # Literal, not str: Starlette's set_cookie and SessionMiddleware both take
-    # this as a Literal, and it makes a typo in .env fail at boot.
+    # Defaults suit dev cross-origin (Vite :5173 to API :8080), where a
+    # cross-site cookie must be SameSite=None and Secure. Prod is same-origin,
+    # so it sets cookie_samesite=lax. Literal, not str, so a typo in .env fails
+    # at boot instead of at the first login.
     cookie_secure: bool = True
     cookie_samesite: Literal["lax", "strict", "none"] = "none"
     cookie_domain: str | None = None

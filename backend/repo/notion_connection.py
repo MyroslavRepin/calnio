@@ -36,14 +36,13 @@ class NotionConnectionRepo:
         workspace_id: str,
         workspace_name: str | None,
         workspace_icon: str | None,
-    ) -> tuple[NotionConnection, bool]:
-        """Create or replace the user's grant. Returns (row, created).
+    ) -> NotionConnection:
+        """Create or replace the user's grant.
 
-        Reconnecting to a *different* workspace clears the selected data
-        source — an id from the old workspace means nothing under the new one.
-        Re-authorizing the same workspace keeps the selection, which is what
-        makes the "re-open Notion's picker to share more databases" flow
-        non-destructive.
+        Reconnecting to a different workspace clears the selected data source,
+        since an id from the old workspace means nothing under the new one.
+        Re-authorizing the same workspace keeps it, which is what makes
+        re-opening Notion's picker to share more databases non-destructive.
         """
         now = datetime.now(timezone.utc)
         row = self.get(user_id)
@@ -60,7 +59,7 @@ class NotionConnectionRepo:
             )
             self.db.add(row)
             self.db.flush()  # assign id before the caller serializes the row
-            return row, True
+            return row
 
         if row.workspace_id != workspace_id:
             row.data_source_id = None
@@ -71,7 +70,7 @@ class NotionConnectionRepo:
         row.workspace_name = workspace_name
         row.workspace_icon = workspace_icon
         row.last_verified_at = now
-        return row, False
+        return row
 
     def set_data_source(
         self, row: NotionConnection, data_source_id: str, data_source_name: str

@@ -29,11 +29,10 @@ class UserRepo:
     def delete(self, user: User) -> None:
         """Drop the user and everything hanging off them.
 
-        Deleted through the ORM on purpose: `oauth_accounts` has no DB-level
-        ON DELETE CASCADE, so it is the mapped `cascade="all, delete-orphan"`
-        that clears it (along with the caldav, notion and sync_settings rows).
-        `synced_events` has no relationship here and is cascaded by Postgres.
-        A raw `DELETE FROM users` would fail on the oauth rows.
+        Deleted through the ORM on purpose: oauth_accounts has no DB-level ON
+        DELETE CASCADE, so the mapped cascade="all, delete-orphan" is what
+        clears it, along with the caldav, notion and sync_settings rows.
+        synced_events is cascaded by Postgres instead.
         """
         self.db.delete(user)
 

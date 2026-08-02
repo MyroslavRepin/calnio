@@ -23,8 +23,9 @@ setup_logging()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # The scheduler starts either way: turning a user's sync on queues a
-    # one-off job through it, and that path is gated separately.
+    """Start the scheduler, schedule the sync tick, stop it on shutdown."""
+    # The scheduler starts either way, because turning a user's sync on queues
+    # a one-off job through it and that path is gated separately.
     scheduler = init_scheduler()
     if settings.scheduler_enabled:
         scheduler.add_job(
@@ -34,15 +35,15 @@ async def lifespan(app: FastAPI):
             max_instances=1,  # never overlap two ticks
             next_run_time=datetime.now(),  # run once immediately on startup
         )
-    yield  # must run on both paths — a lifespan that never yields fails startup
-    scheduler.shutdown(wait=False)  # don't block Ctrl+C on an in-flight sync
+    yield
+    scheduler.shutdown(wait=False)  # do not block Ctrl+C on an in-flight sync
 
 
 app = FastAPI(lifespan=lifespan)
 
-# CORS: the Vue dev app (frontend_url) calls the API cross-origin and must send
-# the refresh cookie, so credentials must be allowed and the origin explicit
-# (a wildcard origin is rejected by browsers when credentials are included).
+# The Vue dev app calls the API cross-origin and must send the refresh cookie,
+# so credentials are allowed and the origin is explicit. Browsers reject a
+# wildcard origin once credentials are included.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[settings.frontend_url],
@@ -51,12 +52,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# SessionMiddleware: stores the OAuth `state` in a signed cookie (CSRF protection).
-# Cookie policy has to match the auth cookies', not Starlette's lax default:
-# Notion's connect flow asks for its authorize URL over a cross-origin XHR, and
-# the session cookie set on that response is only usable cross-site as
-# SameSite=None + Secure. Google's flow never hit this because its state cookie
-# is set during a top-level navigation.
+# Holds the OAuth state in a signed cookie. Its policy has to match the auth
+# cookies rather than Starlette's lax default: Notion's connect flow asks for
+# its authorize URL over a cross-origin XHR, and a session cookie set on that
+# response is only usable cross-site as SameSite=None and Secure.
 app.add_middleware(
     SessionMiddleware,
     secret_key=settings.session_secret,
@@ -70,25 +69,24 @@ app.include_router(notion_router)
 app.include_router(sync_router)
 app.include_router(account_router)
 
-# The built Vue app, served same-origin in prod. Resolved from this file, not the
-# working directory, so uvicorn started from anywhere still finds it. The
-# directory only exists in the Docker image (Dockerfile's build stage puts it
-# there); in dev it is absent and the app stays a bare API, exactly as before.
+# The built Vue app, served same-origin in prod. Resolved from this file rather
+# than the working directory, and present only inside the Docker image. In dev
+# the directory is absent and the app stays a bare API.
 DIST = Path(__file__).parent / "frontend" / "dist"
 
 if DIST.is_dir():
     app.mount("/assets", StaticFiles(directory=DIST / "assets"), name="assets")
 
-    # Catch-all, declared after every router so real endpoints win. The Vue
-    # router runs in history mode: /dashboard/connections is not a file, but a
-    # hard refresh still asks the server for it, and the answer has to be
-    # index.html so the router can take over on the client.
+    # Declared after every router so real endpoints win. The Vue router runs in
+    # history mode, so a hard refresh of /dashboard/connections asks the server
+    # for a path that is not a file and has to be answered with index.html.
     @app.get("/{spa_path:path}", include_in_schema=False)
     async def spa(spa_path: str) -> FileResponse:
-        # An unmatched API path must stay JSON — returning HTML with a 200 would
-        # make a typo'd endpoint look like a successful request to the client.
+        """Serve index.html for any path the routers did not claim."""
+        # An unmatched API path stays JSON: HTML with a 200 would make a typo'd
+        # endpoint look like a successful request.
         if spa_path.startswith(("api/", "auth/")):
             raise HTTPException(status_code=404, detail="Not Found")
-        # index.html must not be cached: it references hashed bundle filenames
-        # that a redeploy replaces, and a stale copy points at files that are gone.
+        # index.html must not be cached: it references hashed bundle names that
+        # a redeploy replaces, and a stale copy points at files that are gone.
         return FileResponse(DIST / "index.html", headers={"Cache-Control": "no-cache"})

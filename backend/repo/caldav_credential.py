@@ -9,7 +9,7 @@ from backend.models.caldav_credential import CaldavCredential
 class CaldavCredentialRepo:
     """iCloud credential persistence. Caller owns the session and the commit.
 
-    Stores and returns the password as ciphertext only — encryption happens in
+    Stores and returns the password as ciphertext only. Encryption happens in
     backend/core/crypto.py, never here.
     """
 
@@ -26,8 +26,8 @@ class CaldavCredentialRepo:
     ) -> tuple[CaldavCredential, bool]:
         """Create or replace the user's credential. Returns (row, created).
 
-        Replacing an account clears `calendar_url` — a calendar URL from the
-        old account is meaningless under new credentials.
+        Replacing an account clears calendar_url, since a URL from the old
+        account is meaningless under new credentials.
         """
         now = datetime.now(timezone.utc)
         row = self.get(user_id)

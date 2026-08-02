@@ -21,13 +21,13 @@ STATUS_AUTH_ERROR = "auth_error"
 class SyncSettings(Base):
     """A user's sync switch, its one setting, and how the last run went.
 
-    One row per user, created on demand — no row means the user has never
+    One row per user, created on demand. No row means the user has never
     touched syncing, which reads exactly like disabled. `enabled` starts False:
     Calnio writes to somebody's calendar only after they ask for it.
 
     `due_date_property` is the Notion column read for dates. It has no default
     on purpose. Guessing "Due Date" would let a user turn syncing on, see a
-    successful run, and get no events — the schema decides the name, so the
+    successful run, and get no events. The schema decides the name, so the
     user picks it.
     """
 

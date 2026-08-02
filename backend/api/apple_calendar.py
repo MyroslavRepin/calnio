@@ -10,7 +10,7 @@ from backend.deps.db import get_session
 from backend.models.caldav_credential import CaldavCredential
 from backend.models.user import User
 from backend.repo.caldav_credential import CaldavCredentialRepo
-from backend.repo.caldav import create_calendar, list_calendars
+from backend.repo.caldav import CalDavAccountRepo
 from backend.schemas.apple_calendar import (
     ConnectionStatus,
     ConnectRequest,
@@ -36,9 +36,9 @@ async def connect_apple_calendar(
     worked at least once.
     """
     with icloud_errors():
-        calendars = list_calendars(
+        calendars = CalDavAccountRepo(
             settings.caldav_url, body.icloud_email, body.app_specific_password
-        )
+        ).list_calendars()
 
     row, created = CaldavCredentialRepo(db).upsert(
         user.id, body.icloud_email, encrypt(body.app_specific_password)
@@ -81,7 +81,7 @@ async def disconnect_apple_calendar(
 async def list_apple_calendars(row: CaldavCredential = Depends(get_credential)):
     """Every calendar on the connected iCloud account."""
     with icloud_errors():
-        return list_calendars(*icloud_credentials(row))
+        return CalDavAccountRepo(*icloud_credentials(row)).list_calendars()
 
 
 @router.post(
@@ -95,7 +95,7 @@ async def create_apple_calendar(
 ):
     """Create a calendar in the user's iCloud account, without selecting it."""
     with icloud_errors():
-        return create_calendar(*icloud_credentials(row), body.name)
+        return CalDavAccountRepo(*icloud_credentials(row)).create_calendar(body.name)
 
 
 @router.put("/api/v1/me/apple-calendar/calendar", response_model=ConnectionStatus)
@@ -106,7 +106,7 @@ async def select_apple_calendar(
 ):
     """Point syncing at one of the user's calendars."""
     with icloud_errors():
-        calendars = list_calendars(*icloud_credentials(row))
+        calendars = CalDavAccountRepo(*icloud_credentials(row)).list_calendars()
 
     # Never store a URL the account cannot see, whoever handed it to us.
     if not any(calendar.url == body.calendar_url for calendar in calendars):

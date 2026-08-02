@@ -6,6 +6,8 @@ from backend.core.config import settings
 
 
 class JWTService:
+    """Mints and validates the access and refresh tokens, HS256."""
+
     def __init__(
         self,
         secret_key: str,
@@ -19,16 +21,19 @@ class JWTService:
         self.refresh_token_exp = refresh_token_exp
 
     def create_access_token(self, user_id: str) -> str:
-        return self._encode(user_id, "access", self.access_token_exp)
+        """Mint a short-lived access token."""
+        return self.encode(user_id, "access", self.access_token_exp)
 
     def create_refresh_token(self, user_id: str) -> str:
-        return self._encode(user_id, "refresh", self.refresh_token_exp)
+        """Mint a long-lived refresh token."""
+        return self.encode(user_id, "refresh", self.refresh_token_exp)
 
     def create_token_pair(self, user_id: str) -> tuple[str, str]:
         """Mint both tokens at once, on login and on refresh."""
         return self.create_access_token(user_id), self.create_refresh_token(user_id)
 
     def decode(self, token: str, expected_type: str | None = None) -> dict:
+        """Decode a token, rejecting one whose type is not the expected one."""
         payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
         if expected_type is not None and payload.get("type") != expected_type:
             raise jwt.InvalidTokenError(
@@ -49,7 +54,8 @@ class JWTService:
         user_id = self.verify(refresh_token, expected_type="refresh")
         return self.create_token_pair(user_id)
 
-    def _encode(self, user_id: str, token_type: str, exp_minutes: int) -> str:
+    def encode(self, user_id: str, token_type: str, exp_minutes: int) -> str:
+        """Sign one token carrying the subject, its type, and an expiry."""
         now = datetime.now(timezone.utc)
         payload = {
             "sub": str(user_id),

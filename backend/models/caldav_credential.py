@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 class CaldavCredential(Base):
     """A user's iCloud CalDAV credential + the calendar they sync into.
 
-    One row per user (unique `user_id`) — multi-account is not a feature.
+    One row per user (unique user_id). Multi-account is not a feature.
     A row only exists if the credential authenticated against iCloud at least
     once, so "row exists" means "these credentials worked".
     """

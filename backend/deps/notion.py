@@ -68,9 +68,7 @@ def get_notion_repo(
     row: NotionConnection = Depends(get_connection),
 ) -> NotionPageRepo:
     """An authenticated Notion repo for this user's grant."""
-    repo = NotionPageRepo(decrypt(row.access_token_encrypted))
-    repo.connect()
-    return repo
+    return NotionPageRepo(decrypt(row.access_token_encrypted))
 
 
 def date_property_names(row: NotionConnection) -> list[str]:

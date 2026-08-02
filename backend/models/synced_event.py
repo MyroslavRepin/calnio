@@ -28,10 +28,10 @@ class SyncedEvent(Base):
         ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
 
-    # Mapping key — Notion page id, also the iCal uid.
+    # Mapping key: Notion page id, also the iCal uid.
     notion_page_id: Mapped[str] = mapped_column(String, index=True)
 
-    # Last-synced title — compared to detect Notion title edits.
+    # Last-synced title, compared to detect Notion title edits.
     title: Mapped[str | None] = mapped_column(String, nullable=True)
 
     # CalDAV locators.

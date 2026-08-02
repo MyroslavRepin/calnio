@@ -20,9 +20,8 @@ class SyncSettingsRepo:
     def get_or_create(self, user_id: int) -> SyncSettings:
         """The user's row, created disabled if this is the first time.
 
-        Every read path goes through here, so the dashboard can render a
-        sensible "off, nothing picked" state without a special case for
-        "no row yet".
+        Every read path goes through here, so the dashboard renders an "off,
+        nothing picked" state without a special case for "no row yet".
         """
         row = self.get(user_id)
         if row is not None:

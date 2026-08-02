@@ -13,15 +13,15 @@ if TYPE_CHECKING:
 class NotionConnection(Base):
     """A user's Notion workspace grant + the data source they sync from.
 
-    One row per user (unique `user_id`) — multi-workspace is not a feature.
+    One row per user (unique user_id). Multi-workspace is not a feature.
     A row only exists once Notion minted a token for us, so "row exists" means
     "the grant worked". `data_source_id` staying NULL means the user authorized
-    the workspace but has not picked a database yet — the two-stage state the
+    the workspace but has not picked a database yet, the two-stage state the
     dashboard renders as "connected" vs "configured".
 
     Distinct from `oauth_accounts`, which answers "who is this user" (a login
     identity keyed by Google `sub`, N per user). This answers "what does this
-    user connect to" — a resource grant, 1 per user.
+    user connect to", a resource grant, 1 per user.
     """
 
     __tablename__: str = "notion_connections"
@@ -34,11 +34,11 @@ class NotionConnection(Base):
     access_token_encrypted: Mapped[str] = mapped_column(String)
 
     # Straight from Notion's token response. `bot_id` identifies this specific
-    # grant — kept for the revoke call and for support questions.
+    # grant, kept for the revoke call and for support questions.
     bot_id: Mapped[str] = mapped_column(String)
     workspace_id: Mapped[str] = mapped_column(String)
     workspace_name: Mapped[str | None] = mapped_column(String, nullable=True)
-    # Either an image URL or a literal emoji — Notion sends both shapes.
+    # Either an image URL or a literal emoji, Notion sends both shapes.
     workspace_icon: Mapped[str | None] = mapped_column(String, nullable=True)
 
     # NULL until the user picks a database. API 2025-09-03: pages and schema

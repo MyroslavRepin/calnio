@@ -24,9 +24,9 @@ class OAuthAccount(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
 
     provider: Mapped[str] = mapped_column(String)  # "google"
-    provider_account_id: Mapped[str] = mapped_column(String)  # Google `sub` — stable id
+    provider_account_id: Mapped[str] = mapped_column(String)  # Google sub, a stable id
 
-    # Google API tokens — only filled if we call Google APIs; nullable otherwise.
+    # Google API tokens, only filled if we call Google APIs.
     access_token: Mapped[str | None] = mapped_column(String, nullable=True)
     refresh_token: Mapped[str | None] = mapped_column(String, nullable=True)
     expires_at: Mapped[datetime | None] = mapped_column(

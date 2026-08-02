@@ -11,7 +11,7 @@ from backend.models.sync_settings import SyncSettings
 
 
 class User(Base):
-    """App identity — one row per person, independent of how they logged in."""
+    """App identity: one row per person, independent of how they logged in."""
 
     __tablename__: str = "users"
 
