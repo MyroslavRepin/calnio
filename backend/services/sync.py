@@ -18,11 +18,11 @@ from backend.models.sync_settings import (
     SyncSettings,
 )
 from backend.models.synced_event import SyncedEvent
-from backend.repo.caldav_credential_repo import CaldavCredentialRepo
-from backend.repo.caldav_repo import CalDavEventRepo, get_calendar_url
-from backend.repo.notion_connection_repo import NotionConnectionRepo
-from backend.repo.notion_repo import NotionPageRepo
-from backend.repo.sync_settings_repo import SyncSettingsRepo
+from backend.repo.caldav_credential import CaldavCredentialRepo
+from backend.repo.caldav import CalDavEventRepo, get_calendar_url
+from backend.repo.notion_connection import NotionConnectionRepo
+from backend.repo.notion import NotionPageRepo
+from backend.repo.sync_settings import SyncSettingsRepo
 from backend.schemas.caldav_event import CalDavEvent as CalDavEventScheme
 from backend.schemas.notion_page import NotionPage
 

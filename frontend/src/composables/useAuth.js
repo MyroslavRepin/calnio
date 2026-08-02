@@ -8,7 +8,7 @@ const API = import.meta.env.VITE_API_URL ?? ''
 // Both tokens live in httpOnly cookies the browser sends automatically — the
 // JS never holds a token. We only track derived UI state here.
 const state = reactive({
-  user: null, // { user_id, email, name, picture } | null
+  user: null, // { id, email, name, picture } | null
   ready: false, // bootstrap finished (avoids UI flicker before we know auth)
   error: null, // last auth error flag (e.g. from ?auth_error=oauth)
 })

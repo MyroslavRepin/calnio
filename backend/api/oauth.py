@@ -7,79 +7,34 @@ from sqlalchemy.orm import Session
 from backend.core.config import settings
 from backend.core.logging import logger
 from backend.core.oauth import oauth
-from backend.core.security import JWTService
-from backend.deps.auth import ACCESS_COOKIE, get_current_user
+from backend.core.security import jwt_service
+from backend.deps.auth import clear_auth_cookies, get_current_user, set_auth_cookies
 from backend.deps.db import get_session
 from backend.models.user import User
-from backend.repo.user_repo import UserRepo
+from backend.repo.user import UserRepo
+from backend.schemas.auth import MeResponse
 
-router = APIRouter()
-
-jwt_service = JWTService(settings.jwt_secret)
-
-# Both tokens ride in httpOnly cookies (never readable by JS).
-# access_token  — sent to every route (path "/"), short-lived. Its name lives
-# in deps/auth.py, which is what reads it back.
-# refresh_tokens — sent only to /auth/* (path "/auth"), long-lived.
-REFRESH_COOKIE = "refresh_token"
-ACCESS_COOKIE_PATH = "/"
-REFRESH_COOKIE_PATH = "/auth"
-ACCESS_MAX_AGE = jwt_service.access_token_exp * 60  # minutes → seconds
-REFRESH_MAX_AGE = jwt_service.refresh_token_exp * 60
-
-
-def _set_cookie(response: Response, name: str, value: str, path: str, max_age: int) -> None:
-    response.set_cookie(
-        name,
-        value,
-        max_age=max_age,
-        httponly=True,
-        secure=settings.cookie_secure,
-        samesite=settings.cookie_samesite,
-        domain=settings.cookie_domain,
-        path=path,
-    )
-
-
-def _clear_cookie(response: Response, name: str, path: str) -> None:
-    response.delete_cookie(
-        name,
-        httponly=True,
-        secure=settings.cookie_secure,
-        samesite=settings.cookie_samesite,
-        domain=settings.cookie_domain,
-        path=path,
-    )
-
-
-def _set_auth_cookies(response: Response, access_token: str, refresh_token: str) -> None:
-    _set_cookie(response, ACCESS_COOKIE, access_token, ACCESS_COOKIE_PATH, ACCESS_MAX_AGE)
-    _set_cookie(response, REFRESH_COOKIE, refresh_token, REFRESH_COOKIE_PATH, REFRESH_MAX_AGE)
-
-
-def _clear_auth_cookies(response: Response) -> None:
-    _clear_cookie(response, ACCESS_COOKIE, ACCESS_COOKIE_PATH)
-    _clear_cookie(response, REFRESH_COOKIE, REFRESH_COOKIE_PATH)
+router = APIRouter(tags=["auth"])
 
 
 @router.get("/auth/oauth/google/login")
-async def oauth_google_login(request: Request):
+async def google_login(request: Request):
+    """Send the browser to Google's consent screen."""
     return await oauth.google.authorize_redirect(
         request, settings.google_oauth_redirect_uri
     )
 
 
 @router.get("/auth/oauth/google/callback")
-async def oauth_google_callback(request: Request, db: Session = Depends(get_session)):
-    # authlib validates the `state` (CSRF) and exchanges the code. Any failure
-    # here is a bounce back to the frontend with an error flag, never a 500.
+async def google_callback(request: Request, db: Session = Depends(get_session)):
+    """Exchange Google's code, mint tokens, land on the dashboard."""
     try:
         token = await oauth.google.authorize_access_token(request)
     except OAuthError as exc:
         logger.warning("google oauth failed: {}", exc.error)
         return RedirectResponse(f"{settings.frontend_url}/?auth_error=oauth")
 
-    info = token.get("userinfo")  # sub, email, name, picture
+    info = token.get("userinfo")
     if not info or not info.get("sub"):
         logger.warning("google oauth: missing userinfo in token response")
         return RedirectResponse(f"{settings.frontend_url}/?auth_error=userinfo")
@@ -93,24 +48,16 @@ async def oauth_google_callback(request: Request, db: Session = Depends(get_sess
     )
     db.commit()
 
-    # Both tokens land in httpOnly cookies; the browser sends them on every
-    # subsequent request. No token in the URL.
-    # Land on the dashboard, not the marketing page — a first-time user needs
-    # the Apple Calendar setup, and a returning one wants their status.
     access_token, refresh_token = jwt_service.create_token_pair(str(user.id))
     response = RedirectResponse(f"{settings.frontend_url}/dashboard")
-    _set_auth_cookies(response, access_token, refresh_token)
+    set_auth_cookies(response, access_token, refresh_token)
     return response
 
 
-@router.post("/auth/refresh")
-async def refresh_tokens(request: Request):
-    """Rotate both cookies off a valid refresh cookie.
-
-    The frontend calls this on any 401. The tokens live only in httpOnly
-    cookies — never sent in a body or returned in the response.
-    """
-    refresh_token = request.cookies.get(REFRESH_COOKIE)
+@router.post("/auth/refresh", status_code=status.HTTP_204_NO_CONTENT)
+async def refresh_tokens(request: Request, response: Response):
+    """Rotate both cookies off a valid refresh cookie."""
+    refresh_token = request.cookies.get("refresh_token")
     if not refresh_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="no refresh cookie"
@@ -119,31 +66,25 @@ async def refresh_tokens(request: Request):
     try:
         access_token, new_refresh_token = jwt_service.refresh(refresh_token)
     except jwt.InvalidTokenError:
-        # Bad/expired refresh: clear stale cookies so the client stops retrying.
-        response = JSONResponse(
+        # Raising would discard the injected response, so the stale cookies are
+        # cleared on a response built here instead.
+        expired = JSONResponse(
             {"detail": "invalid or expired refresh token"},
             status_code=status.HTTP_401_UNAUTHORIZED,
         )
-        _clear_auth_cookies(response)
-        return response
+        clear_auth_cookies(expired)
+        return expired
 
-    response = JSONResponse({"ok": True})
-    _set_auth_cookies(response, access_token, new_refresh_token)
-    return response
+    set_auth_cookies(response, access_token, new_refresh_token)
 
 
-@router.post("/auth/logout")
-async def logout():
-    response = JSONResponse({"ok": True})
-    _clear_auth_cookies(response)
-    return response
+@router.post("/auth/logout", status_code=status.HTTP_204_NO_CONTENT)
+async def logout(response: Response):
+    """Clear both auth cookies."""
+    clear_auth_cookies(response)
 
 
-@router.get("/auth/me")
+@router.get("/auth/me", response_model=MeResponse)
 async def get_me(user: User = Depends(get_current_user)):
-    return {
-        "user_id": user.id,
-        "email": user.email,
-        "name": user.name,
-        "picture": user.picture,
-    }
+    """Return the signed-in user's profile."""
+    return user

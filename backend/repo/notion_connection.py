@@ -1,15 +1,21 @@
 from datetime import datetime, timezone
 
+import httpx
+from authlib.integrations.base_client import OAuthError
+from authlib.integrations.httpx_client import OAuth2Client
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from backend.core.config import settings
+from backend.core.logging import logger
+from backend.core.oauth import NOTION_REVOKE_URL
 from backend.models.notion_connection import NotionConnection
 
 
 class NotionConnectionRepo:
     """Notion grant persistence. Caller owns the session and the commit.
 
-    Stores and returns the access token as ciphertext only — encryption happens
+    Stores and returns the access token as ciphertext only. Encryption happens
     in backend/core/crypto.py, never here.
     """
 
@@ -75,3 +81,15 @@ class NotionConnectionRepo:
 
     def delete(self, row: NotionConnection) -> None:
         self.db.delete(row)
+
+    def revoke(self, access_token: str) -> None:
+        """Drop the grant on Notion's side. Best effort, never blocks a disconnect."""
+        client = OAuth2Client(
+            settings.notion_oauth_client_id, settings.notion_oauth_client_secret
+        )
+        try:
+            client.revoke_token(
+                NOTION_REVOKE_URL, token=access_token, token_type_hint="access_token"
+            )
+        except (OAuthError, httpx.HTTPError) as exc:
+            logger.warning("notion revoke failed, forgetting the grant anyway: {}", exc)

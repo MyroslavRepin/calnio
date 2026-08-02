@@ -1,204 +1,79 @@
-from collections.abc import Iterator
-from contextlib import contextmanager
-from datetime import datetime
-
-import httpx
 from authlib.integrations.starlette_client import OAuthError
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
-from notion_client.errors import (
-    APIResponseError,
-    HTTPResponseError,
-    RequestTimeoutError,
-)
-from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from backend.core.config import settings
 from backend.core.crypto import decrypt, encrypt
 from backend.core.logging import logger
-from backend.core.oauth import NOTION_REVOKE_URL, oauth
+from backend.core.oauth import oauth
 from backend.deps.auth import get_current_user
 from backend.deps.db import get_session
+from backend.deps.notion import (
+    date_property_names,
+    get_connection,
+    get_notion_repo,
+    notion_errors,
+)
 from backend.models.notion_connection import NotionConnection
 from backend.models.user import User
-from backend.repo.notion_connection_repo import NotionConnectionRepo
-from backend.repo.notion_repo import NotionPageRepo
-from backend.repo.sync_settings_repo import SyncSettingsRepo
+from backend.repo.notion_connection import NotionConnectionRepo
+from backend.repo.notion import NotionPageRepo
+from backend.repo.sync_settings import SyncSettingsRepo
+from backend.schemas.notion_connection import (
+    AuthorizeUrlResponse,
+    ConnectionStatus,
+    NotionDatabaseOption,
+    SelectDatabaseRequest,
+)
 
-# Two path families in one router on purpose. The OAuth dance sits under
-# /auth/oauth/* next to Google's, because that is what a reader looking for an
-# OAuth callback expects; the resource routes take /api/v1 like every other new
-# router. One feature stays in one file, so the paths are spelled out in full
-# rather than set as a router prefix.
 router = APIRouter(tags=["notion"])
 
-OAUTH_BASE = "/auth/oauth/notion"
-BASE = "/api/v1/me/notion"
 
-# Where the OAuth dance lands the browser, success or failure.
-LANDING = "/dashboard/connections"
-
-
-class AuthorizeUrlResponse(BaseModel):
-    authorize_url: str
-
-
-class SelectDatabaseRequest(BaseModel):
-    data_source_id: str = Field(min_length=1)
-
-
-class ConnectionStatus(BaseModel):
-    """What the dashboard is allowed to see. Never carries the access token."""
-
-    connected: bool
-    workspace_name: str | None
-    workspace_icon: str | None
-    data_source_id: str | None
-    data_source_name: str | None
-    last_verified_at: datetime | None
-
-
-class NotionDatabaseOption(BaseModel):
-    """One row in the database picker.
-
-    A projection of NotionDatabase without `properties` — the picker needs a
-    name, not the workspace's column schema.
-    """
-
-    id: str
-    title: str
-    url: str | None
-
-
-def _status(row: NotionConnection) -> ConnectionStatus:
-    return ConnectionStatus(
-        connected=True,
-        workspace_name=row.workspace_name,
-        workspace_icon=row.workspace_icon,
-        data_source_id=row.data_source_id,
-        data_source_name=row.data_source_name,
-        last_verified_at=row.last_verified_at,
+def redirect_with_error(flag: str) -> RedirectResponse:
+    """Send the browser back to the connections page carrying an error flag."""
+    return RedirectResponse(
+        f"{settings.frontend_url}/dashboard/connections?notion_error={flag}"
     )
 
 
-@contextmanager
-def notion_errors() -> Iterator[None]:
-    """Map Notion API failures onto HTTP status codes.
-
-    Never 401 — the frontend's apiFetch auto-refreshes and retries on 401, and
-    a revoked Notion token will never start working on a retry. Notion
-    rejecting us is a 400 telling the user to reconnect; Notion being
-    unreachable is a 502.
-
-    Raw exception text is logged, never returned: it can carry request URLs and
-    the bearer token.
-    """
-    try:
-        yield
-    except APIResponseError as exc:
-        # Subclass of HTTPResponseError, so it has to be caught first.
-        if exc.status in (401, 403):
-            logger.warning("notion rejected the grant: {}", exc)
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="notion rejected this connection, reconnect calnio",
-            )
-        if exc.status == 404:
-            logger.warning("notion object missing or unshared: {}", exc)
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="that database is no longer shared with calnio",
-            )
-        logger.error("notion api error: {}", exc)
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="could not reach notion, try again",
-        )
-    except (HTTPResponseError, RequestTimeoutError, httpx.HTTPError) as exc:
-        logger.error("notion unreachable: {}", exc)
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="could not reach notion, try again",
-        )
-
-
-def get_connection(
-    user: User = Depends(get_current_user), db: Session = Depends(get_session)
-) -> NotionConnection:
-    """The current user's stored grant, or 404."""
-    row = NotionConnectionRepo(db).get(user.id)
-    if row is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="no notion connection"
-        )
-    return row
-
-
-def notion_repo_for(row: NotionConnection) -> NotionPageRepo:
-    """An authenticated Notion repo for this user's grant.
-
-    The one request-path place a stored Notion token is decrypted — the sync
-    loop does its own, off the request path, in services/sync.py.
-    """
-    repo = NotionPageRepo(decrypt(row.access_token_encrypted))
-    repo.connect()
-    return repo
-
-
-def _bounce(flag: str) -> RedirectResponse:
-    return RedirectResponse(f"{settings.frontend_url}{LANDING}?notion_error={flag}")
-
-
-@router.get(f"{OAUTH_BASE}/login", response_model=AuthorizeUrlResponse)
+@router.get("/auth/oauth/notion/login", response_model=AuthorizeUrlResponse)
 async def notion_login(request: Request, user: User = Depends(get_current_user)):
     """Hand the frontend an authorize URL instead of redirecting to it.
 
-    Unlike Google's login, this route needs to know who is asking — and the
-    access cookie lives 5 minutes. A plain link would 401 whenever the
-    dashboard had been open a while, with no apiFetch in the loop to refresh
-    silently. Returning JSON lets the frontend fetch it through apiFetch (which
-    does refresh), then navigate, so the callback seconds later still has a
-    valid cookie.
+    A plain link would 401 once the 5 minute access cookie expired, with no
+    apiFetch in the loop to refresh it silently.
     """
     redirect_uri = settings.notion_oauth_redirect_uri
-    rv = await oauth.notion.create_authorization_url(redirect_uri)
-    # Stores the CSRF `state` in the session cookie. authorize_redirect would
-    # do this for us, but it also returns the 302 we are avoiding here.
-    await oauth.notion.save_authorize_data(request, redirect_uri=redirect_uri, **rv)
-    logger.info("notion authorize url issued for user {}", user.id)
-    return AuthorizeUrlResponse(authorize_url=rv["url"])
+    authorize_data = await oauth.notion.create_authorization_url(redirect_uri)
+    # Stores the CSRF state in the session cookie, which authorize_redirect
+    # would also do, but it returns the 302 this route is avoiding.
+    await oauth.notion.save_authorize_data(
+        request, redirect_uri=redirect_uri, **authorize_data
+    )
+    return AuthorizeUrlResponse(authorize_url=authorize_data["url"])
 
 
-@router.get(f"{OAUTH_BASE}/callback")
+@router.get("/auth/oauth/notion/callback")
 async def notion_callback(request: Request, db: Session = Depends(get_session)):
-    """Exchange the code, store the grant, send the browser back to the app.
-
-    The successful exchange is the verification — a token Notion just minted
-    works — so there is no probe call here. The frontend fetches the database
-    list itself once it lands.
-    """
-    # get_current_user is called by hand rather than as a dependency: its 401 is
-    # a JSON body, and this route is a browser navigation that has to end on a
-    # page. Expiry here means the user sat on Notion's consent screen for over
-    # five minutes; they land back on the dashboard and click connect again.
+    """Exchange the code, store the grant, send the browser back to the app."""
+    # Called by hand, not as a dependency: a 401 here is a JSON body, and a
+    # browser navigation has to end on a page.
     try:
         user = get_current_user(request, db)
     except HTTPException:
         logger.warning("notion callback arrived without a valid session")
-        return _bounce("session")
+        return redirect_with_error("session")
 
     try:
         token = await oauth.notion.authorize_access_token(request)
     except OAuthError as exc:
         logger.warning("notion oauth failed: {}", exc.error)
-        return _bounce("oauth")
+        return redirect_with_error("oauth")
 
-    # access_token + workspace_id are the two fields everything downstream
-    # depends on; anything else Notion sends is optional.
     if not token.get("access_token") or not token.get("workspace_id"):
         logger.warning("notion oauth: unexpected token response shape")
-        return _bounce("token")
+        return redirect_with_error("token")
 
     NotionConnectionRepo(db).upsert(
         user.id,
@@ -211,115 +86,61 @@ async def notion_callback(request: Request, db: Session = Depends(get_session)):
     db.commit()
 
     logger.info("notion connected for user {}", user.id)
-    return RedirectResponse(f"{settings.frontend_url}{LANDING}")
+    return RedirectResponse(f"{settings.frontend_url}/dashboard/connections")
 
 
-@router.get(BASE, response_model=ConnectionStatus)
+@router.get("/api/v1/me/notion", response_model=ConnectionStatus)
 async def get_notion(row: NotionConnection = Depends(get_connection)):
-    return _status(row)
+    """The stored grant as the dashboard sees it."""
+    return row
 
 
-def _revoke(access_token: str) -> None:
-    """Ask Notion to drop the grant. Best effort — never blocks a disconnect.
-
-    The iCloud disconnect deliberately leaves the user's events alone because
-    they are the user's data. This is the opposite case: the grant is ours, and
-    leaving it live would keep Calnio listed in the user's Notion connections
-    after they asked us to go away.
-    """
-    try:
-        httpx.post(
-            NOTION_REVOKE_URL,
-            auth=(
-                settings.notion_oauth_client_id,
-                settings.notion_oauth_client_secret,
-            ),
-            json={"token": access_token},
-            timeout=10,
-        ).raise_for_status()
-    except httpx.HTTPError as exc:
-        logger.warning("notion revoke failed, forgetting the grant anyway: {}", exc)
-
-
-@router.delete(BASE, status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/api/v1/me/notion", status_code=status.HTTP_204_NO_CONTENT)
 async def disconnect_notion(
     row: NotionConnection = Depends(get_connection),
     db: Session = Depends(get_session),
 ):
+    """Revoke the grant on Notion's side and forget it here."""
     user_id = row.user_id
-    _revoke(decrypt(row.access_token_encrypted))
-    NotionConnectionRepo(db).delete(row)
+    repo = NotionConnectionRepo(db)
+    repo.revoke(decrypt(row.access_token_encrypted))
+    repo.delete(row)
     db.commit()
     logger.info("notion disconnected for user {}", user_id)
 
 
-@router.get(f"{BASE}/databases", response_model=list[NotionDatabaseOption])
-async def list_notion_databases(row: NotionConnection = Depends(get_connection)):
-    """The data sources the user ticked in Notion's consent picker.
-
-    Legitimately empty when they authorized the workspace without sharing a
-    database — an easy thing to do in Notion's dialog — so the client renders
-    an empty state rather than treating it as an error.
-    """
+@router.get(
+    "/api/v1/me/notion/databases", response_model=list[NotionDatabaseOption]
+)
+async def list_notion_databases(repo: NotionPageRepo = Depends(get_notion_repo)):
+    """The data sources the user ticked in Notion's consent picker."""
     with notion_errors():
-        databases = notion_repo_for(row).list_databases()
-    return [
-        NotionDatabaseOption(id=d.id, title=d.title, url=d.url) for d in databases
-    ]
+        return repo.list_databases()
 
 
-def date_property_names(row: NotionConnection) -> list[str]:
-    """The date columns on the user's selected data source, in schema order.
-
-    Notion property keys *are* the column names, so these strings are exactly
-    what sync looks up on a page. Shared with the sync settings route, which
-    validates a chosen name against this same list.
-    """
-    if row.data_source_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="pick a notion database first",
-        )
-    with notion_errors():
-        database = notion_repo_for(row).get_database(row.data_source_id)
-    return [
-        name
-        for name, prop in database.properties.items()
-        if prop.get("type") == "date"
-    ]
-
-
-@router.get(f"{BASE}/date-properties", response_model=list[str])
+@router.get("/api/v1/me/notion/date-properties", response_model=list[str])
 async def list_date_properties(row: NotionConnection = Depends(get_connection)):
-    """Candidates for the due-date setting.
-
-    Legitimately empty — a database with no date column cannot be synced, and
-    the client says so rather than showing an empty picker.
-    """
+    """Candidates for the due-date setting, empty if the database has none."""
     return date_property_names(row)
 
 
-@router.put(f"{BASE}/database", response_model=ConnectionStatus)
+@router.put("/api/v1/me/notion/database", response_model=ConnectionStatus)
 async def select_notion_database(
     body: SelectDatabaseRequest,
     row: NotionConnection = Depends(get_connection),
+    repo: NotionPageRepo = Depends(get_notion_repo),
     db: Session = Depends(get_session),
 ):
-    """Point syncing at one of the workspace's data sources.
-
-    Verified with a single retrieve rather than by scanning the whole list: it
-    proves the data source is still shared with us, costs one call instead of a
-    paginated search, and hands back the authoritative title to store. An id we
-    cannot see comes back as a Notion 404, which notion_errors turns into 400.
-    """
+    """Point syncing at one of the workspace's data sources."""
+    # One retrieve proves the data source is still shared with us and hands
+    # back the authoritative title. An id we cannot see comes back as a 404.
     with notion_errors():
-        database = notion_repo_for(row).get_database(body.data_source_id)
+        database = repo.get_database(body.data_source_id)
 
-    # A different database means a different schema: the due-date column the
-    # user picked on the old one may not exist here, and syncing against a
-    # name that is gone finds nothing while reporting success. Drop it and
-    # make them pick again — eligibility requires it, so sync pauses until
-    # they do.
+    # A different database means a different schema, so a due-date column
+    # picked on the old one may not exist here. Syncing against a name that is
+    # gone finds nothing while reporting success, so drop it and make them pick
+    # again. Eligibility requires it, so sync pauses until they do.
     if row.data_source_id != database.id:
         sync_settings = SyncSettingsRepo(db).get(row.user_id)
         if sync_settings is not None:
@@ -327,5 +148,4 @@ async def select_notion_database(
 
     NotionConnectionRepo(db).set_data_source(row, database.id, database.title)
     db.commit()
-    logger.info("notion data source selected for user {}", row.user_id)
-    return _status(row)
+    return row

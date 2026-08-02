@@ -2,6 +2,8 @@ from datetime import datetime, timedelta, timezone
 
 import jwt
 
+from backend.core.config import settings
+
 
 class JWTService:
     def __init__(
@@ -23,7 +25,7 @@ class JWTService:
         return self._encode(user_id, "refresh", self.refresh_token_exp)
 
     def create_token_pair(self, user_id: str) -> tuple[str, str]:
-        """Mint both tokens at once — used on login and on refresh."""
+        """Mint both tokens at once, on login and on refresh."""
         return self.create_access_token(user_id), self.create_refresh_token(user_id)
 
     def decode(self, token: str, expected_type: str | None = None) -> dict:
@@ -35,11 +37,7 @@ class JWTService:
         return payload
 
     def verify(self, token: str, expected_type: str) -> str:
-        """Validate a token and return its subject (user id).
-
-        Raises jwt.InvalidTokenError (or a subclass, e.g. ExpiredSignatureError)
-        on a bad signature, wrong type, or expiry.
-        """
+        """Validate a token and return its subject, or raise jwt.InvalidTokenError."""
         payload = self.decode(token, expected_type=expected_type)
         sub = payload.get("sub")
         if not sub:
@@ -47,10 +45,7 @@ class JWTService:
         return sub
 
     def refresh(self, refresh_token: str) -> tuple[str, str]:
-        """Trade a valid refresh token for a fresh access + refresh pair.
-
-        Rotates the refresh token so a leaked one has a bounded lifetime.
-        """
+        """Trade a valid refresh token for a fresh, rotated pair."""
         user_id = self.verify(refresh_token, expected_type="refresh")
         return self.create_token_pair(user_id)
 
@@ -63,3 +58,6 @@ class JWTService:
             "exp": now + timedelta(minutes=exp_minutes),
         }
         return jwt.encode(payload, self.secret_key, algorithm=self.algorithm)
+
+
+jwt_service = JWTService(settings.jwt_secret)

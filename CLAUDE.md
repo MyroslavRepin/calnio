@@ -62,9 +62,55 @@ Notion parsing rules (real payload shapes): title = the property whose `type == 
 ## Conventions
 
 - **Simplicity is rule #1.** No premature abstraction, no extra layers, no scope creep.
-- Conversion logic = private module functions inside the repo modules (`_page_to_event`, `_from_notion`, …) — no separate mapper classes.
+- Raw payload parsing lives in `backend/parsers/`, one class per topic. See "Repo layer" below.
 - PostgreSQL is the only store — no JSON files, no local-file shortcuts.
 - Timestamps: ORM rows use db-managed `row_created_at`/`row_updated_at`; domain timestamps are timezone-aware UTC.
+
+## Code style
+
+Binding rules. Existing code that breaks them is wrong and gets rewritten, not copied.
+
+**Comments**
+
+1. One-line docstring per function, saying WHAT it does. Never a paragraph, never a WHY essay, never a multi-line docstring unless a real trap needs recording.
+2. Inline comments only where the logic is genuinely unclear. Not to restate a line.
+3. **No em dashes anywhere.** Use a comma, a colon, or a full stop.
+
+**Layout, one thing per folder**
+
+4. Pydantic request/response models live in `backend/schemas/<feature>.py`, grouped per feature. Never defined inside a router.
+5. FastAPI dependencies live in `backend/deps/<feature>.py`. Chain them, so a route receives the finished object (`repo: NotionPageRepo`), not a row plus a factory call.
+6. Routers never import from other routers. Anything two routers share moves to `deps/`.
+7. Filenames do not repeat their folder. `repo/notion_connection.py`, not `repo/notion_connection_repo.py`. Classes keep the role suffix: `NotionConnectionRepo`.
+8. Network calls belong in `repo/`. Nothing in `api/` opens a connection to a third party.
+9. Use a dedicated client library, never raw HTTP by hand. Notion goes through `notion-client`, iCloud through `caldav`, OAuth including token revocation through `authlib`.
+10. No service layer for a flow with one caller. Logic stays in the handler until a second caller appears.
+
+**Routes**
+
+11. Full literal path in every decorator: `@router.get("/api/v1/me/notion/databases")`. No path constants, no f-strings, no router prefixes.
+12. `response_model=` on the decorator declares the contract. No return annotation on handlers.
+13. Routes with no payload return 204 and no body.
+14. Take an injected `response: Response` to set cookies. Construct a response object only for redirects, or when cookies must survive an error branch.
+15. All handlers are `async def`, uniformly.
+
+**Code**
+
+16. Row to schema conversion is `model_validate` with `model_config = ConfigDict(from_attributes=True)`. No hand-written mapper functions in the API layer.
+17. Full words, verb first. No `rv`, no `_bounce`. Names carry no abbreviations.
+18. Prefer the shorter shape. Two helpers beat four wrappers; a literal beats a constant used once.
+19. Singletons for stateless services live at the bottom of their `core/` module, same shape as `settings`: `jwt_service = JWTService(settings.jwt_secret)`. Nobody constructs a second one.
+20. Logging in `api/`: warnings and errors on every failure branch, `info` only for events that happen once per user and cannot be undone (connect, disconnect, delete).
+21. **No leading underscore anywhere in `backend/`.** Not on methods, not on module functions, not on attributes. Layout communicates scope, naming does not.
+
+**Repo layer**
+
+22. Every repo is a class, and its client is built in `__init__`. No `connect()` step, no `assert self.client is not None` guards, no `Client | None` attributes.
+23. One class per resource, not per remote system: `CalDavAccountRepo` owns calendars, `CalDavEventRepo` owns events inside one calendar. A constructor argument that only half the methods use means the class should be two.
+24. Repos log almost nothing: a count after a bulk read, a warning before a destructive bulk write. Never a line before and after the same call. The caller owns the narrative.
+25. Raw payload parsing lives in `backend/parsers/<topic>.py` as a class with instance methods, held by the repo as `self.parser`. Verb-first method names: `parse_page`, `parse_database`, `parse_event`, `render_event`. Pagination and other transport concerns stay in the repo.
+26. Repos raise `RuntimeError` on a failed lookup. A custom exception class waits until something needs to catch that specific failure and act on it.
+27. A repo returns a bare row unless a caller genuinely branches on extra information. `(row, created)` exists only where a route answers 201 versus 200.
 
 ## Config
 
