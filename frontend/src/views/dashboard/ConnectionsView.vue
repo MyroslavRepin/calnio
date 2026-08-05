@@ -28,58 +28,58 @@ const notionOpen = computed(() =>
 )
 
 const appleStatus = computed(() => {
-  if (!apple.ready) return 'checking…'
-  if (appleConfigured.value) return apple.connection.icloud_email
-  if (apple.connection) return 'no calendar selected'
-  return 'not connected'
+  if (!apple.ready) return { text: 'Checking…', tone: 'neutral' }
+  if (appleConfigured.value) return { text: apple.connection.icloud_email, tone: 'success' }
+  if (apple.connection) return { text: 'No calendar selected', tone: 'attention' }
+  return { text: 'Not connected', tone: 'neutral' }
 })
 
 const notionStatus = computed(() => {
-  if (!notion.ready) return 'checking…'
-  if (notionConfigured.value) return notion.connection.data_source_name
-  if (notion.connection) return 'no database selected'
-  return 'not connected'
+  if (!notion.ready) return { text: 'Checking…', tone: 'neutral' }
+  if (notionConfigured.value)
+    return { text: notion.connection.data_source_name, tone: 'success' }
+  if (notion.connection) return { text: 'No database selected', tone: 'attention' }
+  return { text: 'Not connected', tone: 'neutral' }
 })
 </script>
 
 <template>
   <header class="head">
-    <p class="eyebrow">Connections</p>
     <h1 class="title">Connections</h1>
     <p class="lead">
       Where Calnio reads your tasks from, and where it writes your events to.
     </p>
   </header>
 
-  <div class="rows">
-    <ConnectionRow
-      name="Notion"
-      :status="notionStatus"
-      :action="notionConfigured ? 'manage' : 'connect'"
-      :open="notionOpen"
-      @toggle="overrides.notion = !notionOpen"
-    >
-      <p v-if="!notion.ready" class="loading">Loading…</p>
-      <NotionStatus v-else-if="notionConfigured" />
-      <NotionSetup v-else />
-    </ConnectionRow>
+  <ConnectionRow
+    name="Notion"
+    :status="notionStatus.text"
+    :tone="notionStatus.tone"
+    :action="notionConfigured ? 'Manage' : 'Connect'"
+    :open="notionOpen"
+    @toggle="overrides.notion = !notionOpen"
+  >
+    <p v-if="!notion.ready" class="loading">Loading…</p>
+    <NotionStatus v-else-if="notionConfigured" />
+    <NotionSetup v-else />
+  </ConnectionRow>
 
-    <ConnectionRow
-      name="Apple Calendar"
-      :status="appleStatus"
-      :action="appleConfigured ? 'manage' : 'connect'"
-      :open="appleOpen"
-      @toggle="overrides.apple = !appleOpen"
-    >
-      <p v-if="!apple.ready" class="loading">Loading…</p>
-      <AppleCalendarStatus v-else-if="appleConfigured" />
-      <AppleCalendarSetup v-else />
-    </ConnectionRow>
-  </div>
+  <ConnectionRow
+    name="Apple Calendar"
+    :status="appleStatus.text"
+    :tone="appleStatus.tone"
+    :action="appleConfigured ? 'Manage' : 'Connect'"
+    :open="appleOpen"
+    @toggle="overrides.apple = !appleOpen"
+  >
+    <p v-if="!apple.ready" class="loading">Loading…</p>
+    <AppleCalendarStatus v-else-if="appleConfigured" />
+    <AppleCalendarSetup v-else />
+  </ConnectionRow>
 
   <p class="note">
     Connecting Notion links your workspace and records which database Calnio
-    should read. During beta the sync still runs on Calnio's own workspace —
+    should read. During beta the sync still runs on Calnio's own workspace, so
     your database is not being read yet.
   </p>
 </template>
@@ -88,15 +88,11 @@ const notionStatus = computed(() => {
 .head {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding-bottom: clamp(24px, 4vw, 32px);
-}
-
-.rows {
-  border-top: 1px solid var(--hairline);
+  gap: 8px;
+  padding-bottom: 20px;
 }
 
 .note {
-  padding-top: 24px;
+  padding-top: 16px;
 }
 </style>

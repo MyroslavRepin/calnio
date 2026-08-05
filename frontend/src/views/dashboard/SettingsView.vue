@@ -31,13 +31,13 @@ watch(hasDatabase, loadProperties)
 
 const lastRun = computed(() => {
   const at = settings.value?.last_run_at
-  return at ? new Date(at).toLocaleString() : '—'
+  return at ? new Date(at).toLocaleString() : 'never'
 })
 
 // What the last run did, in the user's terms. auth_error is the only status
 // that also turned the switch off, so it has to explain itself.
 const statusLine = computed(() => {
-  if (sync.pending) return 'Syncing now — this takes a few seconds.'
+  if (sync.pending) return 'Syncing now, this takes a few seconds.'
   switch (settings.value?.last_status) {
     case 'ok':
       return 'Last sync finished normally.'
@@ -63,8 +63,7 @@ async function choose(name) {
 }
 
 // Deletion is two steps: the trigger only opens the block, and the confirm
-// button stays dead until the signed-in email is typed back. Nothing about it
-// is styled in a new colour — the weight comes from the copy and the typing.
+// button stays dead until the signed-in email is typed back.
 const confirming = ref(false)
 const typedEmail = ref('')
 const deleting = ref(false)
@@ -110,7 +109,6 @@ async function confirmDelete() {
 
   <template v-else>
     <header class="head">
-      <p class="eyebrow">Settings</p>
       <h1 class="title">Settings</h1>
       <p class="lead">
         Syncing runs in the background and pushes your Notion due dates into
@@ -118,132 +116,156 @@ async function confirmDelete() {
       </p>
     </header>
 
-    <section class="block">
-      <p class="eyebrow">Syncing</p>
+    <section class="card">
+      <div class="card-head">
+        <h2>Syncing</h2>
+        <span class="label" :class="enabled ? 'success' : 'neutral'">
+          {{ enabled ? 'On' : 'Off' }}
+        </span>
+      </div>
 
-      <button
-        class="switch"
-        type="button"
-        role="switch"
-        :aria-checked="enabled"
-        :disabled="!eligible || sync.busy"
-        @click="toggle"
-      >
-        <span class="track" :class="{ on: enabled }"><span class="knob"></span></span>
-        <span>{{ enabled ? 'On' : 'Off' }}</span>
-      </button>
+      <div class="card-body">
+        <button
+          class="switch"
+          type="button"
+          role="switch"
+          :aria-checked="enabled"
+          :disabled="!eligible || sync.busy"
+          @click="toggle"
+        >
+          <span class="track" :class="{ on: enabled }"><span class="knob"></span></span>
+          <span class="switch-label">
+            {{ enabled ? 'Syncing is on' : 'Syncing is off' }}
+          </span>
+        </button>
 
-      <p v-if="!eligible" class="note">
-        Connect Notion and Apple Calendar, and pick a due-date column below,
-        before turning syncing on.
-        <router-link class="inline" :to="{ name: 'welcome' }">Finish setup</router-link>
-      </p>
-
-      <template v-else>
-        <p class="note">{{ statusLine }}</p>
-
-        <dl class="datarows">
-          <div>
-            <dt>Last run</dt>
-            <dd>{{ lastRun }}</dd>
-          </div>
-        </dl>
-      </template>
-    </section>
-
-    <section class="block">
-      <p class="eyebrow">Due date column</p>
-      <p class="body">
-        The Notion date property Calnio reads. Only date columns can be chosen —
-        every page with a value there becomes an event.
-      </p>
-
-      <p v-if="!hasDatabase" class="note">
-        Pick a Notion database first.
-        <router-link class="inline" :to="{ name: 'connections' }">Connections</router-link>
-      </p>
-
-      <p v-else-if="sync.busy && !sync.dateProperties.length" class="note">
-        Reading your database…
-      </p>
-
-      <p v-else-if="!sync.dateProperties.length" class="note">
-        This database has no date columns, so there is nothing to sync. Add one
-        in Notion, then reload this page.
-      </p>
-
-      <ul v-else class="picklist">
-        <li v-for="name in sync.dateProperties" :key="name">
-          <label>
-            <input
-              type="radio"
-              name="due-date-property"
-              :value="name"
-              :checked="settings?.due_date_property === name"
-              :disabled="sync.busy"
-              @change="choose(name)"
-            />
-            <span>{{ name }}</span>
-          </label>
-        </li>
-      </ul>
-    </section>
-
-    <section class="block">
-      <p class="eyebrow">Delete account</p>
-
-      <button v-if="!confirming" class="link-mono quiet" type="button" @click="openDelete">
-        <span>Delete my account</span>
-      </button>
-
-      <template v-else>
-        <p class="body">
-          Deleting your account removes your Google sign-in, your iCloud
-          password, your Notion connection and everything Calnio remembers
-          about what it synced. Calnio's access to your Notion workspace is
-          revoked. Events already in your Apple Calendar are yours — they stay,
-          and Calnio can no longer remove them. If you ever sign up again,
-          remove those old events first, or Apple Calendar may end up with
-          duplicates. This cannot be undone.
+        <p v-if="!eligible" class="note">
+          Connect Notion and Apple Calendar, and pick a due-date column below,
+          before turning syncing on.
+          <router-link :to="{ name: 'welcome' }">Finish setup</router-link>
         </p>
 
-        <label class="field">
-          <span>Type {{ signedInEmail }} to confirm</span>
-          <input
-            v-model="typedEmail"
-            type="email"
-            autocomplete="off"
-            autocapitalize="none"
-            spellcheck="false"
-            :disabled="deleting"
-          />
-        </label>
+        <template v-else>
+          <p class="note">{{ statusLine }}</p>
 
-        <div class="actions">
-          <button
-            class="btn"
-            type="button"
-            :disabled="!canDelete || deleting"
-            @click="confirmDelete"
-          >
-            {{ deleting ? 'Deleting…' : 'Delete my account' }}
-          </button>
-
-          <button
-            class="link-mono quiet"
-            type="button"
-            :disabled="deleting"
-            @click="cancelDelete"
-          >
-            <span>Cancel</span>
-          </button>
-        </div>
-
-        <p v-if="deleteError" class="error">{{ deleteError }}</p>
-      </template>
+          <dl class="datarows">
+            <div>
+              <dt>Last run</dt>
+              <dd>{{ lastRun }}</dd>
+            </div>
+          </dl>
+        </template>
+      </div>
     </section>
 
-    <p v-if="error" class="error">{{ error }}</p>
+    <section class="card">
+      <div class="card-head">
+        <h2>Due date column</h2>
+      </div>
+
+      <div class="card-body">
+        <p class="body">
+          The Notion date property Calnio reads. Only date columns can be chosen,
+          every page with a value there becomes an event.
+        </p>
+
+        <p v-if="!hasDatabase" class="note">
+          Pick a Notion database first.
+          <router-link :to="{ name: 'connections' }">Connections</router-link>
+        </p>
+
+        <p v-else-if="sync.busy && !sync.dateProperties.length" class="note">
+          Reading your database…
+        </p>
+
+        <p v-else-if="!sync.dateProperties.length" class="note">
+          This database has no date columns, so there is nothing to sync. Add one
+          in Notion, then reload this page.
+        </p>
+
+        <ul v-else class="picklist">
+          <li v-for="name in sync.dateProperties" :key="name">
+            <label>
+              <input
+                type="radio"
+                name="due-date-property"
+                :value="name"
+                :checked="settings?.due_date_property === name"
+                :disabled="sync.busy"
+                @change="choose(name)"
+              />
+              <span>{{ name }}</span>
+            </label>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="card danger">
+      <div class="card-head">
+        <h2>Delete account</h2>
+      </div>
+
+      <div class="card-body">
+        <template v-if="!confirming">
+          <p class="body">
+            Removes your account and everything Calnio stores about it. This
+            cannot be undone.
+          </p>
+          <button class="btn danger" type="button" @click="openDelete">
+            Delete my account
+          </button>
+        </template>
+
+        <template v-else>
+          <p class="body">
+            Deleting your account removes your Google sign-in, your iCloud
+            password, your Notion connection and everything Calnio remembers
+            about what it synced. Calnio's access to your Notion workspace is
+            revoked. Events already in your Apple Calendar are yours, they stay,
+            and Calnio can no longer remove them. If you ever sign up again,
+            remove those old events first, or Apple Calendar may end up with
+            duplicates. This cannot be undone.
+          </p>
+
+          <label class="field">
+            <span>Type {{ signedInEmail }} to confirm</span>
+            <input
+              v-model="typedEmail"
+              type="email"
+              autocomplete="off"
+              autocapitalize="none"
+              spellcheck="false"
+              :disabled="deleting"
+            />
+          </label>
+
+          <div class="actions">
+            <button
+              class="btn danger"
+              type="button"
+              :disabled="!canDelete || deleting"
+              @click="confirmDelete"
+            >
+              {{ deleting ? 'Deleting…' : 'Delete my account' }}
+            </button>
+
+            <button
+              class="btn plain"
+              type="button"
+              :disabled="deleting"
+              @click="cancelDelete"
+            >
+              Cancel
+            </button>
+          </div>
+
+          <p v-if="deleteError" class="error">{{ deleteError }}</p>
+        </template>
+      </div>
+    </section>
+
+    <p v-if="error" class="error spaced">{{ error }}</p>
   </template>
 </template>
 
@@ -251,90 +273,88 @@ async function confirmDelete() {
 .head {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding-bottom: clamp(24px, 4vw, 32px);
+  gap: 8px;
+  padding-bottom: 20px;
 }
 
-.block {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: clamp(14px, 2.5vw, 20px);
-  padding: clamp(24px, 4vw, 32px) 0 clamp(28px, 5vw, 40px);
-  border-top: 1px solid var(--hairline);
+.card + .card {
+  margin-top: 16px;
 }
 
-.body {
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--body);
-  max-width: 52ch;
+.card.danger {
+  border-color: rgba(255, 129, 130, 0.6);
 }
 
-/* The switch. State is carried by colour alone — no transition and no travel,
-   per the no-motion rule; the knob simply sits at the other end. */
+.card.danger .card-head {
+  background: var(--app-danger-subtle);
+  border-bottom-color: rgba(255, 129, 130, 0.6);
+}
+
+.card-body > * + * {
+  margin-top: 12px;
+}
+
+/* Toggle. State is carried by colour and the knob's side, no transition —
+   it reads as a control, not as an animation. */
 .switch {
   display: inline-flex;
   align-items: center;
-  gap: 14px;
-  min-height: 44px;
+  gap: 10px;
   padding: 0;
   background: none;
   border: none;
   cursor: pointer;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--ink);
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--app-fg);
 }
 
 .switch:disabled {
-  opacity: 0.4;
+  opacity: 0.6;
   cursor: default;
 }
 
 .track {
   display: inline-flex;
   align-items: center;
-  width: 54px;
-  height: 30px;
+  width: 48px;
+  height: 28px;
   padding: 3px;
-  border: 1px solid var(--hairline-strong);
-  border-radius: 999px;
-  background: var(--hairline);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+  background: var(--app-canvas-subtle);
 }
 
 .track.on {
-  background: var(--ink);
-  border-color: var(--ink);
+  background: var(--app-accent);
+  border-color: var(--app-accent);
 }
 
 .knob {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
   background: #fff;
-  border: 1px solid var(--hairline-strong);
+  border: 1px solid var(--app-border);
 }
 
 .track.on .knob {
   margin-left: auto;
-  border-color: var(--ink);
+  border-color: rgba(31, 35, 40, 0.15);
 }
 
-/* Confirm and cancel on one row; they wrap rather than shrink on a narrow
-   screen, so both keep their touch target. */
+.switch-label {
+  font-weight: 500;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: clamp(16px, 3vw, 24px);
+  gap: 12px;
 }
 
-/* A link inside a mono footnote, kept on the footnote's baseline. */
-.inline {
-  border-bottom: 1px solid var(--field-line);
-  color: var(--ink);
+.spaced {
+  margin-top: 16px;
 }
 </style>

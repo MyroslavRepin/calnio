@@ -2,10 +2,10 @@
 import { computed, ref } from 'vue'
 import { useAppleCalendar } from '../composables/useAppleCalendar'
 
-// See NotionSetup: numbered 03/04 when the welcome page runs both wizards as one
-// sequence, 01/02 when it stands alone in a Connections row.
+// See NotionSetup: numbered 3/4 when the welcome page runs both wizards as one
+// sequence, 1/2 when it stands alone in a Connections row.
 defineProps({
-  numbers: { type: Array, default: () => ['01', '02'] },
+  numbers: { type: Array, default: () => ['1', '2'] },
 })
 
 const { state, connect, createCalendar, selectCalendar } = useAppleCalendar()
@@ -50,112 +50,122 @@ async function submitCalendar() {
 
 <template>
   <div class="setup">
-    <!-- Step 01 — credentials ------------------------------------------->
+    <!-- Step 1 — credentials --------------------------------------------->
     <section class="step">
-      <span class="num">{{ numbers[0] }}</span>
-      <h3>Connect your iCloud account</h3>
+      <div class="line">
+        <span class="num" :class="{ done: step > 1 }">{{ numbers[0] }}</span>
+        <h3>Connect your iCloud account</h3>
+      </div>
 
-      <template v-if="step === 1">
-        <!-- The short version, for a Connections row. The welcome page fills
-             the slot with the full walkthrough instead of repeating this. -->
-        <p v-if="!$slots.help" class="body">
-          Apple requires an app-specific password — your normal Apple Account
-          password will not work. Create one at
-          <a href="https://account.apple.com" target="_blank" rel="noreferrer"
-            >account.apple.com</a
-          >
-          under Sign-In and Security → App-Specific Passwords.
+      <div class="stepbody">
+        <template v-if="step === 1">
+          <!-- The short version, for a Connections row. The welcome page fills
+               the slot with the full walkthrough instead of repeating this. -->
+          <p v-if="!$slots.help" class="body">
+            Apple requires an app-specific password, your normal Apple Account
+            password will not work. Create one at
+            <a href="https://account.apple.com" target="_blank" rel="noreferrer"
+              >account.apple.com</a
+            >
+            under Sign-In and Security → App-Specific Passwords.
+          </p>
+          <slot name="help" />
+
+          <form class="form" @submit.prevent="submitCredentials">
+            <label class="field">
+              <span>Apple Account email</span>
+              <input
+                v-model="email"
+                type="email"
+                required
+                autocomplete="username"
+                placeholder="you@icloud.com"
+              />
+            </label>
+
+            <label class="field">
+              <span>App-specific password</span>
+              <!-- Plain text on purpose: an app-specific password is a
+                   four-group string nobody can type blind, and a typo costs a
+                   round trip to iCloud that rejects it. -->
+              <input
+                v-model="password"
+                type="text"
+                required
+                autocomplete="off"
+                autocapitalize="none"
+                autocorrect="off"
+                spellcheck="false"
+                placeholder="xxxx-xxxx-xxxx-xxxx"
+              />
+            </label>
+
+            <button class="btn" type="submit" :disabled="state.busy">
+              {{ state.busy ? 'Checking with iCloud…' : 'Connect' }}
+            </button>
+          </form>
+
+          <p class="note">
+            Calnio stores this password encrypted and uses it only to write events
+            into the calendar you choose. Revoking it in your Apple Account
+            settings disconnects Calnio immediately.
+          </p>
+        </template>
+
+        <p v-else class="body">
+          Connected as <strong>{{ state.connection.icloud_email }}</strong>
         </p>
-        <slot name="help" />
-
-        <form class="form" @submit.prevent="submitCredentials">
-          <label class="field">
-            <span>Apple Account email</span>
-            <input
-              v-model="email"
-              type="email"
-              required
-              autocomplete="username"
-              placeholder="you@icloud.com"
-            />
-          </label>
-
-          <label class="field">
-            <span>App-specific password</span>
-            <!-- Plain text on purpose: an app-specific password is a
-                 four-group string nobody can type blind, and a typo costs a
-                 round trip to iCloud that rejects it. -->
-            <input
-              v-model="password"
-              type="text"
-              required
-              autocomplete="off"
-              autocapitalize="none"
-              autocorrect="off"
-              spellcheck="false"
-              placeholder="xxxx-xxxx-xxxx-xxxx"
-            />
-          </label>
-
-          <button class="btn" type="submit" :disabled="state.busy">
-            {{ state.busy ? 'Checking with iCloud…' : 'Connect' }}
-          </button>
-        </form>
-
-        <p class="note">
-          Calnio stores this password encrypted and uses it only to write events
-          into the calendar you choose. Revoking it in your Apple Account
-          settings disconnects Calnio immediately.
-        </p>
-      </template>
-
-      <p v-else class="body">
-        Connected as <strong>{{ state.connection.icloud_email }}</strong>
-      </p>
+      </div>
     </section>
 
-    <!-- Step 02 — calendar ---------------------------------------------->
+    <!-- Step 2 — calendar ------------------------------------------------>
     <section class="step" :class="{ ahead: step < 2 }">
-      <span class="num">{{ numbers[1] }}</span>
-      <h3>Choose a calendar</h3>
+      <div class="line">
+        <span class="num">{{ numbers[1] }}</span>
+        <h3>Choose a calendar</h3>
+      </div>
 
-      <template v-if="step === 2">
-        <p class="body">
-          Calnio writes your Notion due dates here. A dedicated calendar is
-          easiest to live with — you can hide it in the Calendar app without
-          touching anything else.
-        </p>
+      <div class="stepbody">
+        <template v-if="step === 2">
+          <p class="body">
+            Calnio writes your Notion due dates here. A dedicated calendar is
+            easiest to live with, you can hide it in the Calendar app without
+            touching anything else.
+          </p>
 
-        <ul class="picklist">
-          <li v-for="cal in state.calendars" :key="cal.url">
-            <label>
-              <input type="radio" :value="cal.url" v-model="picked" />
-              <span>{{ cal.name }}</span>
-            </label>
-          </li>
-        </ul>
+          <ul class="picklist">
+            <li v-for="cal in state.calendars" :key="cal.url">
+              <label>
+                <input type="radio" :value="cal.url" v-model="picked" />
+                <span>{{ cal.name }}</span>
+              </label>
+            </li>
+          </ul>
 
-        <div class="create">
-          <input v-model="newName" class="text" type="text" placeholder="Calnio" />
+          <div class="create">
+            <input v-model="newName" class="text" type="text" placeholder="Calnio" />
+            <button
+              type="button"
+              class="btn plain"
+              :disabled="state.busy || !newName.trim()"
+              @click="submitNewCalendar"
+            >
+              Create calendar
+            </button>
+          </div>
+
           <button
+            class="btn"
             type="button"
-            class="link-mono quiet"
-            :disabled="state.busy || !newName.trim()"
-            @click="submitNewCalendar"
+            :disabled="state.busy || !picked"
+            @click="submitCalendar"
           >
-            <span>Create a new calendar</span>
+            {{ state.busy ? 'Saving…' : 'Use this calendar' }}
           </button>
-        </div>
+        </template>
 
-        <button
-          class="btn"
-          type="button"
-          :disabled="state.busy || !picked"
-          @click="submitCalendar"
-        >
-          {{ state.busy ? 'Saving…' : 'Use this calendar' }}
-        </button>
-      </template>
+        <p v-else class="body">Available once your iCloud account is connected.</p>
+      </div>
     </section>
 
     <p v-if="error" class="error">{{ error }}</p>
@@ -166,71 +176,77 @@ async function submitCalendar() {
 .setup {
   display: flex;
   flex-direction: column;
+  gap: 20px;
 }
 
 .step {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 12px;
-  padding: clamp(28px, 5vw, 40px) 0;
-  border-top: 1px solid var(--hairline);
+  gap: 8px;
 }
 
 .step.ahead {
-  opacity: 0.4;
+  opacity: 0.55;
+}
+
+.line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .num {
-  font-family: var(--font-mono);
-  font-size: clamp(30px, 6vw, 40px);
-  font-weight: 500;
-  letter-spacing: -0.04em;
-  line-height: 1;
-  color: var(--accent, #0b63f6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--app-border);
+  background: var(--app-canvas-subtle);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--app-fg-muted);
+}
+
+.num.done {
+  background: var(--app-success-subtle);
+  border-color: rgba(31, 136, 61, 0.4);
+  color: var(--app-success);
 }
 
 h3 {
-  font-size: clamp(19px, 4.6vw, 21px);
+  margin: 0;
+  font-size: 14px;
   font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--ink);
+  color: var(--app-fg);
 }
 
-.body {
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--body);
-  max-width: 52ch;
-}
-
-.body strong {
-  font-weight: 500;
-  color: var(--ink);
-}
-
-.body a {
-  border-bottom: 1px solid var(--field-line);
-  color: var(--ink);
+.stepbody {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding-left: 28px;
 }
 
 .form {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 20px;
+  gap: 16px;
   width: 100%;
-  padding: 8px 0;
 }
 
+/* The name field and its button sit on one line and wrap together. */
 .create {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 16px 24px;
+  gap: 8px;
 }
 
 .create .text {
-  max-width: 220px;
+  width: 200px;
 }
 </style>

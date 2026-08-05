@@ -1,12 +1,12 @@
 <script setup>
 import { onMounted, watch } from 'vue'
-import TheNav from '../../components/TheNav.vue'
+import AppHeader from '../../components/AppHeader.vue'
 import { useAppleCalendar } from '../../composables/useAppleCalendar'
 import { useAuth } from '../../composables/useAuth'
 import { useNotion } from '../../composables/useNotion'
 import { useSync } from '../../composables/useSync'
 
-// App shell for every /dashboard/* page: top nav, sidebar menu, content.
+// App shell for every /dashboard/* page and /me: header, sidebar menu, content.
 // Auth branching lives here so child views can assume a signed-in user.
 const { state: auth, login } = useAuth()
 const { load: loadApple } = useAppleCalendar()
@@ -34,34 +34,35 @@ watch(() => [auth.ready, auth.user], loadIfAuthed)
 </script>
 
 <template>
-  <div class="page">
-    <TheNav />
+  <div class="app-ui page">
+    <AppHeader v-if="auth.ready && auth.user" />
 
-    <main class="wrap shell">
+    <main class="shell">
       <p v-if="!auth.ready" class="loading">Loading…</p>
 
-      <div v-else-if="!auth.user" class="signedout">
-        <p class="eyebrow">Not signed in</p>
-        <h1 class="title">Log in to see<br />your dashboard.</h1>
+      <div v-else-if="!auth.user" class="signedout card">
+        <h1 class="title">Sign in to Calnio</h1>
+        <p class="lead">
+          Your dashboard needs an account. Calnio signs you in with Google.
+        </p>
         <button class="btn" type="button" @click="login">Continue with Google</button>
       </div>
 
       <div v-else class="grid">
-        <aside class="side surface">
-          <p class="eyebrow">Menu</p>
+        <aside class="side">
           <nav class="menu">
             <router-link v-for="item in menu" :key="item.label" :to="item.to">
               {{ item.label }}
             </router-link>
           </nav>
 
-          <p class="eyebrow group">Account</p>
+          <p class="group">Account</p>
           <nav class="menu">
             <router-link to="/me">Profile</router-link>
           </nav>
         </aside>
 
-        <section class="content surface">
+        <section class="content">
           <router-view />
         </section>
       </div>
@@ -71,15 +72,13 @@ watch(() => [auth.ready, auth.user], loadIfAuthed)
 
 <style scoped>
 .page {
-  position: relative;
   min-height: 100vh;
 }
 
 .shell {
-  position: relative;
-  z-index: 1;
-  padding-top: clamp(24px, 4vw, 40px);
-  padding-bottom: var(--sec-bottom);
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px clamp(16px, 4vw, 32px) 64px;
 }
 
 /* No breakpoint: the content column asks for min(560px, 100%), so once the two
@@ -87,43 +86,50 @@ watch(() => [auth.ready, auth.user], loadIfAuthed)
 .grid {
   display: flex;
   flex-wrap: wrap;
-  gap: clamp(16px, 2vw, 24px);
+  gap: 24px;
   align-items: flex-start;
 }
 
 .side {
-  flex: 1 1 160px;
+  flex: 1 1 200px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .group {
-  padding-top: 20px;
+  padding: 16px 12px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--app-fg-muted);
 }
 
 .menu {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
 .menu a {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  min-height: 44px;
-  font-size: 15px;
-  color: var(--link);
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: var(--app-radius);
+  font-size: 14px;
+  color: var(--app-fg);
 }
 
 .menu a:hover {
-  color: var(--ink);
+  background: var(--app-canvas-subtle);
+  text-decoration: none;
 }
 
 /* Exact-match class: vue-router marks parents active too, which would light
    up Overview on every child route. */
 .menu a.router-link-exact-active {
-  color: var(--ink);
-  font-weight: 500;
+  background: var(--app-canvas-subtle);
+  font-weight: 600;
 }
 
 .content {
@@ -135,7 +141,9 @@ watch(() => [auth.ready, auth.user], loadIfAuthed)
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: clamp(16px, 2.5vw, 24px);
-  padding-top: clamp(32px, 6vw, 64px);
+  gap: 16px;
+  max-width: 480px;
+  margin: 48px auto;
+  padding: 24px;
 }
 </style>

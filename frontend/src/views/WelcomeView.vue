@@ -1,15 +1,14 @@
 <script setup>
 import { computed, onMounted, watch } from 'vue'
 import AppleCalendarSetup from '../components/AppleCalendarSetup.vue'
-import AtmosphereField from '../components/AtmosphereField.vue'
 import NotionSetup from '../components/NotionSetup.vue'
 import { useAppleCalendar } from '../composables/useAppleCalendar'
 import { useAuth } from '../composables/useAuth'
 import { useNotion } from '../composables/useNotion'
 
-// Full-screen onboarding: the whole setup on one scrolling page, outside the
-// dashboard shell so nothing competes with it. The two wizards are the real
-// ones from Connections, renumbered 01–04 into a single sequence.
+// Onboarding: the whole setup on one page, outside the dashboard shell so
+// nothing competes with it. The two wizards are the real ones from Connections,
+// renumbered 1–4 into a single sequence.
 const { state: auth, login } = useAuth()
 const { state: apple, load: loadApple } = useAppleCalendar()
 const { state: notion, load: loadNotion } = useNotion()
@@ -41,43 +40,38 @@ watch(() => [auth.ready, auth.user], loadIfAuthed)
 </script>
 
 <template>
-  <div class="page">
-    <AtmosphereField variant="short" />
-
+  <div class="app-ui page">
     <!-- Sticky progress ---------------------------------------------------->
     <header class="bar">
-      <div class="wrap barinner">
+      <div class="barinner">
         <router-link to="/" class="wordmark">calnio</router-link>
         <p class="count">
-          <template v-if="ready">{{ doneCount }} of {{ stages.length }}</template>
-          <template v-else>setup</template>
+          <template v-if="ready">{{ doneCount }} of {{ stages.length }} done</template>
+          <template v-else>Setup</template>
         </p>
       </div>
-      <!-- No transition on the fill: the design system has no motion. -->
       <div class="track" role="presentation">
         <div class="fill" :style="{ width: ready ? `${percent}%` : '0%' }" />
       </div>
     </header>
 
-    <main class="wrap main">
+    <main class="main">
       <p v-if="!auth.ready" class="loading">Loading…</p>
 
       <!-- Signed out ------------------------------------------------------->
-      <section v-else-if="!auth.user" class="hero">
-        <p class="eyebrow">Welcome</p>
-        <h1 class="title">Set up Calnio.</h1>
-        <p class="lead">Log in first — your setup is stored against your account.</p>
+      <section v-else-if="!auth.user" class="card intro">
+        <h1 class="title">Set up Calnio</h1>
+        <p class="lead">Sign in first, your setup is stored against your account.</p>
         <button class="btn" type="button" @click="login">Continue with Google</button>
       </section>
 
       <template v-else>
-        <section class="hero">
-          <p class="eyebrow">Welcome</p>
-          <h1 class="title">{{ allDone ? 'You are all set.' : 'Set up Calnio.' }}</h1>
+        <header class="head">
+          <h1 class="title">{{ allDone ? 'You are all set' : 'Set up Calnio' }}</h1>
           <p class="lead">
             <template v-if="allDone">
               Both connections are in place. Syncing your own workspace switches
-              on later in beta — nothing else is needed from you until then.
+              on later in beta, nothing else is needed from you until then.
             </template>
             <template v-else>
               Four steps, once. You are connecting your accounts now; syncing
@@ -89,67 +83,77 @@ watch(() => [auth.ready, auth.user], loadIfAuthed)
           <router-link v-if="allDone" class="btn" :to="{ name: 'dashboard' }">
             Go to your dashboard
           </router-link>
-        </section>
+        </header>
 
         <p v-if="!ready" class="loading">Loading your connections…</p>
 
-        <!-- The wizards carry forms and small print, so they ride on a
-             surface rather than sitting straight on the atmosphere. -->
-        <div v-else class="wizards surface">
-          <!-- Steps 01–02 ------------------------------------------------->
-          <NotionSetup :numbers="['01', '02']" />
+        <template v-else>
+          <section class="card">
+            <div class="card-head">
+              <h2>Notion</h2>
+              <span class="label" :class="stages[1] ? 'success' : 'neutral'">
+                Steps 1 and 2
+              </span>
+            </div>
+            <div class="card-body">
+              <NotionSetup :numbers="['1', '2']" />
+            </div>
+          </section>
 
-          <!-- Steps 03–04 ------------------------------------------------->
-          <AppleCalendarSetup :numbers="['03', '04']">
-            <template #help>
-              <p class="help">
-                Apple requires an <strong>app-specific password</strong>. Your
-                Apple Account password will not work here.
-              </p>
-              <p class="help">
-                Your Apple Account also needs two-factor authentication turned on
-                — without it, Apple does not offer app-specific passwords at all.
-              </p>
+          <section class="card">
+            <div class="card-head">
+              <h2>Apple Calendar</h2>
+              <span class="label" :class="stages[3] ? 'success' : 'neutral'">
+                Steps 3 and 4
+              </span>
+            </div>
+            <div class="card-body">
+              <AppleCalendarSetup :numbers="['3', '4']">
+                <template #help>
+                  <p class="body">
+                    Apple requires an <strong>app-specific password</strong>. Your
+                    Apple Account password will not work here. Your Apple Account
+                    also needs two-factor authentication turned on, without it
+                    Apple does not offer app-specific passwords at all.
+                  </p>
 
-              <ol class="sub">
-                <li>
-                  Sign in at
-                  <a href="https://account.apple.com" target="_blank" rel="noreferrer"
-                    >account.apple.com</a
-                  >
-                </li>
-                <li>Open Sign-In and Security → App-Specific Passwords</li>
-                <li>Choose Generate an app-specific password</li>
-                <li>
-                  Name it <span class="mono">Calnio</span>, then copy the
-                  <span class="mono">xxxx-xxxx-xxxx-xxxx</span> it shows you
-                </li>
-              </ol>
+                  <ol class="sub">
+                    <li>
+                      Sign in at
+                      <a href="https://account.apple.com" target="_blank" rel="noreferrer"
+                        >account.apple.com</a
+                      >
+                    </li>
+                    <li>Open Sign-In and Security → App-Specific Passwords</li>
+                    <li>Choose Generate an app-specific password</li>
+                    <li>
+                      Name it <code>Calnio</code>, then copy the
+                      <code>xxxx-xxxx-xxxx-xxxx</code> it shows you
+                    </li>
+                  </ol>
 
-              <p class="note">
-                Revoking the password at Apple disconnects Calnio immediately.
-              </p>
-            </template>
-          </AppleCalendarSetup>
+                  <p class="note">
+                    Revoking the password at Apple disconnects Calnio immediately.
+                  </p>
+                </template>
+              </AppleCalendarSetup>
+            </div>
+          </section>
 
           <footer class="foot">
-            <router-link class="link-mono quiet" :to="{ name: 'dashboard' }">
-              <span>{{ allDone ? 'Go to your dashboard' : 'Skip for now' }}</span>
+            <router-link :to="{ name: 'dashboard' }">
+              {{ allDone ? 'Go to your dashboard' : 'Skip for now' }}
             </router-link>
           </footer>
-        </div>
+        </template>
       </template>
     </main>
   </div>
 </template>
 
 <style scoped>
-/* `clip`, not `hidden`: hidden would make this a scroll container and the
-   progress bar would stop sticking. */
 .page {
-  position: relative;
   min-height: 100vh;
-  overflow: clip;
   display: flex;
   flex-direction: column;
 }
@@ -159,132 +163,108 @@ watch(() => [auth.ready, auth.user], loadIfAuthed)
   position: sticky;
   top: 0;
   z-index: 2;
-  /* Translucent because the atmosphere layer runs underneath it. */
-  background: rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(10px);
+  background: var(--app-canvas);
+  border-bottom: 1px solid var(--app-border);
 }
 
 .barinner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
-  padding-top: 8px;
-  padding-bottom: 8px;
+  gap: 16px;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 10px clamp(16px, 4vw, 32px);
 }
 
 .wordmark {
   display: inline-flex;
   align-items: center;
-  min-height: 44px;
-  font-size: 19px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--ink);
+  min-height: 32px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--app-fg);
+}
+
+.wordmark:hover {
+  text-decoration: none;
 }
 
 .count {
-  font-family: var(--font-mono);
   font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: var(--muted);
+  color: var(--app-fg-muted);
 }
 
+/* No transition on the fill: the width simply reflects the stored state. */
 .track {
-  height: 2px;
-  background: var(--hairline);
+  height: 3px;
+  background: var(--app-canvas-subtle);
 }
 
 .fill {
-  height: 2px;
-  background: var(--ink);
+  height: 3px;
+  background: var(--app-success);
 }
 
 /* Content -------------------------------------------------------------- */
 .main {
-  position: relative;
-  z-index: 1;
   flex: 1;
-  padding-bottom: var(--sec-bottom);
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px clamp(16px, 4vw, 32px) 64px;
 }
 
-.hero {
+.head {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: clamp(16px, 2.5vw, 24px);
-  padding: clamp(40px, 9vw, 84px) 0 clamp(32px, 6vw, 56px);
-  max-width: 640px;
+  gap: 12px;
+  padding-bottom: 24px;
 }
 
-.wizards {
-  max-width: 760px;
+.intro {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  max-width: 480px;
+  margin: 48px auto;
+  padding: 24px;
 }
 
-/* The panel already opens the block; the first step's own rule would double it. */
-.wizards > :first-child :deep(.step:first-child) {
-  border-top: none;
-  padding-top: 0;
+.card + .card {
+  margin-top: 16px;
 }
 
 /* Apple instructions, injected into the wizard's slot ------------------- */
-.help {
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--body);
-  max-width: 52ch;
-}
-
-.help strong {
-  font-weight: 500;
-  color: var(--ink);
-}
-
 .sub {
-  list-style: none;
   margin: 0;
-  padding: 0;
-  counter-reset: substep;
+  padding-left: 20px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  max-width: 52ch;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--app-fg-muted);
+  max-width: 72ch;
 }
 
-.sub li {
-  counter-increment: substep;
-  display: grid;
-  grid-template-columns: 24px 1fr;
-  gap: 12px;
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--body);
-}
-
-.sub li::before {
-  content: counter(substep, lower-alpha);
-  font-family: var(--font-mono);
+code {
+  font-family: var(--app-font-mono);
   font-size: 12px;
-  letter-spacing: 0.16em;
-  color: var(--muted);
-  padding-top: 3px;
-}
-
-.sub a {
-  border-bottom: 1px solid var(--field-line);
-  color: var(--ink);
-}
-
-.mono {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--ink);
+  background: var(--app-canvas-subtle);
+  border: 1px solid var(--app-border-subtle);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--app-fg);
 }
 
 .foot {
   display: flex;
-  padding-top: clamp(24px, 4vw, 40px);
-  border-top: 1px solid var(--hairline);
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--app-border-subtle);
+  font-size: 14px;
 }
 </style>

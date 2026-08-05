@@ -24,8 +24,10 @@ export const router = createRouter({
         { path: '', name: 'dashboard', component: OverviewView },
         { path: 'connections', name: 'connections', component: ConnectionsView },
         { path: 'settings', name: 'settings', component: SettingsView },
+        // Absolute child path: the URL stays /me, but the page renders inside
+        // the shell, so the sidebar does not disappear on the profile.
+        { path: '/me', name: 'me', component: MeView },
       ],
     },
-    { path: '/me', name: 'me', component: MeView },
   ],
 })

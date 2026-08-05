@@ -85,38 +85,34 @@ async function confirmDisconnect() {
         >
           {{ state.busy ? 'Saving…' : 'Save' }}
         </button>
-        <button class="link-mono quiet" type="button" @click="changing = false">
-          <span>Cancel</span>
-        </button>
+        <button class="btn plain" type="button" @click="changing = false">Cancel</button>
       </div>
     </template>
 
     <template v-else-if="confirming">
       <p class="body">
         Disconnecting forgets your app-specific password. Events Calnio already
-        wrote stay in your calendar — delete them yourself if you want them gone.
+        wrote stay in your calendar, delete them yourself if you want them gone.
       </p>
       <div class="actions">
-        <button class="btn" type="button" :disabled="state.busy" @click="confirmDisconnect">
+        <button
+          class="btn danger"
+          type="button"
+          :disabled="state.busy"
+          @click="confirmDisconnect"
+        >
           {{ state.busy ? 'Disconnecting…' : 'Disconnect' }}
         </button>
-        <button class="link-mono quiet" type="button" @click="confirming = false">
-          <span>Cancel</span>
-        </button>
+        <button class="btn plain" type="button" @click="confirming = false">Cancel</button>
       </div>
     </template>
 
     <div v-else class="actions">
-      <button
-        class="link-mono quiet"
-        type="button"
-        :disabled="state.busy"
-        @click="startChange"
-      >
-        <span>{{ state.busy ? 'Loading calendars…' : 'Change calendar' }}</span>
+      <button class="btn plain" type="button" :disabled="state.busy" @click="startChange">
+        {{ state.busy ? 'Loading calendars…' : 'Change calendar' }}
       </button>
-      <button class="link-mono quiet" type="button" @click="confirming = true">
-        <span>Disconnect</span>
+      <button class="btn plain" type="button" @click="confirming = true">
+        Disconnect
       </button>
     </div>
 
@@ -129,22 +125,17 @@ async function confirmDisconnect() {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: clamp(20px, 3vw, 28px);
-  padding: clamp(28px, 5vw, 40px) 0;
-  border-top: 1px solid var(--hairline);
+  gap: 16px;
+}
+
+.status > .datarows {
+  width: 100%;
 }
 
 .actions {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 16px 24px;
-}
-
-.body {
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--body);
-  max-width: 52ch;
+  gap: 8px;
 }
 </style>

@@ -1,26 +1,33 @@
 <script setup>
 import { computed } from 'vue'
 import { useAppleCalendar } from '../../composables/useAppleCalendar'
+import { useAuth } from '../../composables/useAuth'
 import { useNotion } from '../../composables/useNotion'
 import { useSync } from '../../composables/useSync'
 
 const { state: apple } = useAppleCalendar()
 const { state: notion } = useNotion()
 const { state: sync } = useSync()
+const { state: auth } = useAuth()
 
 // The four setup stages, same definitions the welcome page counts: a grant
 // stored, then a target picked, for each connection. The walkthrough itself
 // lives on /welcome — this page only reports where you are.
 const stages = computed(() => [
-  Boolean(notion.connection),
-  Boolean(notion.connection?.data_source_id),
-  Boolean(apple.connection),
-  Boolean(apple.connection?.calendar_url),
+  { label: 'Notion workspace connected', done: Boolean(notion.connection) },
+  { label: 'Notion database chosen', done: Boolean(notion.connection?.data_source_id) },
+  { label: 'iCloud account connected', done: Boolean(apple.connection) },
+  { label: 'Apple calendar chosen', done: Boolean(apple.connection?.calendar_url) },
 ])
 
 const ready = computed(() => notion.ready && apple.ready && sync.ready)
-const doneCount = computed(() => stages.value.filter(Boolean).length)
+const doneCount = computed(() => stages.value.filter((s) => s.done).length)
 const allDone = computed(() => doneCount.value === stages.value.length)
+
+const greeting = computed(() => {
+  const name = auth.user?.name || auth.user?.email || ''
+  return name ? `Hi, ${name}` : 'Overview'
+})
 
 // The calendar list is not fetched on load (it hits iCloud and is slow), so the
 // name is only known if this session already loaded it — fall back to the URL.
@@ -32,26 +39,27 @@ const calendarName = computed(() => {
 
 const lastRun = computed(() => {
   const at = sync.settings?.last_run_at
-  return at ? new Date(at).toLocaleString() : '—'
+  return at ? new Date(at).toLocaleString() : 'never'
 })
 
 // Reporting only — the switch itself lives in Settings, so this never shows a
 // second control for the same state.
-const syncState = computed(() => {
-  if (sync.pending) return 'Syncing now'
-  return sync.settings?.enabled ? 'On' : 'Off'
+const syncLabel = computed(() => {
+  if (sync.pending) return { text: 'Syncing now', tone: 'accent' }
+  if (sync.settings?.enabled) return { text: 'Sync on', tone: 'success' }
+  return { text: 'Sync off', tone: 'neutral' }
 })
 
 const lastResult = computed(() => {
   switch (sync.settings?.last_status) {
     case 'ok':
-      return 'Finished normally'
+      return { text: 'Finished normally', tone: 'success' }
     case 'error':
-      return 'Failed — retrying on the next run'
+      return { text: 'Failed, retrying on the next run', tone: 'danger' }
     case 'auth_error':
-      return 'A connection was rejected — reconnect it'
+      return { text: 'A connection was rejected, reconnect it', tone: 'danger' }
     default:
-      return '—'
+      return { text: 'Nothing has run yet', tone: 'neutral' }
   }
 })
 </script>
@@ -61,98 +69,109 @@ const lastResult = computed(() => {
 
   <template v-else>
     <header class="head">
-      <p class="eyebrow">Overview</p>
-      <h1 class="title">{{ allDone ? 'Your sync is set up.' : 'Finish your setup.' }}</h1>
+      <div class="headline">
+        <h1 class="title">{{ greeting }}</h1>
+        <span class="label" :class="syncLabel.tone">{{ syncLabel.text }}</span>
+      </div>
       <p class="lead">
         Calnio pushes your Notion due dates into Apple Calendar. Notion stays the
-        source of truth — nothing is ever written back to it.
+        source of truth, nothing is ever written back to it.
       </p>
     </header>
 
     <!-- Unfinished: point at the walkthrough, do not repeat it here. -->
-    <section v-if="!allDone" class="block">
-      <p class="eyebrow">Setup — {{ doneCount }} of {{ stages.length }}</p>
-      <p class="body">
-        Nothing is connected end to end yet. The walkthrough takes four steps and
-        covers the app-specific password Apple requires.
-      </p>
-      <router-link class="btn" :to="{ name: 'welcome' }">Continue setup</router-link>
+    <section v-if="!allDone" class="card setup">
+      <div class="card-head">
+        <h2>Finish setup</h2>
+        <span class="label attention">{{ doneCount }} of {{ stages.length }} done</span>
+      </div>
+      <div class="card-body">
+        <ul class="checks">
+          <li v-for="stage in stages" :key="stage.label" :class="{ done: stage.done }">
+            <span class="mark">{{ stage.done ? '✓' : '○' }}</span>
+            <span>{{ stage.label }}</span>
+          </li>
+        </ul>
+        <p class="body">
+          The walkthrough takes four steps and covers the app-specific password
+          Apple requires.
+        </p>
+        <router-link class="btn" :to="{ name: 'welcome' }">Continue setup</router-link>
+      </div>
     </section>
 
     <template v-else>
-      <section class="block">
-        <p class="eyebrow">Notion</p>
-        <dl class="datarows">
-          <div>
-            <dt>Workspace</dt>
-            <dd>{{ notion.connection.workspace_name || '—' }}</dd>
-          </div>
-          <div>
-            <dt>Database</dt>
-            <dd>{{ notion.connection.data_source_name }}</dd>
-          </div>
-          <div>
-            <dt>Pages</dt>
-            <dd>—</dd>
-          </div>
-          <div>
-            <dt>With a due date</dt>
-            <dd>—</dd>
-          </div>
-        </dl>
+      <section class="card">
+        <div class="card-head">
+          <h2>Notion</h2>
+          <router-link :to="{ name: 'connections' }">Manage</router-link>
+        </div>
+        <div class="card-body">
+          <dl class="datarows">
+            <div>
+              <dt>Workspace</dt>
+              <dd>{{ notion.connection.workspace_name || '—' }}</dd>
+            </div>
+            <div>
+              <dt>Database</dt>
+              <dd>{{ notion.connection.data_source_name }}</dd>
+            </div>
+            <div>
+              <dt>Due date column</dt>
+              <dd>{{ sync.settings?.due_date_property || '—' }}</dd>
+            </div>
+          </dl>
+        </div>
       </section>
 
-      <section class="block">
-        <p class="eyebrow">Apple Calendar</p>
-        <dl class="datarows">
-          <div>
-            <dt>Apple Account</dt>
-            <dd>{{ apple.connection.icloud_email }}</dd>
-          </div>
-          <div>
-            <dt>Calendar</dt>
-            <dd>{{ calendarName }}</dd>
-          </div>
-          <div>
-            <dt>Events synced</dt>
-            <dd>—</dd>
-          </div>
-        </dl>
+      <section class="card">
+        <div class="card-head">
+          <h2>Apple Calendar</h2>
+          <router-link :to="{ name: 'connections' }">Manage</router-link>
+        </div>
+        <div class="card-body">
+          <dl class="datarows">
+            <div>
+              <dt>Apple Account</dt>
+              <dd>{{ apple.connection.icloud_email }}</dd>
+            </div>
+            <div>
+              <dt>Calendar</dt>
+              <dd>{{ calendarName }}</dd>
+            </div>
+          </dl>
+        </div>
       </section>
 
-      <section class="block">
-        <p class="eyebrow">Sync activity</p>
-        <dl class="datarows">
-          <div>
-            <dt>Syncing</dt>
-            <dd>{{ syncState }}</dd>
-          </div>
-          <div>
-            <dt>Due date column</dt>
-            <dd>{{ sync.settings?.due_date_property || '—' }}</dd>
-          </div>
-          <div>
-            <dt>Last run</dt>
-            <dd>{{ lastRun }}</dd>
-          </div>
-          <div>
-            <dt>Result</dt>
-            <dd>{{ lastResult }}</dd>
-          </div>
-        </dl>
+      <section class="card">
+        <div class="card-head">
+          <h2>Sync activity</h2>
+          <router-link :to="{ name: 'settings' }">Sync settings</router-link>
+        </div>
+        <div class="card-body">
+          <dl class="datarows">
+            <div>
+              <dt>Status</dt>
+              <dd>
+                <span class="label" :class="syncLabel.tone">{{ syncLabel.text }}</span>
+              </dd>
+            </div>
+            <div>
+              <dt>Last run</dt>
+              <dd>{{ lastRun }}</dd>
+            </div>
+            <div>
+              <dt>Result</dt>
+              <dd>
+                <span class="label" :class="lastResult.tone">{{ lastResult.text }}</span>
+              </dd>
+            </div>
+          </dl>
 
-        <p v-if="!sync.settings?.enabled" class="note">
-          Syncing is off, so nothing is being pushed to your calendar. Turn it
-          on in Settings.
-        </p>
-
-        <div class="actions">
-          <router-link class="link-mono quiet" :to="{ name: 'settings' }">
-            <span>Sync settings</span>
-          </router-link>
-          <router-link class="link-mono quiet" :to="{ name: 'connections' }">
-            <span>Manage connections</span>
-          </router-link>
+          <p v-if="!sync.settings?.enabled" class="note off">
+            Syncing is off, so nothing is being pushed to your calendar. Turn it
+            on in Settings.
+          </p>
         </div>
       </section>
     </template>
@@ -163,29 +182,59 @@ const lastResult = computed(() => {
 .head {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding-bottom: clamp(28px, 5vw, 40px);
+  gap: 8px;
+  padding-bottom: 20px;
 }
 
-.block {
+.headline {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.card + .card,
+.setup + .card {
+  margin-top: 16px;
+}
+
+/* Setup checklist. A tick or a ring, no icon set to pull in. */
+.checks {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: clamp(16px, 2.5vw, 20px);
-  padding: clamp(24px, 4vw, 32px) 0 clamp(28px, 5vw, 40px);
-  border-top: 1px solid var(--hairline);
+  gap: 8px;
 }
 
-.body {
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--body);
-  max-width: 52ch;
-}
-
-.actions {
+.checks li {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px 28px;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--app-fg-muted);
+}
+
+.checks li.done {
+  color: var(--app-fg);
+}
+
+.mark {
+  width: 16px;
+  text-align: center;
+  color: var(--app-fg-subtle);
+}
+
+.checks li.done .mark {
+  color: var(--app-success);
+}
+
+.card-body .body {
+  margin-bottom: 16px;
+}
+
+.off {
+  margin-top: 12px;
 }
 </style>

@@ -1,9 +1,11 @@
 <script setup>
-// One line in the Connections list. Rows expand in place — no modal, no
-// second page — so the dashboard stays a single view.
+// One connection in the Connections list, as a card that expands in place —
+// no modal, no second page — so the dashboard stays a single view.
 defineProps({
   name: { type: String, required: true },
   status: { type: String, required: true },
+  // success / attention / neutral, matching the .label tones in app.css.
+  tone: { type: String, default: 'neutral' },
   // Empty action = inert row (a connection the user cannot configure yet).
   action: { type: String, default: '' },
   open: { type: Boolean, default: false },
@@ -13,58 +15,40 @@ defineEmits(['toggle'])
 </script>
 
 <template>
-  <div class="row">
-    <div class="head">
-      <p class="name">{{ name }}</p>
-      <p class="status">{{ status }}</p>
-      <button
-        v-if="action"
-        class="link-mono quiet"
-        type="button"
-        @click="$emit('toggle')"
-      >
-        <span>{{ open ? 'close' : action }}</span>
+  <div class="card">
+    <div class="card-head">
+      <div class="ident">
+        <span class="name">{{ name }}</span>
+        <span class="label" :class="tone">{{ status }}</span>
+      </div>
+
+      <button v-if="action" class="btn plain" type="button" @click="$emit('toggle')">
+        {{ open ? 'Close' : action }}
       </button>
-      <span v-else />
     </div>
 
-    <div v-if="open" class="body">
+    <div v-if="open" class="card-body">
       <slot />
     </div>
   </div>
 </template>
 
 <style scoped>
-.row {
-  border-bottom: 1px solid var(--hairline);
+.card + .card {
+  margin-top: 16px;
 }
 
-/* Flex-wrap rather than a fixed grid: the status drops to its own line on a
-   narrow screen without a breakpoint. */
-.head {
+.ident {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 4px 24px;
-  padding: 8px 0;
+  gap: 8px 12px;
+  min-width: 0;
 }
 
 .name {
-  flex: 0 0 min(220px, 100%);
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--ink);
-}
-
-.status {
-  flex: 1 1 min(200px, 100%);
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-  color: var(--muted);
-  overflow-wrap: anywhere;
-}
-
-.body {
-  padding-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--app-fg);
 }
 </style>

@@ -1,107 +1,85 @@
 <script setup>
-import { useRouter } from 'vue-router'
-import AtmosphereField from '../components/AtmosphereField.vue'
-import TheNav from '../components/TheNav.vue'
+import { computed } from 'vue'
 import { useAuth } from '../composables/useAuth'
 
-// Read-only account page. Everything shown here comes from /auth/me — there is
-// no account-mutation endpoint yet, so nothing on this page is editable.
-const { state: auth, login, logout } = useAuth()
-const router = useRouter()
+// Read-only account page, rendered inside DashboardLayout: the header, the
+// sidebar and the signed-out branch all belong to the shell, so this file is
+// content only. Everything shown comes from /auth/me — there is no
+// account-mutation endpoint yet, so nothing here is editable.
+const { state: auth } = useAuth()
 
-async function signOut() {
-  await logout()
-  router.push('/')
-}
+const name = computed(() => auth.user?.name || auth.user?.email || '')
+const initial = computed(() => (name.value[0] || '?').toUpperCase())
 </script>
 
 <template>
-  <div class="page">
-    <AtmosphereField variant="short" />
+  <header class="head">
+    <img v-if="auth.user.picture" :src="auth.user.picture" alt="" class="avatar" />
+    <span v-else class="avatar fallback">{{ initial }}</span>
+    <div>
+      <h1 class="title">{{ name }}</h1>
+      <p class="lead">{{ auth.user.email }}</p>
+    </div>
+  </header>
 
-    <TheNav />
-
-    <main class="wrap shell">
-      <p v-if="!auth.ready" class="loading">Loading…</p>
-
-      <div v-else-if="!auth.user" class="signedout surface">
-        <p class="eyebrow">Not signed in</p>
-        <h1 class="title">Log in to see<br />your account.</h1>
-        <button class="btn" type="button" @click="login">Continue with Google</button>
-      </div>
-
-      <div v-else class="surface">
-        <header class="head">
-          <p class="eyebrow">Account</p>
-          <h1 class="title">{{ auth.user.name || auth.user.email }}</h1>
-        </header>
-
-        <dl class="datarows">
-          <div>
-            <dt>Name</dt>
-            <dd>{{ auth.user.name || '—' }}</dd>
-          </div>
-          <div>
-            <dt>Email</dt>
-            <dd>{{ auth.user.email }}</dd>
-          </div>
-          <div>
-            <dt>Signed in with</dt>
-            <dd>Google</dd>
-          </div>
-        </dl>
-
-        <div class="actions">
-          <router-link class="link-mono quiet" to="/dashboard">
-            <span>Dashboard</span>
-          </router-link>
-          <button class="link-mono quiet" type="button" @click="signOut">
-            <span>Log out</span>
-          </button>
+  <section class="card">
+    <div class="card-head">
+      <h2>Account</h2>
+      <router-link :to="{ name: 'dashboard' }">Overview</router-link>
+    </div>
+    <div class="card-body">
+      <dl class="datarows">
+        <div>
+          <dt>Name</dt>
+          <dd>{{ auth.user.name || '—' }}</dd>
         </div>
-      </div>
-    </main>
-  </div>
+        <div>
+          <dt>Email</dt>
+          <dd>{{ auth.user.email }}</dd>
+        </div>
+        <div>
+          <dt>Signed in with</dt>
+          <dd>Google</dd>
+        </div>
+      </dl>
+
+      <p class="note">
+        Nothing here is editable. Your name, email and picture come from the
+        Google account you signed in with. Deleting your account lives in
+        <router-link :to="{ name: 'settings' }">Settings</router-link>.
+      </p>
+    </div>
+  </section>
 </template>
 
 <style scoped>
-.page {
-  position: relative;
-  min-height: 100vh;
-  overflow: clip;
-}
-
-.shell {
-  position: relative;
-  z-index: 1;
-  padding-top: clamp(32px, 6vw, 56px);
-  padding-bottom: var(--sec-bottom);
-}
-
 .head {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding-bottom: clamp(28px, 5vw, 40px);
-}
-
-.signedout {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: clamp(16px, 2.5vw, 24px);
-  max-width: 640px;
-}
-
-.surface {
-  max-width: 760px;
-}
-
-.actions {
-  display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 16px 24px;
-  padding-top: 24px;
+  gap: 16px;
+  padding-bottom: 20px;
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid var(--app-border);
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+
+.fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--app-canvas-subtle);
+  color: var(--app-fg-muted);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.card-body .note {
+  margin-top: 16px;
 }
 </style>
