@@ -10,7 +10,7 @@ const error = ref('')
 const confirming = ref(false)
 
 // The calendar list is not fetched on load (it hits iCloud and is slow), so the
-// name is only known if this session already loaded it — fall back to the URL.
+// name is only known if this session already loaded it, fall back to the URL.
 const calendarName = computed(() => {
   const url = state.connection?.calendar_url
   return state.calendars.find((c) => c.url === url)?.name || null
@@ -125,17 +125,10 @@ async function confirmDisconnect() {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 16px;
+  gap: var(--app-gap-block);
 }
 
 .status > .datarows {
   width: 100%;
-}
-
-.actions {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
 }
 </style>

@@ -48,18 +48,18 @@ async function signOut() {
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 8px 16px;
-  max-width: 1280px;
+  gap: var(--app-gap-inline) var(--app-gap-block);
+  max-width: var(--app-width-page);
   margin: 0 auto;
-  padding: 10px clamp(16px, 4vw, 32px);
+  padding: 10px var(--app-pad-page);
 }
 
 .wordmark {
   display: inline-flex;
   align-items: center;
-  min-height: 32px;
-  font-size: 16px;
-  font-weight: 600;
+  min-height: var(--app-control-height);
+  font-size: var(--app-text-head);
+  font-weight: var(--app-weight-bold);
   letter-spacing: -0.01em;
   color: var(--app-fg);
 }
@@ -71,16 +71,16 @@ async function signOut() {
 .right {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--app-gap-block);
 }
 
 .account {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 32px;
+  gap: var(--app-gap-inline);
+  min-height: var(--app-control-height);
   color: var(--app-fg);
-  font-size: 14px;
+  font-size: var(--app-text-body);
 }
 
 .account:hover {
@@ -89,9 +89,9 @@ async function signOut() {
 }
 
 .avatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
+  width: var(--app-avatar);
+  height: var(--app-avatar);
+  border-radius: var(--app-radius-pill);
   border: 1px solid var(--app-border);
   object-fit: cover;
 }
@@ -102,8 +102,8 @@ async function signOut() {
   justify-content: center;
   background: var(--app-canvas-subtle);
   color: var(--app-fg-muted);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--app-text-meta);
+  font-weight: var(--app-weight-bold);
 }
 
 .name {
@@ -115,12 +115,12 @@ async function signOut() {
 
 .signout {
   font-family: inherit;
-  font-size: 14px;
+  font-size: var(--app-text-body);
   color: var(--app-fg-muted);
   background: none;
   border: none;
   padding: 0;
-  min-height: 32px;
+  min-height: var(--app-control-height);
   cursor: pointer;
 }
 

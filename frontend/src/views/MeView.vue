@@ -4,7 +4,7 @@ import { useAuth } from '../composables/useAuth'
 
 // Read-only account page, rendered inside DashboardLayout: the header, the
 // sidebar and the signed-out branch all belong to the shell, so this file is
-// content only. Everything shown comes from /auth/me — there is no
+// content only. Everything shown comes from /auth/me, there is no
 // account-mutation endpoint yet, so nothing here is editable.
 const { state: auth } = useAuth()
 
@@ -13,7 +13,7 @@ const initial = computed(() => (name.value[0] || '?').toUpperCase())
 </script>
 
 <template>
-  <header class="head">
+  <header class="profile">
     <img v-if="auth.user.picture" :src="auth.user.picture" alt="" class="avatar" />
     <span v-else class="avatar fallback">{{ initial }}</span>
     <div>
@@ -53,17 +53,17 @@ const initial = computed(() => (name.value[0] || '?').toUpperCase())
 </template>
 
 <style scoped>
-.head {
+.profile {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding-bottom: 20px;
+  gap: var(--app-gap-block);
+  padding-bottom: var(--app-space-5);
 }
 
 .avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
+  width: var(--app-avatar-lg);
+  height: var(--app-avatar-lg);
+  border-radius: var(--app-radius-pill);
   border: 1px solid var(--app-border);
   object-fit: cover;
   flex: 0 0 auto;
@@ -75,11 +75,11 @@ const initial = computed(() => (name.value[0] || '?').toUpperCase())
   justify-content: center;
   background: var(--app-canvas-subtle);
   color: var(--app-fg-muted);
-  font-size: 20px;
-  font-weight: 600;
+  font-size: var(--app-text-title);
+  font-weight: var(--app-weight-bold);
 }
 
 .card-body .note {
-  margin-top: 16px;
+  margin-top: var(--app-gap-block);
 }
 </style>

@@ -1,6 +1,6 @@
 <script setup>
 // One connection in the Connections list, as a card that expands in place —
-// no modal, no second page — so the dashboard stays a single view.
+// no modal, no second page, so the dashboard stays a single view.
 defineProps({
   name: { type: String, required: true },
   status: { type: String, required: true },
@@ -34,21 +34,17 @@ defineEmits(['toggle'])
 </template>
 
 <style scoped>
-.card + .card {
-  margin-top: 16px;
-}
-
 .ident {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px 12px;
+  gap: var(--app-gap-inline) var(--app-gap-stack);
   min-width: 0;
 }
 
 .name {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--app-text-body);
+  font-weight: var(--app-weight-bold);
   color: var(--app-fg);
 }
 </style>

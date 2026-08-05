@@ -50,7 +50,7 @@ async function submitCalendar() {
 
 <template>
   <div class="setup">
-    <!-- Step 1 — credentials --------------------------------------------->
+    <!-- Step 1: credentials --------------------------------------------->
     <section class="step">
       <div class="line">
         <span class="num" :class="{ done: step > 1 }">{{ numbers[0] }}</span>
@@ -118,7 +118,7 @@ async function submitCalendar() {
       </div>
     </section>
 
-    <!-- Step 2 — calendar ------------------------------------------------>
+    <!-- Step 2: calendar ------------------------------------------------>
     <section class="step" :class="{ ahead: step < 2 }">
       <div class="line">
         <span class="num">{{ numbers[1] }}</span>
@@ -176,13 +176,13 @@ async function submitCalendar() {
 .setup {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--app-space-5);
 }
 
 .step {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--app-gap-inline);
 }
 
 .step.ahead {
@@ -192,33 +192,33 @@ async function submitCalendar() {
 .line {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--app-gap-inline);
 }
 
 .num {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
+  width: var(--app-marker);
+  height: var(--app-marker);
+  border-radius: var(--app-radius-pill);
   border: 1px solid var(--app-border);
   background: var(--app-canvas-subtle);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--app-text-meta);
+  font-weight: var(--app-weight-bold);
   color: var(--app-fg-muted);
 }
 
 .num.done {
-  background: var(--app-success-subtle);
-  border-color: rgba(31, 136, 61, 0.4);
+  background: var(--app-success-tint);
+  border-color: var(--app-success-line);
   color: var(--app-success);
 }
 
 h3 {
   margin: 0;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--app-text-body);
+  font-weight: var(--app-weight-bold);
   color: var(--app-fg);
 }
 
@@ -226,15 +226,15 @@ h3 {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 12px;
-  padding-left: 28px;
+  gap: var(--app-gap-stack);
+  padding-left: calc(var(--app-marker) + var(--app-gap-inline));
 }
 
 .form {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 16px;
+  gap: var(--app-gap-block);
   width: 100%;
 }
 
@@ -243,10 +243,10 @@ h3 {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--app-gap-inline);
 }
 
 .create .text {
-  width: 200px;
+  width: 200px; /* wide enough for a calendar name, narrow enough to stay on the row */
 }
 </style>

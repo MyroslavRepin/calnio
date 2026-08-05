@@ -127,7 +127,9 @@ Binding rules. Existing code that breaks them is wrong and gets rewritten, not c
 
 README holds the working plan: sync model detail, roadmap phases, auth flow + todo checklist, frontend integration plan (Vue/Vite dev on :5173, prod served by FastAPI `StaticFiles`). Check it before starting auth or frontend work — it tracks what's done vs todo.
 
-# Calnio — Design System
+# Calnio Landing — Design System
+
+**Scope: the landing page only** (`/`, `views/LandingPage.vue` and the components it imports, tokens in `frontend/src/styles/global.css`). Every signed-in page follows the separate app design system at the bottom of this file. The two never share a token.
 
 Source of truth: `Calnio Landing.dc.html`. Every value below is lifted from that file; if the two disagree, the file wins.
 
@@ -302,3 +304,116 @@ Page order: nav → hero → chip band + claim row → beta line → `#how` (3 s
 - The chip band is styled text, not proof — real Notion table and Apple Calendar screenshots would carry more weight.
 - Nothing addresses failure: a short honest line about failed syncs and retries would build more trust than another feature bullet.
 - "No duplicates" and "Smart scheduler" in the feature row restate steps 02 and 03 — worth cutting to two features for more air.
+
+# Calnio App Design System
+
+**Scope: everything except the landing page**, `/dashboard`, `/dashboard/connections`, `/dashboard/settings`, `/welcome`, `/me`, and every component they import. Source of truth: `frontend/src/styles/app.css`. If this document and that file disagree, the file wins.
+
+The app is not the landing page and must not look like it: no atmosphere circles, no mono eyebrows, no 104px display type, no `.surface` panels. The landing page sells; the app reports state and takes instructions. It should read like a settings screen a bank could ship.
+
+**Rules that hold everywhere here**
+
+1. Every rule lives under `.app-ui` and nothing else. The shell (`DashboardLayout`, `WelcomeView`) puts that class on its root, so `global.css` and `app.css` cannot collide.
+2. **Components read tokens, never raw values.** A hex, a px gap or a font size written in a component's scoped block is a bug: it means a token is missing from `app.css`. The only literals left in components are one-off geometry (progress bar height, toggle track).
+3. **No motion.** No `transition`, no `@keyframes`. Hover changes colour, state changes colour, a toggle knob simply sits at the other end.
+4. **No icons, no emoji, no images** other than the user's Google avatar. A tick in the setup checklist is the character `✓`.
+5. Shared primitives live in `app.css`, component-specific layout stays in the component's scoped block. If a rule appears in two components, it belongs in `app.css`.
+6. No em dashes, in copy or comments.
+
+## 1. Foundations
+
+### Fonts
+
+| Token | Value | Use |
+|---|---|---|
+| `--app-font` | `-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif` | everything |
+| `--app-font-mono` | `ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace` | `<code>` chips only |
+
+No IBM Plex Mono, no web fonts, no `<link>` to Google Fonts. The app loads zero font files.
+
+**Five sizes, no more.** Anything that does not fit one is being designed, not styled.
+
+| Token | Size | Use |
+|---|---|---|
+| `--app-text-meta` | 12px | labels/pills, footnotes (`.note`), counts, code chips |
+| `--app-text-body` | 14px | the default: copy, controls, table rows, nav, card headings |
+| `--app-text-head` | 16px | wordmark, step headings |
+| `--app-text-title` | 20px | a section title inside a page |
+| `--app-text-page` | 24px | the one `h1` per page (`.title`) |
+
+Weights: `--app-weight-normal` 400 (copy, `dt`), `--app-weight-medium` 500 (values, button labels), `--app-weight-bold` 600 (headings, active nav). Nothing is 700.
+
+Line height: `--app-lh-tight` 1.25 for headings, `--app-lh-body` 1.5 for everything else. Running copy is capped at `--app-measure` (72ch).
+
+### Gaps
+
+One 4px scale. `--app-space-1` 4 · `-2` 8 · `-3` 12 · `-4` 16 · `-5` 24 · `-6` 32 · `-7` 48 · `-8` 64.
+
+Four of them have named jobs, so intent survives a refactor. Use the named token when the job matches:
+
+| Token | Value | Job |
+|---|---|---|
+| `--app-gap-inline` | 8px | buttons side by side, label next to a name |
+| `--app-gap-stack` | 12px | items inside one block |
+| `--app-gap-block` | 16px | card to card, card padding (`--app-pad-card`) |
+| `--app-gap-section` | 24px | page header to content, sidebar to content |
+
+Card header padding is `--app-pad-card-head` (12px/16px). Page padding is `--app-pad-page` = `clamp(16px, 4vw, 32px)`.
+
+Layout widths: `--app-width-page` 1280px (dashboard shell) · `--app-width-narrow` 800px (welcome, profile) · `--app-width-panel` 480px (centred signed-out card) · `--app-width-field` 440px (input) · `--app-width-list` 560px (picklist) · `--app-sidebar` 200px.
+
+Sizes: `--app-control-height` 32px (buttons, inputs) · `--app-row-height` 40px (clickable list row) · `--app-marker` 20px (step numeral, pill height, toggle knob) · `--app-avatar` 24px · `--app-avatar-lg` 48px.
+
+Radii: `--app-radius` 6px (cards, buttons, inputs, lists) · `--app-radius-sm` 4px (code chip, toggle knob) · `--app-radius-pill` 999px (labels, avatars). Nothing is bigger than 6px except a pill.
+
+**No breakpoints.** Columns reflow with `flex-wrap` and a `min()` basis, same discipline as the landing page.
+
+### Colours
+
+| Token | Value | Use |
+|---|---|---|
+| `--app-fg` | `#1f2328` | headings, values, anything you must read |
+| `--app-fg-muted` | `#59636e` | labels, body copy, `dt`, secondary rows |
+| `--app-fg-subtle` | `#818b98` | disabled, placeholder, unmet checklist item |
+| `--app-fg-on-emphasis` | `#fff` | text on a filled button |
+| `--app-canvas` | `#fff` | page and card background |
+| `--app-canvas-subtle` | `#f6f8fa` | card headers, hover, neutral fills |
+| `--app-border` | `#d1d9e0` | card, input, list outlines |
+| `--app-border-subtle` | `#e4e8ec` | dividers inside a card |
+| `--app-border-emphasis` | `rgba(31,35,40,0.15)` | edge of a filled button |
+
+Four roles, each with a text colour, a tint and a line, so a state can be a word, a pill or a whole panel without inventing a colour:
+
+| Role | Text | Tint | Line | Means |
+|---|---|---|---|---|
+| accent | `#0969da` | `#ddf4ff` | `rgba(9,105,218,0.4)` | links, focus, "syncing now" |
+| success | `#1a7f37` | `#dafbe1` | `rgba(31,136,61,0.4)` | connected, done, sync on |
+| attention | `#9a6700` | `#fff8c5` | `rgba(154,103,0,0.4)` | half-configured, needs a decision |
+| danger | `#d1242f` | `#ffebe9` | `rgba(255,129,130,0.5)` | failed, destructive |
+
+Buttons carry their own tokens: `--app-btn-bg` `#f6f8fa` / `--app-btn-bg-hover` `#eef1f4` (neutral), `--app-btn-primary` `#1f883d` / `--app-btn-primary-hover` `#1a7f37` (the one affirmative fill), `--app-btn-danger-hover` `#a40e26`.
+
+Rules: the green button is a role of its own, not `success` reused. A saturated fill appears only on a button, a toggle track or a progress fill. Everything else states its role with text on a tint. Focus is `--app-focus-ring` on inputs and a 2px accent outline elsewhere.
+
+## 2. Components (all in `app.css`)
+
+- **`.card`**: the only container: white, 1px `--app-border`, 6px radius, no shadow. `.card-head` (subtle background, hairline under it, `h2` at 14px/600, one action or one `.label` on the right) plus `.card-body` (16px padding). Consecutive cards space themselves; a card never contains another card.
+- **`.label`**: the state pill. 20px tall, `--app-radius-pill`, 12px/500, one tone class: `neutral` `accent` `success` `attention` `danger`. Colour repeats what the text already says, it never carries the meaning alone.
+- **`.btn`**: one shape, three tones. Bare `.btn` is green and commits (max one per view), `.btn.plain` is grey and is the default for everything else, `.btn.danger` is red and destroys. 32px tall, 14px/500, 6px radius. Disabled is `opacity: 0.6`.
+- **`.actions`**: a wrapping row of buttons, `--app-gap-inline`. Buttons wrap rather than shrink.
+- **`.field`**: stacked label (14px/600) over an input (32px, 6px radius, focus ring). Max `--app-width-field`.
+- **`.picklist`**: bordered list box for a short set of radio choices, 40px rows, hover on `--app-canvas-subtle`. Max `--app-width-list`.
+- **`.datarows`**: `dl` of term/value pairs: `dt` muted 400, `dd` ink 500, hairline between rows, none after the last. This is how the app states a stored fact.
+- **`.page-head`**: the `h1` (`.title`) and its one `.lead` paragraph, 24px of space under it. Every app page starts with one.
+- **`.note`**: 12px muted small print. **`.error`**: 14px on the danger tint with a danger line, 6px radius. **`.loading`**: 14px muted, the single word while data is in flight.
+- **`code`**: mono 12px on `--app-canvas-subtle` with a subtle border, 4px radius.
+
+Layout pieces that stay local to their component: `AppHeader` (wordmark, avatar, sign out), the sidebar menu in `DashboardLayout` (36px rows, active = subtle fill + 600 weight, **no coloured bar**), the welcome progress bar, the settings toggle, the setup step numeral.
+
+## 3. Page anatomy
+
+Shell: `AppHeader` (hairline bottom) → `.shell` (max `--app-width-page`, `--app-gap-section` between sidebar and content) → sidebar (Overview / Connections / Settings, then Account → Profile) → content, a `.page-head` followed by cards. `/me` renders inside this shell as an absolute child route, so the sidebar stays visible. `/welcome` is the only page outside it: sticky bar with a progress fill, one narrow column.
+
+## 4. Banned
+
+Landing tokens (`--ink`, `--body`, `--hairline`, `--font-mono`, `--accent`) · the atmosphere layer and grain · `.surface`, `.eyebrow`, `.link-mono`, `.pill` · mono uppercase labels · letter-spacing on anything but the wordmark · icons, emoji, status dots, arrow glyphs · shadows · gradients · nested cards · a second green button on one view · colour as the only carrier of a state · any `transition`.

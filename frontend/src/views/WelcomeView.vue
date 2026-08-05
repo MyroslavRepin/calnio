@@ -66,7 +66,7 @@ watch(() => [auth.ready, auth.user], loadIfAuthed)
       </section>
 
       <template v-else>
-        <header class="head">
+        <header class="page-head">
           <h1 class="title">{{ allDone ? 'You are all set' : 'Set up Calnio' }}</h1>
           <p class="lead">
             <template v-if="allDone">
@@ -171,18 +171,18 @@ watch(() => [auth.ready, auth.user], loadIfAuthed)
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  max-width: 800px;
+  gap: var(--app-gap-block);
+  max-width: var(--app-width-narrow);
   margin: 0 auto;
-  padding: 10px clamp(16px, 4vw, 32px);
+  padding: 10px var(--app-pad-page);
 }
 
 .wordmark {
   display: inline-flex;
   align-items: center;
-  min-height: 32px;
-  font-size: 16px;
-  font-weight: 600;
+  min-height: var(--app-control-height);
+  font-size: var(--app-text-head);
+  font-weight: var(--app-weight-bold);
   letter-spacing: -0.01em;
   color: var(--app-fg);
 }
@@ -192,7 +192,7 @@ watch(() => [auth.ready, auth.user], loadIfAuthed)
 }
 
 .count {
-  font-size: 12px;
+  font-size: var(--app-text-meta);
   color: var(--app-fg-muted);
 }
 
@@ -211,60 +211,38 @@ watch(() => [auth.ready, auth.user], loadIfAuthed)
 .main {
   flex: 1;
   width: 100%;
-  max-width: 800px;
+  max-width: var(--app-width-narrow);
   margin: 0 auto;
-  padding: 24px clamp(16px, 4vw, 32px) 64px;
-}
-
-.head {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 12px;
-  padding-bottom: 24px;
+  padding: var(--app-space-5) var(--app-pad-page) var(--app-space-8);
 }
 
 .intro {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 16px;
-  max-width: 480px;
-  margin: 48px auto;
-  padding: 24px;
-}
-
-.card + .card {
-  margin-top: 16px;
+  gap: var(--app-gap-block);
+  max-width: var(--app-width-panel);
+  margin: var(--app-space-7) auto;
+  padding: var(--app-space-5);
 }
 
 /* Apple instructions, injected into the wizard's slot ------------------- */
 .sub {
   margin: 0;
-  padding-left: 20px;
+  padding-left: var(--app-space-5);
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  font-size: 14px;
+  gap: var(--app-space-1);
+  font-size: var(--app-text-body);
   color: var(--app-fg-muted);
-  max-width: 72ch;
-}
-
-code {
-  font-family: var(--app-font-mono);
-  font-size: 12px;
-  background: var(--app-canvas-subtle);
-  border: 1px solid var(--app-border-subtle);
-  border-radius: 4px;
-  padding: 1px 5px;
-  color: var(--app-fg);
+  max-width: var(--app-measure);
 }
 
 .foot {
   display: flex;
-  margin-top: 16px;
-  padding-top: 16px;
+  margin-top: var(--app-gap-block);
+  padding-top: var(--app-space-4);
   border-top: 1px solid var(--app-border-subtle);
-  font-size: 14px;
+  font-size: var(--app-text-body);
 }
 </style>

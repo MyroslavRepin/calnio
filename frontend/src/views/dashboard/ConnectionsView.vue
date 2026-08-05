@@ -44,7 +44,7 @@ const notionStatus = computed(() => {
 </script>
 
 <template>
-  <header class="head">
+  <header class="page-head">
     <h1 class="title">Connections</h1>
     <p class="lead">
       Where Calnio reads your tasks from, and where it writes your events to.
@@ -85,14 +85,7 @@ const notionStatus = computed(() => {
 </template>
 
 <style scoped>
-.head {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-bottom: 20px;
-}
-
 .note {
-  padding-top: 16px;
+  padding-top: var(--app-space-4);
 }
 </style>

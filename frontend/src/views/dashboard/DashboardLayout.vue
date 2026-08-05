@@ -21,7 +21,7 @@ const menu = [
 
 // App.vue bootstraps auth; wait for a user before asking for their connections,
 // otherwise the first call 401s during a page refresh. Loaded once here rather
-// than per child view — the composable state is shared.
+// than per child view, the composable state is shared.
 function loadIfAuthed() {
   if (!auth.ready || !auth.user) return
   loadApple()
@@ -76,9 +76,9 @@ watch(() => [auth.ready, auth.user], loadIfAuthed)
 }
 
 .shell {
-  max-width: 1280px;
+  max-width: var(--app-width-page);
   margin: 0 auto;
-  padding: 24px clamp(16px, 4vw, 32px) 64px;
+  padding: var(--app-space-5) var(--app-pad-page) var(--app-space-8);
 }
 
 /* No breakpoint: the content column asks for min(560px, 100%), so once the two
@@ -86,21 +86,21 @@ watch(() => [auth.ready, auth.user], loadIfAuthed)
 .grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 24px;
+  gap: var(--app-gap-section);
   align-items: flex-start;
 }
 
 .side {
-  flex: 1 1 200px;
+  flex: 1 1 var(--app-sidebar);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--app-space-1);
 }
 
 .group {
-  padding: 16px 12px 4px;
-  font-size: 12px;
-  font-weight: 600;
+  padding: var(--app-space-4) var(--app-space-3) var(--app-space-1);
+  font-size: var(--app-text-meta);
+  font-weight: var(--app-weight-bold);
   color: var(--app-fg-muted);
 }
 
@@ -114,9 +114,9 @@ watch(() => [auth.ready, auth.user], loadIfAuthed)
   display: flex;
   align-items: center;
   min-height: 36px;
-  padding: 6px 12px;
+  padding: 6px var(--app-space-3);
   border-radius: var(--app-radius);
-  font-size: 14px;
+  font-size: var(--app-text-body);
   color: var(--app-fg);
 }
 
@@ -129,7 +129,7 @@ watch(() => [auth.ready, auth.user], loadIfAuthed)
    up Overview on every child route. */
 .menu a.router-link-exact-active {
   background: var(--app-canvas-subtle);
-  font-weight: 600;
+  font-weight: var(--app-weight-bold);
 }
 
 .content {
@@ -141,9 +141,9 @@ watch(() => [auth.ready, auth.user], loadIfAuthed)
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 16px;
-  max-width: 480px;
-  margin: 48px auto;
-  padding: 24px;
+  gap: var(--app-gap-block);
+  max-width: var(--app-width-panel);
+  margin: var(--app-space-7) auto;
+  padding: var(--app-space-5);
 }
 </style>

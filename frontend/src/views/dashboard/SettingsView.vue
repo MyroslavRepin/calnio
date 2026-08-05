@@ -108,7 +108,7 @@ async function confirmDelete() {
   <p v-if="!sync.ready" class="loading">Loading…</p>
 
   <template v-else>
-    <header class="head">
+    <header class="page-head">
       <h1 class="title">Settings</h1>
       <p class="lead">
         Syncing runs in the background and pushes your Notion due dates into
@@ -270,28 +270,17 @@ async function confirmDelete() {
 </template>
 
 <style scoped>
-.head {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-bottom: 20px;
-}
-
-.card + .card {
-  margin-top: 16px;
-}
-
 .card.danger {
-  border-color: rgba(255, 129, 130, 0.6);
+  border-color: var(--app-danger-line);
 }
 
 .card.danger .card-head {
-  background: var(--app-danger-subtle);
-  border-bottom-color: rgba(255, 129, 130, 0.6);
+  background: var(--app-danger-tint);
+  border-bottom-color: var(--app-danger-line);
 }
 
 .card-body > * + * {
-  margin-top: 12px;
+  margin-top: var(--app-gap-stack);
 }
 
 /* Toggle. State is carried by colour and the knob's side, no transition —
@@ -299,13 +288,13 @@ async function confirmDelete() {
 .switch {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--app-space-2);
   padding: 0;
   background: none;
   border: none;
   cursor: pointer;
   font-family: inherit;
-  font-size: 14px;
+  font-size: var(--app-text-body);
   color: var(--app-fg);
 }
 
@@ -331,30 +320,23 @@ async function confirmDelete() {
 }
 
 .knob {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-  background: #fff;
+  width: var(--app-marker);
+  height: var(--app-marker);
+  border-radius: var(--app-radius-sm);
+  background: var(--app-canvas);
   border: 1px solid var(--app-border);
 }
 
 .track.on .knob {
   margin-left: auto;
-  border-color: rgba(31, 35, 40, 0.15);
+  border-color: var(--app-border-emphasis);
 }
 
 .switch-label {
-  font-weight: 500;
-}
-
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
+  font-weight: var(--app-weight-medium);
 }
 
 .spaced {
-  margin-top: 16px;
+  margin-top: var(--app-gap-block);
 }
 </style>

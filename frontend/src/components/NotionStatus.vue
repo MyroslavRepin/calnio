@@ -144,17 +144,10 @@ async function confirmDisconnect() {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 16px;
+  gap: var(--app-gap-block);
 }
 
 .status > .datarows {
   width: 100%;
-}
-
-.actions {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
 }
 </style>

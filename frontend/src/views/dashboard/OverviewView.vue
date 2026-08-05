@@ -12,7 +12,7 @@ const { state: auth } = useAuth()
 
 // The four setup stages, same definitions the welcome page counts: a grant
 // stored, then a target picked, for each connection. The walkthrough itself
-// lives on /welcome — this page only reports where you are.
+// lives on /welcome, this page only reports where you are.
 const stages = computed(() => [
   { label: 'Notion workspace connected', done: Boolean(notion.connection) },
   { label: 'Notion database chosen', done: Boolean(notion.connection?.data_source_id) },
@@ -30,7 +30,7 @@ const greeting = computed(() => {
 })
 
 // The calendar list is not fetched on load (it hits iCloud and is slow), so the
-// name is only known if this session already loaded it — fall back to the URL.
+// name is only known if this session already loaded it, fall back to the URL.
 const calendarName = computed(() => {
   const url = apple.connection?.calendar_url
   if (!url) return '—'
@@ -42,7 +42,7 @@ const lastRun = computed(() => {
   return at ? new Date(at).toLocaleString() : 'never'
 })
 
-// Reporting only — the switch itself lives in Settings, so this never shows a
+// Reporting only, the switch itself lives in Settings, so this never shows a
 // second control for the same state.
 const syncLabel = computed(() => {
   if (sync.pending) return { text: 'Syncing now', tone: 'accent' }
@@ -68,7 +68,7 @@ const lastResult = computed(() => {
   <p v-if="!ready" class="loading">Loading…</p>
 
   <template v-else>
-    <header class="head">
+    <header class="page-head">
       <div class="headline">
         <h1 class="title">{{ greeting }}</h1>
         <span class="label" :class="syncLabel.tone">{{ syncLabel.text }}</span>
@@ -179,40 +179,27 @@ const lastResult = computed(() => {
 </template>
 
 <style scoped>
-.head {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-bottom: 20px;
-}
-
 .headline {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: var(--app-gap-stack);
 }
-
-.card + .card,
-.setup + .card {
-  margin-top: 16px;
-}
-
 /* Setup checklist. A tick or a ring, no icon set to pull in. */
 .checks {
   list-style: none;
-  margin: 0 0 16px;
+  margin: 0 0 var(--app-gap-block);
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--app-gap-inline);
 }
 
 .checks li {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
+  gap: var(--app-gap-inline);
+  font-size: var(--app-text-body);
   color: var(--app-fg-muted);
 }
 
@@ -221,7 +208,7 @@ const lastResult = computed(() => {
 }
 
 .mark {
-  width: 16px;
+  width: var(--app-space-4);
   text-align: center;
   color: var(--app-fg-subtle);
 }
@@ -231,10 +218,10 @@ const lastResult = computed(() => {
 }
 
 .card-body .body {
-  margin-bottom: 16px;
+  margin-bottom: var(--app-gap-block);
 }
 
 .off {
-  margin-top: 12px;
+  margin-top: var(--app-gap-stack);
 }
 </style>

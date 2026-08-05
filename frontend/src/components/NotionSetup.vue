@@ -19,7 +19,7 @@ const fetched = ref(false)
 // database is picked.
 const step = computed(() => (state.connection ? 2 : 1))
 
-// The grant is shared with zero databases — the likeliest first-run mistake,
+// The grant is shared with zero databases, the likeliest first-run mistake,
 // since Notion's dialog lets you finish without ticking anything.
 const empty = computed(() => fetched.value && state.databases.length === 0)
 
@@ -55,7 +55,7 @@ async function submitDatabase() {
 
 <template>
   <div class="setup">
-    <!-- Step 1 — authorize ----------------------------------------------->
+    <!-- Step 1: authorize ----------------------------------------------->
     <section class="step">
       <div class="line">
         <span class="num" :class="{ done: step > 1 }">{{ numbers[0] }}</span>
@@ -86,7 +86,7 @@ async function submitDatabase() {
       </div>
     </section>
 
-    <!-- Step 2 — database ------------------------------------------------>
+    <!-- Step 2: database ------------------------------------------------>
     <section class="step" :class="{ ahead: step < 2 }">
       <div class="line">
         <span class="num">{{ numbers[1] }}</span>
@@ -145,13 +145,13 @@ async function submitDatabase() {
 .setup {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--app-space-5);
 }
 
 .step {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--app-gap-inline);
 }
 
 /* A step the user has not reached yet stays visible but recedes. */
@@ -162,7 +162,7 @@ async function submitDatabase() {
 .line {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--app-gap-inline);
 }
 
 /* Numbered disc: the only place the app numbers anything, so the shape has to
@@ -171,26 +171,26 @@ async function submitDatabase() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
+  width: var(--app-marker);
+  height: var(--app-marker);
+  border-radius: var(--app-radius-pill);
   border: 1px solid var(--app-border);
   background: var(--app-canvas-subtle);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--app-text-meta);
+  font-weight: var(--app-weight-bold);
   color: var(--app-fg-muted);
 }
 
 .num.done {
-  background: var(--app-success-subtle);
-  border-color: rgba(31, 136, 61, 0.4);
+  background: var(--app-success-tint);
+  border-color: var(--app-success-line);
   color: var(--app-success);
 }
 
 h3 {
   margin: 0;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--app-text-body);
+  font-weight: var(--app-weight-bold);
   color: var(--app-fg);
 }
 
@@ -199,7 +199,7 @@ h3 {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 12px;
-  padding-left: 28px;
+  gap: var(--app-gap-stack);
+  padding-left: calc(var(--app-marker) + var(--app-gap-inline));
 }
 </style>
