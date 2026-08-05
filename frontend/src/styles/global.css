@@ -1,0 +1,354 @@
+/* Calnio design system — foundations and the handful of primitives every page
+   shares. Component-specific rules stay in the component's scoped block; a
+   token or a primitive lives here so the landing page and the app cannot
+   drift apart. */
+
+:root {
+  /* Colour ------------------------------------------------------------- */
+  --bg: #fff;
+  --ink: #0a0a0a;
+  --ink-hover: #262626;
+  --body: #57554e; /* body copy on plain white */
+  --body-cool: #1d2b38; /* body copy sitting near/over the blue field */
+  --muted: #8a877e; /* mono meta on white */
+  --muted-cool: #6b8299; /* mono meta inside a white card over blue */
+  --link: #3a4a5c; /* nav + footer links at rest */
+  --hairline: #ededea;
+  --hairline-strong: rgba(10, 10, 10, 0.12);
+  --field-line: rgba(10, 10, 10, 0.4); /* input + text-link underlines */
+
+  /* The one accent. Set from App.vue's `accent` prop; never hardcode the
+     hex in a component — read var(--accent). */
+  --accent: #0b63f6;
+
+  /* Type --------------------------------------------------------------- */
+  --font-ui: -apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  /* Layout ------------------------------------------------------------- */
+  --maxw: 1180px;
+  --pad: clamp(20px, 5vw, 40px);
+  --sec-top: clamp(56px, 11vw, 120px);
+  --sec-bottom: clamp(48px, 9vw, 96px);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  /* Stops iOS inflating type in landscape. */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  /* Circles crop against the viewport edge, so they must not scroll it. */
+  overflow-x: hidden;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+::selection {
+  background: #0a0a0a;
+  color: #fff;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: rgba(10, 10, 10, 0.06);
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+/* Layout primitives ------------------------------------------------------ */
+
+.wrap {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding-left: var(--pad);
+  padding-right: var(--pad);
+}
+
+/* Every section stacks above the atmosphere layer, which sits at z-index 0. */
+.section {
+  position: relative;
+  z-index: 1;
+  padding-top: var(--sec-top);
+  padding-bottom: var(--sec-bottom);
+}
+
+/* Type primitives -------------------------------------------------------- */
+
+.display {
+  font-size: clamp(44px, 9vw, 104px);
+  font-weight: 700;
+  line-height: 0.92;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+
+.title {
+  font-size: clamp(32px, 6vw, 52px);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+}
+
+.lead {
+  font-size: clamp(16px, 1.5vw, 17px);
+  line-height: 1.55;
+  max-width: 52ch;
+  text-wrap: pretty;
+  color: var(--body);
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: clamp(10.5px, 2.6vw, 12px);
+  text-transform: uppercase;
+  letter-spacing: 0.17em;
+  color: var(--muted);
+}
+
+.note {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--muted);
+  max-width: 60ch;
+}
+
+/* Controls --------------------------------------------------------------- */
+
+/* Vertical padding on an inline element does not make a touch target —
+   inline-flex plus a min-height does. 50px for buttons, 44px for links. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 500;
+  color: #fff;
+  background: var(--ink);
+  border: none;
+  border-radius: 8px;
+  padding: 16px 24px;
+  min-height: 50px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background: var(--ink-hover);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.btn:disabled:hover {
+  background: var(--ink);
+}
+
+/* Secondary action: mono uppercase, ink, rule under the label only. The rule
+   sits on a nested span so the 44px hit box does not drag it down. */
+.link-mono {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.link-mono > span {
+  border-bottom: 1px solid var(--field-line);
+  padding-bottom: 3px;
+}
+
+.link-mono:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Quiet variant, for rows of secondary actions inside the app. */
+.link-mono.quiet {
+  color: var(--link);
+}
+
+.link-mono.quiet:hover {
+  color: var(--ink);
+}
+
+/* Surface — a white translucent panel that lifts a block of app content off
+   the atmosphere layer. The landing page has enough empty margin to keep its
+   copy on clean white; the app does not, so its content sits on one of these.
+   Radius stays at the 10px ceiling and the border is a hairline, not a card
+   outline. */
+.surface {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(10, 10, 10, 0.06);
+  border-radius: 10px;
+  padding: clamp(20px, 3vw, 32px);
+}
+
+/* White translucent pill — the only way text may sit over blue. */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(8px);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: clamp(10.5px, 2.6vw, 12px);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--ink);
+}
+
+/* Forms ------------------------------------------------------------------ */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.field > span {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+}
+
+.field input,
+input.text {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  color: var(--ink);
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--field-line);
+  border-radius: 0;
+  padding: 10px 0;
+  min-height: 44px;
+  width: 100%;
+}
+
+.field input:focus,
+input.text:focus {
+  outline: none;
+  border-bottom-color: var(--ink);
+}
+
+/* Radio lists (databases, calendars) — hairline rows, no boxes. */
+.picklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--hairline);
+  width: 100%;
+  max-width: 520px;
+}
+
+.picklist li {
+  border-bottom: 1px solid var(--hairline);
+}
+
+.picklist label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 10px 0;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.picklist input[type='radio'] {
+  accent-color: var(--ink);
+}
+
+/* Data rows -------------------------------------------------------------- */
+
+/* term / value pairs, used by every app page. Flex rather than a fixed grid,
+   so the value drops under its label on a narrow screen without a breakpoint. */
+.datarows {
+  margin: 0;
+  border-top: 1px solid var(--hairline);
+  max-width: 640px;
+}
+
+.datarows > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.datarows dt {
+  flex: 0 0 min(180px, 100%);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+  padding-top: 2px;
+}
+
+.datarows dd {
+  flex: 1 1 min(240px, 100%);
+  margin: 0;
+  font-size: 15px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+/* Status ----------------------------------------------------------------- */
+
+.error {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--ink);
+  border-top: 1px solid var(--hairline);
+  padding-top: 20px;
+  max-width: 60ch;
+}
+
+.loading {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+  padding: 32px 0;
+}

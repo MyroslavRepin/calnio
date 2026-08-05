@@ -1,22 +1,37 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, String, func
+from sqlalchemy import DateTime, ForeignKey, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from backend.core.base import Base
 
 
 class SyncedEvent(Base):
-    """Link between a Notion page and its CalDAV event (sync state)."""
+    """Link between a Notion page and its CalDAV event (sync state).
+
+    Scoped to a user: the same Notion page can only ever be linked once per
+    user, but two users syncing the same shared page are two independent
+    links into two different calendars. That is why the uniqueness lives on
+    (user_id, notion_page_id) rather than on the page id alone.
+    """
 
     __tablename__: str = "synced_events"
+    __table_args__ = (
+        UniqueConstraint("user_id", "notion_page_id", name="uq_synced_events_user_page"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
 
-    # Mapping key — Notion page id, also the iCal uid.
-    notion_page_id: Mapped[str] = mapped_column(String, unique=True, index=True)
+    # Owner of this link. Deleting the user drops their links; the CalDAV
+    # events themselves stay in their calendar, same as a disconnect does.
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
 
-    # Last-synced title — compared to detect Notion title edits.
+    # Mapping key: Notion page id, also the iCal uid.
+    notion_page_id: Mapped[str] = mapped_column(String, index=True)
+
+    # Last-synced title, compared to detect Notion title edits.
     title: Mapped[str | None] = mapped_column(String, nullable=True)
 
     # CalDAV locators.

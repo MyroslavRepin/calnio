@@ -1,4 +1,5 @@
 .env
+.env.prod
 .venv
 __pycache__/
 *.pyc
@@ -8,3 +9,8 @@ __pycache__/
 .idea/
 .vscode/
 .claude
+logs/
+
+# local API testing (Posting)
+collections/
+openapi.json
