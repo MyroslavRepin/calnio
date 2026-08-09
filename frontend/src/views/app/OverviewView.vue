@@ -56,10 +56,14 @@ const greeting = computed(function () {
   }
 })
 
-// Calendar name for display. The full calendar list is not always
-// loaded, so if we do not have the name, fall back to showing the
-// raw URL instead of nothing.
+// Calendar name for display. The backend stores it alongside the url, so
+// this is the normal case. Older rows saved before that existed fall back to
+// this session's fetched list, then to the raw url.
 const calendarName = computed(function () {
+  if (apple.connection?.calendar_name) {
+    return apple.connection.calendar_name
+  }
+
   const url = apple.connection?.calendar_url
 
   if (!url) {

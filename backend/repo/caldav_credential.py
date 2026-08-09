@@ -26,8 +26,8 @@ class CaldavCredentialRepo:
     ) -> tuple[CaldavCredential, bool]:
         """Create or replace the user's credential. Returns (row, created).
 
-        Replacing an account clears calendar_url, since a URL from the old
-        account is meaningless under new credentials.
+        Replacing an account clears calendar_url and calendar_name, since a
+        URL from the old account is meaningless under new credentials.
         """
         now = datetime.now(timezone.utc)
         row = self.get(user_id)
@@ -45,13 +45,17 @@ class CaldavCredentialRepo:
 
         if row.icloud_email != icloud_email:
             row.calendar_url = None
+            row.calendar_name = None
         row.icloud_email = icloud_email
         row.password_encrypted = password_encrypted
         row.last_verified_at = now
         return row, False
 
-    def set_calendar_url(self, row: CaldavCredential, calendar_url: str) -> None:
+    def set_calendar(
+        self, row: CaldavCredential, calendar_url: str, calendar_name: str
+    ) -> None:
         row.calendar_url = calendar_url
+        row.calendar_name = calendar_name
 
     def delete(self, row: CaldavCredential) -> None:
         self.db.delete(row)

@@ -31,6 +31,8 @@ class CaldavCredential(Base):
 
     calendar_url: Mapped[str | None] = mapped_column(String, nullable=True)
 
+    calendar_name: Mapped[str | None] = mapped_column(String, nullable=True)
+
     last_verified_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
