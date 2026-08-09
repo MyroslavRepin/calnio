@@ -26,6 +26,7 @@ class ConnectionStatus(BaseModel):
     connected: bool = True
     icloud_email: str
     calendar_url: str | None
+    calendar_name: str | None
     last_verified_at: datetime | None
 
 

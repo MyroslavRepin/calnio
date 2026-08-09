@@ -18,9 +18,14 @@ const confirming = ref(false)
 const picked = ref('')
 const error = ref('')
 
-// The calendar list is not fetched on page load, so we only know the name if
-// this session already loaded it. Otherwise show the raw URL.
+// The backend stores the name alongside the url, picked up the moment a
+// calendar is selected. Older rows saved before that existed have none, so
+// this session's fetched list (if loaded) and the raw url are the fallbacks.
 const calendarName = computed(function () {
+  if (state.connection?.calendar_name) {
+    return state.connection.calendar_name
+  }
+
   const url = state.connection?.calendar_url
 
   const match = state.calendars.find(function (calendar) {

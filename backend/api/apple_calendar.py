@@ -50,6 +50,7 @@ async def connect_apple_calendar(
     return ConnectResponse(
         icloud_email=row.icloud_email,
         calendar_url=row.calendar_url,
+        calendar_name=row.calendar_name,
         last_verified_at=row.last_verified_at,
         calendars=calendars,
     )
@@ -108,12 +109,17 @@ async def select_apple_calendar(
     with icloud_errors():
         calendars = CalDavAccountRepo(*icloud_credentials(row)).list_calendars()
 
-    # Never store a URL the account cannot see, whoever handed it to us.
-    if not any(calendar.url == body.calendar_url for calendar in calendars):
+    # Never store a URL the account cannot see, whoever handed it to us. The
+    # matching row also gives us the display name, straight from iCloud.
+    matched = next(
+        (calendar for calendar in calendars if calendar.url == body.calendar_url),
+        None,
+    )
+    if matched is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="unknown calendar"
         )
 
-    CaldavCredentialRepo(db).set_calendar_url(row, body.calendar_url)
+    CaldavCredentialRepo(db).set_calendar(row, matched.url, matched.name)
     db.commit()
     return row
