@@ -1,0 +1,32 @@
+/* The three ways anything is laid out in this app. They are the only classes
+   that are not scoped to .app-ui or .landing-ui, because a column is a column
+   on both. They carry no colour and no type, only arrangement.
+
+   The gap is always different, so it comes from the element itself:
+
+     <div class="column hero">        .hero { --gap: 24px; }
+
+   Nothing else is needed. If a block needs no gap, set none. */
+
+/* One under the other. */
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap, 0px);
+}
+
+/* Side by side, centred, wrapping onto the next line when it runs out of room. */
+.row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--gap, 0px);
+}
+
+/* Columns that reflow on their own. --col is the narrowest a column may get
+   before one drops to the next line. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--col, 240px), 1fr));
+  gap: var(--gap, 0px);
+}

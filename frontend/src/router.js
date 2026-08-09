@@ -1,21 +1,21 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import LandingPage from './views/LandingPage.vue'
-import MeView from './views/MeView.vue'
-import WelcomeView from './views/WelcomeView.vue'
-import ConnectionsView from './views/dashboard/ConnectionsView.vue'
-import DashboardLayout from './views/dashboard/DashboardLayout.vue'
-import OverviewView from './views/dashboard/OverviewView.vue'
-import SettingsView from './views/dashboard/SettingsView.vue'
+import LandingView from './views/landing/LandingView.vue'
+import ConnectionsView from './views/app/ConnectionsView.vue'
+import DashboardLayout from './views/app/DashboardLayout.vue'
+import MeView from './views/app/MeView.vue'
+import OverviewView from './views/app/OverviewView.vue'
+import SettingsView from './views/app/SettingsView.vue'
+import WelcomeView from './views/app/WelcomeView.vue'
 
-// No auth guard: useAuth's bootstrap runs after the router resolves, so a guard
-// reading state.user would bounce a logged-in user on every hard refresh.
-// DashboardLayout renders the loading / logged-out branch instead.
+// No auth guard: bootstrap runs after the router resolves, so a guard reading
+// state.user would bounce a signed-in user on every hard refresh.
+// DashboardLayout renders the loading and signed-out branches instead.
 export const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', name: 'landing', component: LandingPage },
-    // Deliberately outside DashboardLayout: onboarding takes the whole screen,
-    // so it has no sidebar and no dashboard chrome.
+    { path: '/', name: 'landing', component: LandingView },
+    // Outside DashboardLayout: onboarding takes the whole screen, so it has no
+    // sidebar and no dashboard chrome.
     { path: '/welcome', name: 'welcome', component: WelcomeView },
     {
       path: '/dashboard',

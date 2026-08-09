@@ -1,0 +1,362 @@
+/* Every box and control the app shares. A rule lands here the moment a second
+   component needs it; anything used once stays in that component's scoped
+   block. */
+
+/* Card, the only container. No shadows, no nesting: a card never holds another
+   card. */
+
+.app-ui .card {
+  background: var(--app-canvas);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+}
+
+.app-ui .card + .card {
+  margin-top: var(--app-gap-block);
+}
+
+.app-ui .card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--app-gap-inline) var(--app-gap-block);
+  padding: var(--app-pad-card-head);
+  border-bottom: 1px solid var(--app-border);
+  background: var(--app-canvas-subtle);
+  border-radius: var(--app-radius) var(--app-radius) 0 0;
+}
+
+.app-ui .card-head h2 {
+  margin: 0;
+  font-size: var(--app-text-body);
+  font-weight: var(--app-weight-bold);
+  color: var(--app-fg);
+}
+
+.app-ui .card-body {
+  padding: var(--app-pad-card);
+}
+
+/* Label, the small state pill. Colour repeats what the text already says, it
+   never carries the meaning alone. */
+
+.app-ui .label {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 var(--app-space-2);
+  border: 1px solid transparent;
+  border-radius: var(--app-radius-pill);
+  font-size: var(--app-text-meta);
+  font-weight: var(--app-weight-medium);
+  white-space: nowrap;
+}
+
+.app-ui .label.neutral {
+  color: var(--app-fg-muted);
+  border-color: var(--app-border);
+  background: var(--app-canvas-subtle);
+}
+
+.app-ui .label.success {
+  color: var(--app-success);
+  border-color: var(--app-success-line);
+  background: var(--app-success-tint);
+}
+
+.app-ui .label.attention {
+  color: var(--app-attention);
+  border-color: var(--app-attention-line);
+  background: var(--app-attention-tint);
+}
+
+.app-ui .label.danger {
+  color: var(--app-danger);
+  border-color: var(--app-danger-line);
+  background: var(--app-danger-tint);
+}
+
+.app-ui .label.accent {
+  color: var(--app-accent);
+  border-color: var(--app-accent-line);
+  background: var(--app-accent-tint);
+}
+
+/* Buttons. One shape, three tones: bare .btn is green and commits, .plain is
+   grey and is the default, .danger destroys. At most one green per view. */
+
+.app-ui .btn,
+.app-ui button.btn,
+.app-ui a.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--app-gap-inline);
+  min-height: var(--app-control-height);
+  padding: 5px var(--app-space-4);
+  border: 1px solid var(--app-border-emphasis);
+  border-radius: var(--app-radius);
+  font-family: var(--app-font);
+  font-size: var(--app-text-body);
+  font-weight: var(--app-weight-medium);
+  color: var(--app-fg-on-emphasis);
+  background: var(--app-btn-primary);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.app-ui .btn:hover {
+  background: var(--app-btn-primary-hover);
+  text-decoration: none;
+}
+
+.app-ui .btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.app-ui .btn:disabled:hover {
+  background: var(--app-btn-primary);
+}
+
+.app-ui .btn.plain {
+  color: var(--app-fg);
+  background: var(--app-btn-bg);
+  border-color: var(--app-border);
+}
+
+.app-ui .btn.plain:hover,
+.app-ui .btn.plain:disabled:hover {
+  background: var(--app-btn-bg);
+}
+
+.app-ui .btn.plain:hover:not(:disabled) {
+  background: var(--app-btn-bg-hover);
+}
+
+.app-ui .btn.danger {
+  color: var(--app-fg-on-emphasis);
+  background: var(--app-danger);
+  border-color: var(--app-border-emphasis);
+}
+
+.app-ui .btn.danger:hover,
+.app-ui .btn.danger:disabled:hover {
+  background: var(--app-btn-danger-hover);
+}
+
+/* A row of buttons. Wraps rather than shrinks, so every target keeps its size. */
+.app-ui .actions {
+  --gap: var(--app-gap-inline);
+}
+
+/* Forms */
+
+.app-ui .field {
+  --gap: 6px;
+  width: 100%;
+  max-width: var(--app-width-field);
+}
+
+.app-ui .field > span {
+  font-family: var(--app-font);
+  font-size: var(--app-text-body);
+  font-weight: var(--app-weight-bold);
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--app-fg);
+}
+
+.app-ui .field input,
+.app-ui input.text {
+  font-family: var(--app-font);
+  font-size: var(--app-text-body);
+  color: var(--app-fg);
+  background: var(--app-canvas);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+  padding: 5px var(--app-space-3);
+  min-height: var(--app-control-height);
+  width: 100%;
+}
+
+.app-ui .field input:focus,
+.app-ui input.text:focus {
+  outline: none;
+  border-color: var(--app-accent);
+  box-shadow: var(--app-focus-ring);
+}
+
+/* Radio lists (databases, calendars): the app's pattern for a short set of
+   choices. */
+.app-ui .picklist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+  overflow: hidden;
+  width: 100%;
+  max-width: var(--app-width-list);
+}
+
+.app-ui .picklist li {
+  border-top: 1px solid var(--app-border);
+  border-bottom: none;
+}
+
+.app-ui .picklist li:first-child {
+  border-top: none;
+}
+
+.app-ui .picklist label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--app-row-height);
+  padding: var(--app-space-2) var(--app-space-3);
+  font-size: var(--app-text-body);
+  cursor: pointer;
+}
+
+.app-ui .picklist label:hover {
+  background: var(--app-canvas-subtle);
+}
+
+.app-ui .picklist input[type='radio'] {
+  accent-color: var(--app-accent);
+  margin: 0;
+}
+
+/* Data rows, term and value pairs, how the app states a stored fact. */
+
+.app-ui .datarows {
+  margin: 0;
+  border-top: none;
+  max-width: none;
+  width: 100%;
+}
+
+.app-ui .datarows > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--app-space-1) var(--app-space-4);
+  padding: var(--app-space-2) 0;
+  border-bottom: 1px solid var(--app-border-subtle);
+}
+
+.app-ui .datarows > div:first-child {
+  padding-top: 0;
+}
+
+.app-ui .datarows > div:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.app-ui .datarows dt {
+  flex: 0 0 min(180px, 100%);
+  font-family: var(--app-font);
+  font-size: var(--app-text-body);
+  font-weight: var(--app-weight-normal);
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--app-fg-muted);
+  padding-top: 0;
+}
+
+.app-ui .datarows dd {
+  flex: 1 1 min(240px, 100%);
+  margin: 0;
+  font-size: var(--app-text-body);
+  font-weight: var(--app-weight-medium);
+  color: var(--app-fg);
+  overflow-wrap: anywhere;
+}
+
+/* Numbered wizard, shared by the Notion and the Apple setup. */
+
+.app-ui .setup {
+  --gap: var(--app-space-5);
+}
+
+.app-ui .step {
+  --gap: var(--app-gap-inline);
+}
+
+/* A step the user has not reached yet stays visible but recedes. */
+.app-ui .step.ahead {
+  opacity: 0.55;
+}
+
+/* The numeral and the heading of one wizard step. */
+.app-ui .stephead {
+  --gap: var(--app-gap-inline);
+}
+
+.app-ui .step h3 {
+  margin: 0;
+  font-size: var(--app-text-body);
+  font-weight: var(--app-weight-bold);
+  color: var(--app-fg);
+}
+
+/* The only place the app numbers anything, so the disc carries the sequence
+   without an icon set. */
+.app-ui .num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--app-marker);
+  height: var(--app-marker);
+  border-radius: var(--app-radius-pill);
+  border: 1px solid var(--app-border);
+  background: var(--app-canvas-subtle);
+  font-size: var(--app-text-meta);
+  font-weight: var(--app-weight-bold);
+  color: var(--app-fg-muted);
+}
+
+.app-ui .num.done {
+  background: var(--app-success-tint);
+  border-color: var(--app-success-line);
+  color: var(--app-success);
+}
+
+/* Indented under the numeral, so the sequence reads as one column. */
+.app-ui .stepbody {
+  --gap: var(--app-gap-stack);
+  align-items: flex-start;
+  padding-left: calc(var(--app-marker) + var(--app-gap-inline));
+}
+
+/* A connected account: its stored facts, then the actions on it. Shared by the
+   Notion and the Apple status blocks. */
+
+.app-ui .status {
+  --gap: var(--app-gap-block);
+  align-items: flex-start;
+}
+
+.app-ui .status > .datarows {
+  width: 100%;
+}
+
+/* Avatar. Size and fallback type come from the component, because the header
+   and the profile use different ones. */
+
+.app-ui .avatar {
+  border-radius: var(--app-radius-pill);
+  border: 1px solid var(--app-border);
+  object-fit: cover;
+}
+
+.app-ui .avatar.fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--app-canvas-subtle);
+  color: var(--app-fg-muted);
+  font-weight: var(--app-weight-bold);
+}

@@ -1,128 +1,121 @@
 import { reactive, readonly } from 'vue'
-import { useAuth } from './useAuth'
+import { send } from './useAuth'
 
 const BASE = '/api/v1/me/apple-calendar'
 
-const { apiFetch } = useAuth()
-
 const state = reactive({
-  ready: false, // first load finished (avoids flashing the wizard at a connected user)
-  connection: null, // { connected, icloud_email, calendar_url, last_verified_at } | null
-  calendars: [], // only populated after a connect or an explicit fetch — the
-  // listing hits iCloud and is slow, so it is never loaded on page load
-  busy: false, // a request that talks to iCloud is in flight
+  ready: false, // first load finished, so the wizard never flashes at a connected user
+  connection: null, // { connected, icloud_email, calendar_url, last_verified_at }
+  // Listing calendars hits iCloud and is slow, so it never runs on page load.
+  calendars: [],
+  busy: false,
 })
 
-// The API returns { detail } on every error. Fall back to something honest if
-// the body is not JSON (proxy error, connection dropped).
-async function detail(res, fallback) {
-  try {
-    const body = await res.json()
-    return body.detail || fallback
-  } catch {
-    return fallback
-  }
-}
-
+// The stored connection, or null when there is none.
 async function load() {
-  const res = await apiFetch(BASE)
-  state.connection = res.ok ? await res.json() : null // 404 = not connected
+  const result = await send(BASE)
+
+  if (result.data) {
+    state.connection = result.data
+  } else {
+    state.connection = null // a 404 means not connected
+  }
+
   state.ready = true
 }
 
 async function connect(icloudEmail, appSpecificPassword) {
   state.busy = true
-  try {
-    const res = await apiFetch(BASE, {
+  const result = await send(
+    BASE,
+    {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+      json: {
         icloud_email: icloudEmail,
         app_specific_password: appSpecificPassword,
-      }),
-    })
-    if (!res.ok) return { error: await detail(res, 'could not connect') }
+      },
+    },
+    'could not connect',
+    'network error — is the API running?',
+  )
+  state.busy = false
 
-    // The connect response carries the calendar list, so step 2 renders
-    // without a second (slow) round trip to iCloud.
-    const body = await res.json()
-    const { calendars, ...connection } = body
-    state.connection = connection
-    state.calendars = calendars
-    return {}
-  } catch {
-    return { error: 'network error — is the API running?' }
-  } finally {
-    state.busy = false
+  if (result.error) {
+    return { error: result.error }
   }
+
+  // The connect answer already carries the calendar list, so step 2 of the
+  // wizard renders without a second slow round trip to iCloud.
+  const body = result.data
+  const calendars = body.calendars
+  const connection = { ...body }
+  delete connection.calendars
+
+  state.connection = connection
+  state.calendars = calendars
+  return {}
 }
 
 async function fetchCalendars() {
   state.busy = true
-  try {
-    const res = await apiFetch(`${BASE}/calendars`)
-    if (!res.ok) return { error: await detail(res, 'could not list calendars') }
-    state.calendars = await res.json()
-    return {}
-  } catch {
-    return { error: 'network error' }
-  } finally {
-    state.busy = false
+  const result = await send(BASE + '/calendars', {}, 'could not list calendars')
+  state.busy = false
+
+  if (result.error) {
+    return { error: result.error }
   }
+
+  state.calendars = result.data
+  return {}
 }
 
 async function createCalendar(name) {
   state.busy = true
-  try {
-    const res = await apiFetch(`${BASE}/calendars`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name }),
-    })
-    if (!res.ok) return { error: await detail(res, 'could not create the calendar') }
-    const calendar = await res.json()
-    state.calendars = [...state.calendars, calendar]
-    return { calendar }
-  } catch {
-    return { error: 'network error' }
-  } finally {
-    state.busy = false
+  const result = await send(
+    BASE + '/calendars',
+    { method: 'POST', json: { name } },
+    'could not create the calendar',
+  )
+  state.busy = false
+
+  if (result.error) {
+    return { error: result.error }
   }
+
+  state.calendars = [...state.calendars, result.data]
+  return { calendar: result.data }
 }
 
 async function selectCalendar(calendarUrl) {
   state.busy = true
-  try {
-    const res = await apiFetch(`${BASE}/calendar`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ calendar_url: calendarUrl }),
-    })
-    if (!res.ok) return { error: await detail(res, 'could not save the calendar') }
-    state.connection = await res.json()
-    return {}
-  } catch {
-    return { error: 'network error' }
-  } finally {
-    state.busy = false
+  const result = await send(
+    BASE + '/calendar',
+    { method: 'PUT', json: { calendar_url: calendarUrl } },
+    'could not save the calendar',
+  )
+  state.busy = false
+
+  if (result.error) {
+    return { error: result.error }
   }
+
+  state.connection = result.data
+  return {}
 }
 
 async function disconnect() {
   state.busy = true
-  try {
-    const res = await apiFetch(BASE, { method: 'DELETE' })
-    if (!res.ok && res.status !== 404) {
-      return { error: await detail(res, 'could not disconnect') }
-    }
-    state.connection = null
-    state.calendars = []
-    return {}
-  } catch {
-    return { error: 'network error' }
-  } finally {
-    state.busy = false
+  const result = await send(BASE, { method: 'DELETE' }, 'could not disconnect')
+  state.busy = false
+
+  // A 404 means it was already gone, which is the outcome we wanted anyway.
+  if (result.error && result.status !== 404) {
+    return { error: result.error }
   }
+
+  state.connection = null
+  state.calendars = []
+  return {}
 }
 
 export function useAppleCalendar() {

@@ -1,16 +1,14 @@
 import { reactive, readonly } from 'vue'
-import { useAuth } from './useAuth'
+import { send } from './useAuth'
 
 const BASE = '/api/v1/me/notion'
 const LOGIN = '/auth/oauth/notion/login'
 
-const { apiFetch } = useAuth()
-
 const state = reactive({
-  ready: false, // first load finished (avoids flashing the wizard at a connected user)
-  connection: null, // { connected, workspace_name, workspace_icon, data_source_id, data_source_name, last_verified_at } | null
-  databases: [], // only the ones the user ticked in Notion's picker; fetched on demand
-  busy: false, // a request that talks to Notion is in flight
+  ready: false, // first load finished, so the wizard never flashes at a connected user
+  connection: null, // { connected, workspace_name, data_source_id, data_source_name, last_verified_at }
+  databases: [], // only the ones ticked in Notion's picker, fetched on demand
+  busy: false,
   error: null, // set when the OAuth dance bounced back with ?notion_error=
 })
 
@@ -22,116 +20,118 @@ const OAUTH_ERRORS = {
   token: 'notion sent back an unexpected response — try again',
 }
 
-// The API returns { detail } on every error. Fall back to something honest if
-// the body is not JSON (proxy error, connection dropped).
-async function detail(res, fallback) {
-  try {
-    const body = await res.json()
-    return body.detail || fallback
-  } catch {
-    return fallback
-  }
-}
-
-// The callback redirects to /dashboard/connections?notion_error=… on failure.
-// Read it once and strip it, so a refresh does not resurrect the message —
-// same move useAuth's bootstrap makes with auth_error.
+// Reads the failure flag off the URL once and strips it, so a refresh does not
+// resurrect the message.
 function consumeErrorFlag() {
   const params = new URLSearchParams(window.location.search)
   const flag = params.get('notion_error')
-  if (!flag) return
 
-  state.error = OAUTH_ERRORS[flag] || 'could not connect Notion'
+  if (!flag) {
+    return
+  }
+
+  if (OAUTH_ERRORS[flag]) {
+    state.error = OAUTH_ERRORS[flag]
+  } else {
+    state.error = 'could not connect Notion'
+  }
+
   params.delete('notion_error')
   const query = params.toString()
-  window.history.replaceState(
-    {},
-    '',
-    window.location.pathname + (query ? `?${query}` : ''),
-  )
+  if (query) {
+    window.history.replaceState({}, '', window.location.pathname + '?' + query)
+  } else {
+    window.history.replaceState({}, '', window.location.pathname)
+  }
 }
 
+// The stored connection, or null when there is none.
 async function load() {
   consumeErrorFlag()
-  const res = await apiFetch(BASE)
-  state.connection = res.ok ? await res.json() : null // 404 = not connected
+
+  const result = await send(BASE)
+
+  if (result.data) {
+    state.connection = result.data
+  } else {
+    state.connection = null // a 404 means not connected
+  }
+
   state.ready = true
 }
 
 // Sends the browser to Notion's consent screen.
 //
-// The authorize URL is fetched over apiFetch rather than linked to directly: the
-// endpoint needs the access cookie, which lives 5 minutes, and apiFetch is the
-// only thing that can refresh it. A plain <a href> would fail for anyone who
-// left the dashboard open. Doubles as the "share more databases" action — Notion
-// re-prompts and lets the user amend which pages they ticked.
+// The authorize URL is fetched rather than linked to, because the endpoint
+// needs the access cookie, which lives five minutes, and only apiFetch can
+// refresh it. A plain <a href> would fail for anyone who left the dashboard
+// open. This doubles as "share more databases": Notion re-prompts and lets the
+// user amend what they ticked.
 async function connect() {
   state.busy = true
   state.error = null
-  try {
-    const res = await apiFetch(LOGIN)
-    if (!res.ok) {
-      state.busy = false
-      return { error: await detail(res, 'could not start the Notion connection') }
-    }
-    const { authorize_url: authorizeUrl } = await res.json()
-    // Deliberately leaves busy set — the button stays disabled while the
-    // browser navigates away.
-    window.location.href = authorizeUrl
-    return {}
-  } catch {
+
+  const result = await send(
+    LOGIN,
+    {},
+    'could not start the Notion connection',
+    'network error — is the API running?',
+  )
+
+  if (result.error) {
     state.busy = false
-    return { error: 'network error — is the API running?' }
+    return { error: result.error }
   }
+
+  // busy stays set on purpose: the button must remain disabled while the
+  // browser navigates away.
+  window.location.href = result.data.authorize_url
+  return {}
 }
 
 async function fetchDatabases() {
   state.busy = true
-  try {
-    const res = await apiFetch(`${BASE}/databases`)
-    if (!res.ok) return { error: await detail(res, 'could not list your databases') }
-    state.databases = await res.json()
-    return {}
-  } catch {
-    return { error: 'network error' }
-  } finally {
-    state.busy = false
+  const result = await send(BASE + '/databases', {}, 'could not list your databases')
+  state.busy = false
+
+  if (result.error) {
+    return { error: result.error }
   }
+
+  state.databases = result.data
+  return {}
 }
 
 async function selectDatabase(dataSourceId) {
   state.busy = true
-  try {
-    const res = await apiFetch(`${BASE}/database`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data_source_id: dataSourceId }),
-    })
-    if (!res.ok) return { error: await detail(res, 'could not save the database') }
-    state.connection = await res.json()
-    return {}
-  } catch {
-    return { error: 'network error' }
-  } finally {
-    state.busy = false
+  const result = await send(
+    BASE + '/database',
+    { method: 'PUT', json: { data_source_id: dataSourceId } },
+    'could not save the database',
+  )
+  state.busy = false
+
+  if (result.error) {
+    return { error: result.error }
   }
+
+  state.connection = result.data
+  return {}
 }
 
 async function disconnect() {
   state.busy = true
-  try {
-    const res = await apiFetch(BASE, { method: 'DELETE' })
-    if (!res.ok && res.status !== 404) {
-      return { error: await detail(res, 'could not disconnect') }
-    }
-    state.connection = null
-    state.databases = []
-    return {}
-  } catch {
-    return { error: 'network error' }
-  } finally {
-    state.busy = false
+  const result = await send(BASE, { method: 'DELETE' }, 'could not disconnect')
+  state.busy = false
+
+  // A 404 means it was already gone, which is the outcome we wanted anyway.
+  if (result.error && result.status !== 404) {
+    return { error: result.error }
   }
+
+  state.connection = null
+  state.databases = []
+  return {}
 }
 
 export function useNotion() {

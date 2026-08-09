@@ -1,0 +1,178 @@
+/* Variables and the page reset. Imported first, so every other file can read
+   a token. Two sets that never mix: :root carries the landing page's, .app-ui
+   carries the signed-in app's. */
+
+:root {
+  /* Colour */
+  --bg: #fff;
+  --ink: #0a0a0a;
+  --ink-hover: #262626;
+  --body: #57554e;
+  --body-cool: #1d2b38; /* body copy sitting near or over the blue field */
+  --muted: #8a877e;
+  --muted-cool: #6b8299; /* mono meta inside a white card over blue */
+  --link: #3a4a5c;
+  --hairline: #ededea;
+  --hairline-strong: rgba(10, 10, 10, 0.12);
+  --field-line: rgba(10, 10, 10, 0.4);
+  --accent: #0b63f6;
+
+  /* Type */
+  --font-ui: -apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  /* Layout */
+  --maxw: 1180px;
+  --pad: clamp(20px, 5vw, 40px);
+  --sec-top: clamp(56px, 11vw, 120px);
+  --sec-bottom: clamp(48px, 9vw, 96px);
+}
+
+.app-ui {
+  /* Text */
+  --app-fg: #1f2328;
+  --app-fg-muted: #59636e;
+  --app-fg-subtle: #818b98;
+  --app-fg-on-emphasis: #ffffff;
+
+  /* Surfaces */
+  --app-canvas: #ffffff;
+  --app-canvas-subtle: #f6f8fa;
+
+  /* Lines */
+  --app-border: #d1d9e0;
+  --app-border-subtle: #e4e8ec;
+  --app-border-emphasis: rgba(31, 35, 40, 0.15);
+
+  /* Roles. Each has a text colour, a tint and a line, so a state can be a
+     word, a pill or a panel without inventing a new colour. */
+  --app-accent: #0969da;
+  --app-accent-tint: #ddf4ff;
+  --app-accent-line: rgba(9, 105, 218, 0.4);
+
+  --app-success: #1a7f37;
+  --app-success-tint: #dafbe1;
+  --app-success-line: rgba(31, 136, 61, 0.4);
+
+  --app-attention: #9a6700;
+  --app-attention-tint: #fff8c5;
+  --app-attention-line: rgba(154, 103, 0, 0.4);
+
+  --app-danger: #d1242f;
+  --app-danger-tint: #ffebe9;
+  --app-danger-line: rgba(255, 129, 130, 0.5);
+
+  /* The green is the one affirmative fill, a role of its own rather than the
+     success colour reused. */
+  --app-btn-bg: #f6f8fa;
+  --app-btn-bg-hover: #eef1f4;
+  --app-btn-primary: #1f883d;
+  --app-btn-primary-hover: #1a7f37;
+  --app-btn-danger-hover: #a40e26;
+
+  /* Type */
+  --app-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica,
+    Arial, sans-serif;
+  --app-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+
+  /* Five sizes, no more. Anything that fits none of them is being designed,
+     not styled. */
+  --app-text-meta: 12px;
+  --app-text-body: 14px;
+  --app-text-head: 16px;
+  --app-text-title: 20px;
+  --app-text-page: 24px;
+
+  --app-weight-normal: 400;
+  --app-weight-medium: 500;
+  --app-weight-bold: 600;
+
+  --app-lh-tight: 1.25;
+  --app-lh-body: 1.5;
+
+  --app-measure: 72ch;
+
+  /* Space, a 4px scale. */
+  --app-space-1: 4px;
+  --app-space-2: 8px;
+  --app-space-3: 12px;
+  --app-space-4: 16px;
+  --app-space-5: 24px;
+  --app-space-6: 32px;
+  --app-space-7: 48px;
+  --app-space-8: 64px;
+
+  /* Named jobs for the four gaps that repeat, so intent survives a refactor. */
+  --app-gap-inline: var(--app-space-2);
+  --app-gap-stack: var(--app-space-3);
+  --app-gap-block: var(--app-space-4);
+  --app-gap-section: var(--app-space-5);
+
+  --app-pad-card: var(--app-space-4);
+  --app-pad-card-head: var(--app-space-3) var(--app-space-4);
+
+  /* Shape and size */
+  --app-radius: 6px;
+  --app-radius-sm: 4px;
+  --app-radius-pill: 999px;
+  --app-control-height: 32px;
+  --app-row-height: 40px;
+  --app-marker: 20px;
+  --app-avatar: 24px;
+  --app-avatar-lg: 48px;
+  --app-focus-ring: 0 0 0 3px rgba(9, 105, 218, 0.3);
+
+  /* Layout */
+  --app-width-page: 1280px;
+  --app-width-narrow: 800px;
+  --app-width-panel: 480px;
+  --app-width-field: 440px;
+  --app-width-list: 560px;
+  --app-pad-page: clamp(var(--app-space-4), 4vw, var(--app-space-6));
+  --app-sidebar: 200px;
+}
+
+/* Reset */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  /* Stops iOS inflating type in landscape. */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  /* Circles crop against the viewport edge, so they must not scroll it. */
+  overflow-x: hidden;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+::selection {
+  background: #0a0a0a;
+  color: #fff;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: rgba(10, 10, 10, 0.06);
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}

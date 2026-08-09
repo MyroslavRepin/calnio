@@ -1,23 +1,15 @@
 <script setup>
-import { computed, onMounted } from 'vue'
+import { onMounted } from 'vue'
 import { useAuth } from './composables/useAuth'
 
-// One accent on screen at a time. It is set here and read everywhere else as
-// var(--accent) — step numerals and the atmosphere circles are the only things
-// that consume it. Alternates: #0a0a0a, #2f7d5b, #a4670f.
-const props = defineProps({
-  accent: { type: String, default: '#0b63f6' },
-})
+// Ask the server who is signed in, once, when the app starts.
+const authResult = useAuth()
 
-const rootStyle = computed(() => ({ '--accent': props.accent }))
-
-onMounted(() => {
-  useAuth().bootstrap()
-})
+onMounted(authResult.bootstrap)
 </script>
 
 <template>
-  <div class="app" :style="rootStyle">
+  <div class="app">
     <router-view />
   </div>
 </template>

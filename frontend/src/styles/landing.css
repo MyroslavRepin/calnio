@@ -1,0 +1,147 @@
+/* The landing page and nothing else. Every rule sits under .landing-ui, which
+   LandingView puts on its root, so these names cannot reach an app page even
+   though several of them (.btn, .title, .lead, .note) also exist there. */
+
+/* Layout */
+
+.landing-ui .wrap {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding-left: var(--pad);
+  padding-right: var(--pad);
+}
+
+/* Every section stacks above the atmosphere layer, which sits at z-index 0. */
+.landing-ui .section {
+  position: relative;
+  z-index: 1;
+  padding-top: var(--sec-top);
+  padding-bottom: var(--sec-bottom);
+}
+
+/* Type */
+
+.landing-ui .display {
+  font-size: clamp(44px, 9vw, 104px);
+  font-weight: 700;
+  line-height: 0.92;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+
+.landing-ui .title {
+  font-size: clamp(32px, 6vw, 52px);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+}
+
+.landing-ui .lead {
+  font-size: clamp(16px, 1.5vw, 17px);
+  line-height: 1.55;
+  max-width: 52ch;
+  text-wrap: pretty;
+  color: var(--body);
+}
+
+.landing-ui .eyebrow {
+  font-family: var(--font-mono);
+  font-size: clamp(10.5px, 2.6vw, 12px);
+  text-transform: uppercase;
+  letter-spacing: 0.17em;
+  color: var(--muted);
+}
+
+.landing-ui .note {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--muted);
+  max-width: 60ch;
+}
+
+/* A numbered step, in How it works and in Get started. */
+
+.landing-ui .step {
+  --gap: 12px;
+}
+
+
+.landing-ui .num {
+  font-family: var(--font-mono);
+  font-size: clamp(30px, 6vw, 40px);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--accent);
+}
+
+/* Controls */
+
+/* Vertical padding on an inline element does not make a touch target.
+   inline-flex plus a min-height does: 50px for buttons, 44px for links. */
+.landing-ui .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 500;
+  color: #fff;
+  background: var(--ink);
+  border: none;
+  border-radius: 8px;
+  padding: 16px 24px;
+  min-height: 50px;
+  cursor: pointer;
+}
+
+.landing-ui .btn:hover {
+  background: var(--ink-hover);
+}
+
+.landing-ui .btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.landing-ui .btn:disabled:hover {
+  background: var(--ink);
+}
+
+/* Secondary action. The rule sits on a nested span so the 44px hit box does not
+   drag it away from the text. */
+.landing-ui .link-mono {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.landing-ui .link-mono > span {
+  border-bottom: 1px solid var(--field-line);
+  padding-bottom: 3px;
+}
+
+/* White translucent pill, the only way text may sit over blue. */
+.landing-ui .pill {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(8px);
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: clamp(10.5px, 2.6vw, 12px);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--ink);
+}

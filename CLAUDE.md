@@ -127,6 +127,79 @@ Binding rules. Existing code that breaks them is wrong and gets rewritten, not c
 
 README holds the working plan: sync model detail, roadmap phases, auth flow + todo checklist, frontend integration plan (Vue/Vite dev on :5173, prod served by FastAPI `StaticFiles`). Check it before starting auth or frontend work — it tracks what's done vs todo.
 
+# Calnio Frontend
+
+Vue 3 with `<script setup>`, Vite, vue-router. Two dependencies total: `vue` and `vue-router`. No Tailwind, no state library, no UI kit, no icon set. The design systems below describe how it looks; this section describes how the code is arranged.
+
+## How it works, read this before changing anything
+
+**Two looks, one app, nothing shared.** The landing page at `/` and every signed-in page share no token, no class and no component. Landing rules live under `.landing-ui`, app rules under `.app-ui`, and the wrapper class on the page root decides which system applies. That is why `.btn` legitimately means two different buttons. Landing is about a quarter of the code and changes rarely; the app is the part that gets worked on.
+
+**A composable is one shared box of data, not a layer.** In `composables/useNotion.js` the `reactive({...})` sits at the top level of the file, outside the exported function. JavaScript runs a module's top level once no matter how many components import it, so there is exactly one `state` object in the whole app, and every `useNotion()` call hands back that same object. Put it inside the function and each caller gets its own copy, which is what breaks things: `ConnectionsView` draws the status pill from `notion.connection` while `NotionStatus` sets that same object to `null` on disconnect, and the pill updates only because both point at one object.
+
+```js
+const { state, connect } = useNotion()   // the shared box
+state.connection                          // read it in the template
+await connect()                           // change it, every screen sees the change
+```
+
+`state` is handed out through `readonly()`. Components never assign to it, they call an action.
+
+**Auth, start to finish.** `main.js` mounts the app, `App.vue` calls `bootstrap()` once. `bootstrap()` strips `?auth_error=` off the URL, then calls `fetchMe()`, which goes through `apiFetch`. `apiFetch` adds `credentials: 'include'`, so the browser attaches its cookies. Both tokens live in httpOnly cookies: the JavaScript never holds a token and never stores one. On a 401, `apiFetch` calls `refresh()` once and retries; `refresh` keeps a single in-flight promise so ten parallel 401s cause one refresh. The result is `state.user` plus `state.ready`, and `state.ready` is the one flag that stops the whole app flickering before auth is known. Login is a real `window.location.href` navigation, not a fetch, because the browser has to follow redirects to Google and back.
+
+**Who loads data.** The shell (`DashboardLayout`, `WelcomeView`) loads the cheap facts every page needs, through `loadWhenSignedIn`. A component loads the slow lists itself, on demand, when the user asks: the iCloud calendar listing and the Notion database listing are slow third-party calls and must not run on page load. Those are the only two cases.
+
+## Rules
+
+Binding. Existing code that breaks them is wrong and gets rewritten, not copied.
+
+**Layout**
+
+1. `views/` holds one file per route, `components/` holds pieces. Both split into `landing/` and `app/`, and a file in one half never imports from the other.
+2. Filenames say what the thing is. A view ends in `View`, a layout in `Layout`, everything else is a plain noun. No `The` prefix.
+3. Styles live in `styles/`: `tokens.css` (variables and the page reset), `layout.css` (the three arrangement classes), `base.css` (page-level type, headers, status text), `components.css` (card, label, button, form, list, datarows, wizard), `landing.css` (everything under `.landing-ui`). `main.js` imports them in that order, because each reads from the ones before it.
+
+**Styles**
+
+4. **There are three ways to arrange anything, and they are named.** `column` puts children one under the other, `row` puts them side by side and wraps, `grid` makes columns that reflow. They live unscoped in `layout.css`, they are the only unscoped classes in the project, and they carry no colour and no type. Never write `display: flex` in a component to get one of these three again.
+5. The gap is always different, so it comes from the element: `<div class="column hero">` plus `.hero { --gap: 24px; }`. A `grid` also sets `--col`, the narrowest a column may get before one drops to the next line.
+6. A local class carries only what is unique to that one place. If it declares more than two or three properties, look for the shared class it should be sitting on instead.
+7. A rule that appears in two components belongs in `components.css`. A rule used once stays in that component's `<style scoped>`.
+8. Components read variables, never raw values. A hex, a font size or a gap written in a component is a bug: it means a token is missing. The only literals left are one-off geometry, like a progress bar's height or a toggle track's width.
+9. Apart from the three layout classes, every shared class name is defined once, under `.app-ui` or under `.landing-ui`. Never unscoped, and never the same name in both.
+10. **A class names the thing, not where it sits or what shape it is.** `inner`, `bar`, `side`, `right`, `head`, `sub`, `off`, `spaced`, `cell`, `mark` and `line` are banned: they force you to read the markup to learn what they mean. `progressfill`, `syncoffnote`, `checkmark`, `stephead`, `newcalendar` do not. Short, lowercase, no BEM, no utility classes.
+11. Never leave two rules for one class at equal specificity in different files. `.landing-ui .links` in `landing.css` and a scoped `.links` in a component tie, and which wins then depends on file order.
+
+**Components**
+
+12. A component exists when its markup repeats, or when it is a self-contained area with its own state, its own load and its own styles. Not for tidiness, and not to shorten a file.
+13. A component never receives a prop it does not use itself.
+14. All components are `<script setup>`. No Options API anywhere.
+15. A component reports a failure upward when the page owns the error display. It shows the error itself only when the message belongs inside that component's own box.
+
+**Data**
+
+16. Every network call goes through a composable in `composables/`. Nothing in a component calls `fetch` directly.
+17. A composable exists when more than one screen reads the same data. Its state is created at module level so all screens share one copy.
+18. Composables return `{ state, ...actions }`. State is `readonly`, actions return `{}` on success or `{ error }` on failure, and the caller decides what to show. `send()` in `useAuth.js` is the one place a request is made, and it never throws.
+19. A shell loads cheap shared data through `loadWhenSignedIn`. A component loads a slow third-party list on demand. Nothing else triggers a load.
+20. New dependencies need to be asked for first.
+
+**How the JavaScript is written**
+
+The frontend is written to be read by someone learning it, not to be short. Verbose and obvious beats clever and dense, every time.
+
+21. **No destructuring.** Call the composable, keep the result, then pull one name per line. `const notionResult = useNotion()`, then `const state = notionResult.state`. Renaming in a destructure (`const { state: notion }`) hides where a name came from.
+22. **`function` everywhere, no arrows.** `computed(function () { ... })`, `list.find(function (calendar) { ... })`. A callback gets a named parameter, never `c` or `e`.
+23. **Branches are written out.** No ternaries in script, no `||` or `??` chains standing in for a fallback, no `switch`. An `if` per case, each returning. Where a value has a fallback, give the fallback its own `if`.
+24. **A comment above every block**, saying what that block is for in plain words. This is the one place where more comments are wanted, and it does not contradict rule 26: the comment names the block's job, it does not restate a line.
+25. Anything that needs a fallback for display gets its own `computed`, so the template stays free of `||` and `?:`. `{{ workspaceName }}`, not `{{ notion.connection.workspace_name || '—' }}`. The template is allowed one ternary for a class or a button label, nothing more.
+
+**Comments**
+
+26. Beyond rule 24's block comments, a comment survives only if it records a trap that would otherwise be hit again, like why the router has no auth guard. A comment that restates the line under it gets deleted.
+27. No em dashes anywhere.
+
 # Calnio Landing — Design System
 
 **Scope: the landing page only** (`/`, `views/LandingPage.vue` and the components it imports, tokens in `frontend/src/styles/global.css`). Every signed-in page follows the separate app design system at the bottom of this file. The two never share a token.
