@@ -3,13 +3,13 @@ import { computed, ref, watch } from 'vue'
 import { useNotion } from '../../composables/useNotion'
 
 // The step numbers are a prop so the welcome page can run this and the Apple
-// wizard as one 1 to 4 sequence. Inside a Connections row each wizard stands
-// alone, so the default is its own 1 and 2.
+// wizard as one 1 to 5 sequence. Inside a Connections row each wizard stands
+// alone, so the default is its own 1, 2 and 3.
 defineProps({
   numbers: {
     type: Array,
     default: function () {
-      return ['1', '2']
+      return ['1', '2', '3']
     },
   },
 })
@@ -25,14 +25,21 @@ const picked = ref('')
 const error = ref('')
 const fetched = ref(false)
 
+// TODO: dummy list for the visual pass, swap for useSync().fetchDateProperties
+// once the layout is approved.
+const dummyDateProperties = ['Due Date', 'Deadline', 'Start Date', 'Review Date']
+const pickedDueDate = ref('')
+
 // Step 1 until Notion grants us the workspace, step 2 until a database is
-// picked.
+// picked, step 3 once it is.
 const step = computed(function () {
-  if (state.connection) {
-    return 2
-  } else {
+  if (!state.connection) {
     return 1
   }
+  if (!state.connection.data_source_id) {
+    return 2
+  }
+  return 3
 })
 
 // Sharing the grant with zero databases is the likeliest first-run mistake,
@@ -130,12 +137,12 @@ async function submitDatabase() {
 
     <section class="column step" :class="{ ahead: step < 2 }">
       <div class="row stephead">
-        <span class="num">{{ numbers[1] }}</span>
+        <span class="num" :class="{ done: step > 2 }">{{ numbers[1] }}</span>
         <h3>Choose the database with your tasks</h3>
       </div>
 
       <div class="column stepbody">
-        <template v-if="step === 2">
+        <template v-if="step >= 2">
           <p v-if="state.busy && !fetched" class="body">Loading your databases…</p>
 
           <template v-else-if="empty">
@@ -175,6 +182,33 @@ async function submitDatabase() {
         </template>
 
         <p v-else class="body">Available once your workspace is connected.</p>
+      </div>
+    </section>
+
+    <section class="column step" :class="{ ahead: step < 3 }">
+      <div class="row stephead">
+        <span class="num">{{ numbers[2] }}</span>
+        <h3>Pick the due-date column</h3>
+      </div>
+
+      <div class="column stepbody">
+        <template v-if="step === 3">
+          <p class="body">
+            The Notion date property Calnio reads. Only date columns can be
+            chosen, every page with a value there becomes an event.
+          </p>
+
+          <ul class="picklist">
+            <li v-for="name in dummyDateProperties" :key="name">
+              <label>
+                <input type="radio" name="due-date-property" :value="name" v-model="pickedDueDate" />
+                <span>{{ name }}</span>
+              </label>
+            </li>
+          </ul>
+        </template>
+
+        <p v-else class="body">Available once you choose a database above.</p>
       </div>
     </section>
 

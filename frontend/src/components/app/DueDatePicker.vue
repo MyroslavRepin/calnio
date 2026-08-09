@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useNotion } from '../../composables/useNotion'
 import { useSync } from '../../composables/useSync'
 
@@ -19,6 +19,20 @@ const hasDatabase = computed(function () {
   return Boolean(notion.connection?.data_source_id)
 })
 
+// The value the dropdown shows. Starts from whatever is already saved, so a
+// reload does not blank the control while the fresh list is still loading.
+const picked = ref('')
+
+watch(
+  function () {
+    return state.settings?.due_date_property
+  },
+  function (value) {
+    picked.value = value || ''
+  },
+  { immediate: true },
+)
+
 // The options come from Notion, so they are fetched once the database is known
 // rather than on every visit. The shell has usually loaded the connection by
 // the time this mounts; the watch covers a hard refresh, where the connection
@@ -37,10 +51,21 @@ async function loadProperties() {
 onMounted(loadProperties)
 watch(hasDatabase, loadProperties)
 
-async function choose(name) {
+// Re-pulls the column list from Notion, for a column added or renamed there
+// since the page loaded.
+async function refresh() {
   emit('error', null)
 
-  const result = await setDueDateProperty(name)
+  const result = await fetchDateProperties()
+  if (result.error) {
+    emit('error', result.error)
+  }
+}
+
+async function choose() {
+  emit('error', null)
+
+  const result = await setDueDateProperty(picked.value)
   if (result.error) {
     emit('error', result.error)
   }
@@ -70,24 +95,24 @@ async function choose(name) {
 
       <p v-else-if="!state.dateProperties.length" class="note">
         This database has no date columns, so there is nothing to sync. Add one
-        in Notion, then reload this page.
+        in Notion, then refresh.
       </p>
 
-      <ul v-else class="picklist">
-        <li v-for="name in state.dateProperties" :key="name">
-          <label>
-            <input
-              type="radio"
-              name="due-date-property"
-              :value="name"
-              :checked="state.settings?.due_date_property === name"
-              :disabled="state.busy"
-              @change="choose(name)"
-            />
-            <span>{{ name }}</span>
-          </label>
-        </li>
-      </ul>
+      <label v-else class="column field">
+        <span>Due date column</span>
+        <select v-model="picked" :disabled="state.busy" @change="choose">
+          <option value="" disabled>Choose a column</option>
+          <option v-for="name in state.dateProperties" :key="name" :value="name">
+            {{ name }}
+          </option>
+        </select>
+      </label>
+
+      <div v-if="hasDatabase" class="row actions">
+        <button class="btn plain" type="button" :disabled="state.busy" @click="refresh">
+          {{ state.busy ? 'Reading…' : 'Refresh columns' }}
+        </button>
+      </div>
     </div>
   </section>
 </template>

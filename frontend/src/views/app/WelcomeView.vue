@@ -60,7 +60,7 @@ loadWhenSignedIn(appleResult.load, notionResult.load)
               on later in beta, nothing else is needed from you until then.
             </template>
             <template v-else>
-              Four steps, once. You are connecting your accounts now; syncing
+              Five steps, once. You are connecting your accounts now; syncing
               your own workspace switches on later in beta, and everything you
               set up here carries over when it does.
             </template>
@@ -78,11 +78,11 @@ loadWhenSignedIn(appleResult.load, notionResult.load)
             <div class="card-head">
               <h2>Notion</h2>
               <span class="label" :class="stages[1].done ? 'success' : 'neutral'">
-                Steps 1 and 2
+                Steps 1, 2 and 3
               </span>
             </div>
             <div class="card-body">
-              <NotionSetup :numbers="['1', '2']" />
+              <NotionSetup :numbers="['1', '2', '3']" />
             </div>
           </section>
 
@@ -90,11 +90,11 @@ loadWhenSignedIn(appleResult.load, notionResult.load)
             <div class="card-head">
               <h2>Apple Calendar</h2>
               <span class="label" :class="stages[3].done ? 'success' : 'neutral'">
-                Steps 3 and 4
+                Steps 4 and 5
               </span>
             </div>
             <div class="card-body">
-              <AppleCalendarSetup :numbers="['3', '4']">
+              <AppleCalendarSetup :numbers="['4', '5']">
                 <template #help>
                   <p class="body">
                     Apple requires an <strong>app-specific password</strong>. Your
