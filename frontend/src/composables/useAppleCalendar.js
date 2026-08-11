@@ -118,6 +118,16 @@ async function disconnect() {
   return {}
 }
 
+// A calendar named like iCloud's Reminders list is not a real calendar and
+// cannot take events, so no screen should let it be saved.
+export function isReminderCalendar(calendar) {
+  if (!calendar) {
+    return false
+  }
+
+  return calendar.name.toLowerCase().includes('reminder')
+}
+
 export function useAppleCalendar() {
   return {
     state: readonly(state),

@@ -1,6 +1,5 @@
 <script setup>
 // One connection in the Connections list, as a card that expands in place —
-// no modal, no second page, so the dashboard stays a single view.
 defineProps({
   name: { type: String, required: true },
   status: { type: String, required: true },
