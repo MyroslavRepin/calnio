@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { useAppleCalendar } from '../../composables/useAppleCalendar'
+import { isReminderCalendar, useAppleCalendar } from '../../composables/useAppleCalendar'
 import { formatDateTime } from '../../format'
 
 // Everything this block does goes through the Apple Calendar composable.
@@ -42,6 +42,18 @@ const calendarName = computed(function () {
 // When the credentials were last checked against iCloud.
 const verified = computed(function () {
   return formatDateTime(state.connection?.last_verified_at, '—')
+})
+
+// The chosen calendar's full row, looked up by url, so its name is available.
+const pickedCalendar = computed(function () {
+  return state.calendars.find(function (calendar) {
+    return calendar.url === picked.value
+  })
+})
+
+// Blocks saving a calendar that is really iCloud's Reminders list.
+const isReminderPicked = computed(function () {
+  return isReminderCalendar(pickedCalendar.value)
 })
 
 // Opens the picker. The list is fetched now, not on page load, because iCloud
@@ -111,16 +123,17 @@ async function confirmDisconnect() {
           <label>
             <input type="radio" :value="cal.url" v-model="picked" />
             <span>{{ cal.name }}</span>
+            <span v-if="isReminderCalendar(cal)" class="label attention">Reminders</span>
           </label>
         </li>
       </ul>
+
+      <p v-if="isReminderPicked" class="error">
+        {{ pickedCalendar.name }} is a Reminder. Support of reminder is in progress
+      </p>
+
       <div class="row actions">
-        <button
-          class="btn"
-          type="button"
-          :disabled="state.busy || !picked"
-          @click="saveChange"
-        >
+        <button class="btn" type="button" :disabled="state.busy || !picked || isReminderPicked" @click="saveChange">
           {{ state.busy ? 'Saving…' : 'Save' }}
         </button>
         <button class="btn plain" type="button" @click="changing = false">Cancel</button>
@@ -133,12 +146,7 @@ async function confirmDisconnect() {
         wrote stay in your calendar, delete them yourself if you want them gone.
       </p>
       <div class="row actions">
-        <button
-          class="btn danger"
-          type="button"
-          :disabled="state.busy"
-          @click="confirmDisconnect"
-        >
+        <button class="btn danger" type="button" :disabled="state.busy" @click="confirmDisconnect">
           {{ state.busy ? 'Disconnecting…' : 'Disconnect' }}
         </button>
         <button class="btn plain" type="button" @click="confirming = false">Cancel</button>

@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { useAppleCalendar } from '../../composables/useAppleCalendar'
+import { isReminderCalendar, useAppleCalendar } from '../../composables/useAppleCalendar'
 
 // See NotionSetup: numbered 3 and 4 when the welcome page runs both wizards as
 // one sequence, 1 and 2 when it stands alone in a Connections row.
@@ -33,6 +33,18 @@ const step = computed(function () {
   } else {
     return 1
   }
+})
+
+// The chosen calendar's full row, looked up by url, so its name is available.
+const pickedCalendar = computed(function () {
+  return state.calendars.find(function (calendar) {
+    return calendar.url === picked.value
+  })
+})
+
+// Blocks saving a calendar that is really iCloud's Reminders list.
+const isReminderPicked = computed(function () {
+  return isReminderCalendar(pickedCalendar.value)
 })
 
 async function submitCredentials() {
@@ -95,9 +107,7 @@ async function submitCalendar() {
           <p v-if="!$slots.help" class="body">
             Apple requires an app-specific password, your normal Apple Account
             password will not work. Create one at
-            <a href="https://account.apple.com" target="_blank" rel="noreferrer"
-              >account.apple.com</a
-            >
+            <a href="https://account.apple.com" target="_blank" rel="noreferrer">account.apple.com</a>
             under Sign-In and Security → App-Specific Passwords.
           </p>
           <slot name="help" />
@@ -105,13 +115,7 @@ async function submitCalendar() {
           <form class="column credentials" @submit.prevent="submitCredentials">
             <label class="column field">
               <span>Apple Account email</span>
-              <input
-                v-model="email"
-                type="email"
-                required
-                autocomplete="username"
-                placeholder="you@icloud.com"
-              />
+              <input v-model="email" type="email" required autocomplete="username" placeholder="you@icloud.com" />
             </label>
 
             <label class="column field">
@@ -119,16 +123,8 @@ async function submitCalendar() {
               <!-- Plain text on purpose: an app-specific password is a
                    four-group string nobody can type blind, and a typo costs a
                    round trip to iCloud that rejects it. -->
-              <input
-                v-model="password"
-                type="text"
-                required
-                autocomplete="off"
-                autocapitalize="none"
-                autocorrect="off"
-                spellcheck="false"
-                placeholder="xxxx-xxxx-xxxx-xxxx"
-              />
+              <input v-model="password" type="text" required autocomplete="off" autocapitalize="none" autocorrect="off"
+                spellcheck="false" placeholder="xxxx-xxxx-xxxx-xxxx" />
             </label>
 
             <button class="btn" type="submit" :disabled="state.busy">
@@ -168,28 +164,26 @@ async function submitCalendar() {
               <label>
                 <input type="radio" :value="cal.url" v-model="picked" />
                 <span>{{ cal.name }}</span>
+                <span v-if="isReminderCalendar(cal)" class="label attention">Reminders</span>
               </label>
             </li>
           </ul>
 
+          <p v-if="isReminderPicked" class="error">
+            {{ pickedCalendar.name }} is a Reminders list, not a calendar. Pick a
+            calendar instead.
+          </p>
+
           <div class="row newcalendar">
             <input v-model="newName" class="text" type="text" placeholder="Calnio" />
-            <button
-              type="button"
-              class="btn plain"
-              :disabled="state.busy || !newName.trim()"
-              @click="submitNewCalendar"
-            >
+            <button type="button" class="btn plain" :disabled="state.busy || !newName.trim()"
+              @click="submitNewCalendar">
               Create calendar
             </button>
           </div>
 
-          <button
-            class="btn"
-            type="button"
-            :disabled="state.busy || !picked"
-            @click="submitCalendar"
-          >
+          <button class="btn" type="button" :disabled="state.busy || !picked || isReminderPicked"
+            @click="submitCalendar">
             {{ state.busy ? 'Saving…' : 'Use this calendar' }}
           </button>
         </template>
@@ -214,6 +208,7 @@ async function submitCalendar() {
 }
 
 .newcalendar .text {
-  width: 200px; /* wide enough for a calendar name, narrow enough to stay on the row */
+  width: 200px;
+  /* wide enough for a calendar name, narrow enough to stay on the row */
 }
 </style>
