@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [0.3.0] - 2026-08-11
+
+### Changed
+- Production database moved from managed Neon to self-hosted Postgres on the same host as the app.
+- Docker prod container uses network_mode: host to reach the local Postgres, and now serves on :8082 internally.
+
 ## [0.2.0] - 2026-08-11
 
 ### Added

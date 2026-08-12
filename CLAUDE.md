@@ -15,7 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Dev server: `uv run uvicorn main:app --reload --port 8080`
 - Migrations: `uv run alembic upgrade head`; new one: `uv run alembic revision --autogenerate -m "..."` (autogenerate works — `alembic/env.py` imports all models and uses `Base.metadata`; a new model must be imported there or autogenerate won't see it)
 - Frontend dev server: `cd frontend && npm run dev` (Vite on 5173, cross-origin to the API on 8080 — that setup works, leave it alone)
-- Docker: `docker compose up --build` — **production only**, serves on 8080. Reads `.env.prod` (not `.env`), builds the Vue app in a `node:22-slim` stage, one uvicorn worker, no `--reload`. Migrations are **not** run by the container.
+- Docker: `docker compose up --build` — **production only**, serves on 8082 via `network_mode: host` (the container reaches a self-hosted Postgres on the same machine through `localhost`, and the port number itself dodges a collision with another service already on that host's 8080). Reads `.env.prod` (not `.env`), builds the Vue app in a `node:22-slim` stage, one uvicorn worker, no `--reload`. Migrations are **not** run by the container.
 - Type check: pyright (config in `pyrightconfig.json`, venv-aware)
 - No tests and no linter configured yet.
 

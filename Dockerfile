@@ -18,4 +18,4 @@ COPY --from=frontend /app/dist ./frontend/dist
 
 # --workers 1 is load-bearing: the lifespan in main.py starts an APScheduler, so a
 # second worker would run a second scheduler and sync every user twice.
-CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "1"]
+CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8082", "--workers", "1"]

@@ -30,5 +30,5 @@ uv run alembic upgrade head
 docker compose up --build
 ```
 
-Serves on :8080, one uvicorn worker (the scheduler doubles every user's sync
+Serves on :8082, one uvicorn worker (the scheduler doubles every user's sync
 with a second worker).
