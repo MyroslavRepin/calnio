@@ -1,13 +1,13 @@
 # Production only. Dev runs two local processes instead:
 #   uv run uvicorn main:app --reload --port 8080   +   npm run dev
-# One service: the image already contains the built Vue app, and the database is
-# managed (Neon), so there is nothing else to bring up.
+# One service: the image already contains the built Vue app, and the database
+# runs on the host (self-hosted Postgres), reached via network_mode: host.
+
 name: calnio
 
 services:
   backend:
     build: .
     env_file: .env.prod
-    ports:
-      - "127.0.0.1:8082:8080"
+    network_mode: host
     restart: unless-stopped
