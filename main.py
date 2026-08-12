@@ -14,11 +14,22 @@ from backend.api.notion import router as notion_router
 from backend.api.oauth import router as oauth_router
 from backend.api.sync import router as sync_router
 from backend.core.config import settings
+from backend.core.db import SessionLocal
 from backend.core.logging import setup_logging
 from backend.core.scheduler import init_scheduler
+from backend.models.system_settings import SystemSettings
 from backend.services.sync import run_all_users
 
 setup_logging()
+
+
+def run_all_users_if_enabled() -> None:
+    """Run the sync tick unless the global switch is off."""
+    with SessionLocal() as db:
+        row = db.query(SystemSettings).first()
+        if row is not None and not row.sync_enabled:
+            return
+    run_all_users()
 
 
 @asynccontextmanager
@@ -29,7 +40,7 @@ async def lifespan(app: FastAPI):
     scheduler = init_scheduler()
     if settings.scheduler_enabled:
         scheduler.add_job(
-            run_all_users,
+            run_all_users_if_enabled,
             "interval",
             minutes=int(settings.syncing_interval_minutes),
             max_instances=1,  # never overlap two ticks

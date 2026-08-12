@@ -125,7 +125,15 @@ Binding rules. Existing code that breaks them is wrong and gets rewritten, not c
 
 ## README.md
 
-README holds the working plan: sync model detail, roadmap phases, auth flow + todo checklist, frontend integration plan (Vue/Vite dev on :5173, prod served by FastAPI `StaticFiles`). Check it before starting auth or frontend work — it tracks what's done vs todo.
+README is user-facing only: what Calnio does, setup, how to run dev and prod. No roadmap, no architecture detail, no per-feature notes — those live here in CLAUDE.md.
+
+## CHANGELOG.md
+
+Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), categories `Added` / `Changed` / `Fixed` / `Removed`, one short line per entry, no em dashes.
+
+- Entries are written **only at version bump time**, not per commit. Look at what changed since the last version bump (`git log`) and summarize it then — don't touch `[Unreleased]` on unrelated commits.
+- The version-bump commit renames `[Unreleased]` to `[X.Y.Z] - YYYY-MM-DD` and adds a fresh empty `[Unreleased]` (all four category headers, no bullets) above it, in the same commit that bumps `pyproject.toml` / `frontend/package.json` / `uv.lock`.
+- Skip empty categories in a cut version section (don't print `### Fixed` with nothing under it) — the empty scaffold under `[Unreleased]` is the only place all four always appear.
 
 # Calnio Frontend
 
