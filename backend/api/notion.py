@@ -9,22 +9,16 @@ from backend.core.logging import logger
 from backend.core.oauth import oauth
 from backend.deps.auth import get_current_user
 from backend.deps.db import get_session
-from backend.deps.notion import (
-    date_property_names,
-    get_connection,
-    get_notion_repo,
-    notion_errors,
-)
+from backend.deps.notion import get_connection, get_notion_repo, notion_errors
 from backend.models.notion_connection import NotionConnection
 from backend.models.user import User
 from backend.repo.notion_connection import NotionConnectionRepo
 from backend.repo.notion import NotionPageRepo
-from backend.repo.sync_settings import SyncSettingsRepo
+from backend.repo.sync_mapping import SyncMappingRepo
 from backend.schemas.notion_connection import (
     AuthorizeUrlResponse,
     ConnectionStatus,
     NotionDatabaseOption,
-    SelectDatabaseRequest,
 )
 
 router = APIRouter(tags=["notion"])
@@ -100,10 +94,18 @@ async def disconnect_notion(
     row: NotionConnection = Depends(get_connection),
     db: Session = Depends(get_session),
 ):
-    """Revoke the grant on Notion's side and forget it here."""
+    """Revoke the grant on Notion's side, forget it, and drop the user's syncs.
+
+    Every sync reads through this grant, so leaving them behind would leave
+    rows that can never run. The ORM cascade takes their link rows with them;
+    events already in iCloud stay, same as an Apple Calendar disconnect.
+    """
     user_id = row.user_id
     repo = NotionConnectionRepo(db)
     repo.revoke(decrypt(row.access_token_encrypted))
+    mapping_repo = SyncMappingRepo(db)
+    for mapping in mapping_repo.list(user_id):
+        mapping_repo.delete(mapping)
     repo.delete(row)
     db.commit()
     logger.info("notion disconnected for user {}", user_id)
@@ -116,36 +118,3 @@ async def list_notion_databases(repo: NotionPageRepo = Depends(get_notion_repo))
     """The data sources the user ticked in Notion's consent picker."""
     with notion_errors():
         return repo.list_databases()
-
-
-@router.get("/api/v1/me/notion/date-properties", response_model=list[str])
-async def list_date_properties(row: NotionConnection = Depends(get_connection)):
-    """Candidates for the due-date setting, empty if the database has none."""
-    return date_property_names(row)
-
-
-@router.put("/api/v1/me/notion/database", response_model=ConnectionStatus)
-async def select_notion_database(
-    body: SelectDatabaseRequest,
-    row: NotionConnection = Depends(get_connection),
-    repo: NotionPageRepo = Depends(get_notion_repo),
-    db: Session = Depends(get_session),
-):
-    """Point syncing at one of the workspace's data sources."""
-    # One retrieve proves the data source is still shared with us and hands
-    # back the authoritative title. An id we cannot see comes back as a 404.
-    with notion_errors():
-        database = repo.get_database(body.data_source_id)
-
-    # A different database means a different schema, so a due-date column
-    # picked on the old one may not exist here. Syncing against a name that is
-    # gone finds nothing while reporting success, so drop it and make them pick
-    # again. Eligibility requires it, so sync pauses until they do.
-    if row.data_source_id != database.id:
-        sync_settings = SyncSettingsRepo(db).get(row.user_id)
-        if sync_settings is not None:
-            sync_settings.due_date_property = None
-
-    NotionConnectionRepo(db).set_data_source(row, database.id, database.title)
-    db.commit()
-    return row

@@ -5,6 +5,7 @@ import DashboardLayout from './views/app/DashboardLayout.vue'
 import MeView from './views/app/MeView.vue'
 import OverviewView from './views/app/OverviewView.vue'
 import SettingsView from './views/app/SettingsView.vue'
+import SyncsView from './views/app/SyncsView.vue'
 import WelcomeView from './views/app/WelcomeView.vue'
 
 // No auth guard: bootstrap runs after the router resolves, so a guard reading
@@ -22,6 +23,7 @@ export const router = createRouter({
       component: DashboardLayout,
       children: [
         { path: '', name: 'dashboard', component: OverviewView },
+        { path: 'syncs', name: 'syncs', component: SyncsView },
         { path: 'connections', name: 'connections', component: ConnectionsView },
         { path: 'settings', name: 'settings', component: SettingsView },
         // Absolute child path: the URL stays /me, but the page renders inside

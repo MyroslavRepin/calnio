@@ -10,8 +10,8 @@ const logout = authResult.logout
 
 const router = useRouter()
 
-// The account link is text, not an avatar: the landing design system allows no
-// icons and no image chrome, so the shortest honest label wins.
+// The shortest honest label for the account link. No avatar here: the header
+// inside the app has one, the front door does not need it.
 const account = computed(function () {
   if (state.user?.name) {
     return state.user.name
@@ -29,95 +29,43 @@ async function signOut() {
 </script>
 
 <template>
-  <nav class="nav">
-    <div class="wrap row navrow">
-      <router-link to="/" class="wordmark">calnio</router-link>
+  <header class="navbar">
+    <div class="row navrow">
+      <router-link to="/" class="wordmark">Calnio</router-link>
 
       <div class="row links">
         <a v-if="$route.name === 'landing'" href="#how">How it works</a>
 
         <template v-if="state.ready && state.user">
-          <router-link
-            v-if="!$route.path.startsWith('/dashboard')"
-            to="/dashboard"
-            class="primary"
-          >
-            <span>Dashboard</span>
-          </router-link>
-
-          <router-link to="/me" class="account" :title="state.user.email">
+          <router-link to="/dashboard">Dashboard</router-link>
+          <router-link to="/me" :title="state.user.email" class="account">
             {{ account }}
           </router-link>
-
-          <button type="button" @click="signOut">Log out</button>
+          <button class="btn plain" type="button" @click="signOut">Log out</button>
         </template>
 
-        <button v-else type="button" class="primary" @click="login">
-          <span>Log in</span>
-        </button>
+        <button v-else class="btn plain" type="button" @click="login">Log in</button>
       </div>
     </div>
-  </nav>
+  </header>
 </template>
 
 <style scoped>
-/* Above the sections, which are above the atmosphere layer. */
-.nav {
-  position: relative;
-  z-index: 2;
+.navbar {
+  border-bottom: 1px solid var(--app-border);
+  background: var(--app-canvas);
 }
 
 .navrow {
-  --gap: clamp(16px, 4vw, 40px);
+  --gap: var(--app-gap-block);
   justify-content: space-between;
-  padding-top: 14px;
-  padding-bottom: 14px;
-}
-
-.wordmark {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  font-size: 19px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--ink);
+  max-width: var(--app-width-page);
+  margin: 0 auto;
+  padding: var(--app-space-3) var(--app-pad-page);
 }
 
 .links {
-  --gap: clamp(14px, 3vw, 28px);
-}
-
-.links a,
-.links button {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--link);
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-}
-
-.links a:hover,
-.links button:hover {
-  color: var(--ink);
-}
-
-/* The one nav item carrying weight. The rule sits on a nested span so the 44px
-   hit box does not drag the underline away from the text. */
-.primary {
-  color: var(--ink);
-}
-
-.primary > span {
-  border-bottom: 1px solid var(--field-line);
-  padding-bottom: 3px;
+  --gap: var(--app-gap-block);
 }
 
 .account {

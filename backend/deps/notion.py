@@ -69,17 +69,3 @@ def get_notion_repo(
 ) -> NotionPageRepo:
     """An authenticated Notion repo for this user's grant."""
     return NotionPageRepo(decrypt(row.access_token_encrypted))
-
-
-def date_property_names(row: NotionConnection) -> list[str]:
-    """Date column names on the selected data source, in schema order."""
-    if row.data_source_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="pick a notion database first",
-        )
-    with notion_errors():
-        database = get_notion_repo(row).get_database(row.data_source_id)
-    return [
-        name for name, prop in database.properties.items() if prop.get("type") == "date"
-    ]

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.orm import Session
 
 from backend.core.config import settings
@@ -16,7 +16,6 @@ from backend.schemas.apple_calendar import (
     ConnectRequest,
     ConnectResponse,
     CreateCalendarRequest,
-    SelectCalendarRequest,
 )
 from backend.schemas.caldav_calendar import CalDavCalendar
 
@@ -49,8 +48,6 @@ async def connect_apple_calendar(
     response.status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
     return ConnectResponse(
         icloud_email=row.icloud_email,
-        calendar_url=row.calendar_url,
-        calendar_name=row.calendar_name,
         last_verified_at=row.last_verified_at,
         calendars=calendars,
     )
@@ -97,29 +94,3 @@ async def create_apple_calendar(
     """Create a calendar in the user's iCloud account, without selecting it."""
     with icloud_errors():
         return CalDavAccountRepo(*icloud_credentials(row)).create_calendar(body.name)
-
-
-@router.put("/api/v1/me/apple-calendar/calendar", response_model=ConnectionStatus)
-async def select_apple_calendar(
-    body: SelectCalendarRequest,
-    row: CaldavCredential = Depends(get_credential),
-    db: Session = Depends(get_session),
-):
-    """Point syncing at one of the user's calendars."""
-    with icloud_errors():
-        calendars = CalDavAccountRepo(*icloud_credentials(row)).list_calendars()
-
-    # Never store a URL the account cannot see, whoever handed it to us. The
-    # matching row also gives us the display name, straight from iCloud.
-    matched = next(
-        (calendar for calendar in calendars if calendar.url == body.calendar_url),
-        None,
-    )
-    if matched is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="unknown calendar"
-        )
-
-    CaldavCredentialRepo(db).set_calendar(row, matched.url, matched.name)
-    db.commit()
-    return row

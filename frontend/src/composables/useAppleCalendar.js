@@ -5,7 +5,7 @@ const BASE = '/api/v1/me/apple-calendar'
 
 const state = reactive({
   ready: false, // first load finished, so the wizard never flashes at a connected user
-  connection: null, // { connected, icloud_email, calendar_url, calendar_name, last_verified_at }
+  connection: null, // { connected, icloud_email, last_verified_at }
   // Listing calendars hits iCloud and is slow, so it never runs on page load.
   calendars: [],
   busy: false,
@@ -86,23 +86,6 @@ async function createCalendar(name) {
   return { calendar: result.data }
 }
 
-async function selectCalendar(calendarUrl) {
-  state.busy = true
-  const result = await send(
-    BASE + '/calendar',
-    { method: 'PUT', json: { calendar_url: calendarUrl } },
-    'could not save the calendar',
-  )
-  state.busy = false
-
-  if (result.error) {
-    return { error: result.error }
-  }
-
-  state.connection = result.data
-  return {}
-}
-
 async function disconnect() {
   state.busy = true
   const result = await send(BASE, { method: 'DELETE' }, 'could not disconnect')
@@ -135,7 +118,6 @@ export function useAppleCalendar() {
     connect,
     fetchCalendars,
     createCalendar,
-    selectCalendar,
     disconnect,
   }
 }

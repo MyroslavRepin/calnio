@@ -51,11 +51,5 @@ class CaldavCredentialRepo:
         row.last_verified_at = now
         return row, False
 
-    def set_calendar(
-        self, row: CaldavCredential, calendar_url: str, calendar_name: str
-    ) -> None:
-        row.calendar_url = calendar_url
-        row.calendar_name = calendar_name
-
     def delete(self, row: CaldavCredential) -> None:
         self.db.delete(row)

@@ -10,8 +10,10 @@ from backend.core.config import settings
 from backend.models.caldav_credential import CaldavCredential
 from backend.models.notion_connection import NotionConnection
 from backend.models.oauth_account import OAuthAccount
+from backend.models.sync_mapping import SyncMapping
 from backend.models.sync_settings import SyncSettings
 from backend.models.synced_event import SyncedEvent
+from backend.models.system_settings import SystemSettings
 from backend.models.user import User
 
 # this is the Alembic Config object, which provides

@@ -2,16 +2,12 @@ import { reactive, readonly } from 'vue'
 import { send } from './useAuth'
 
 const BASE = '/api/v1/me/sync'
-// The date columns live on the Notion connection, so the picker's options come
-// from that router rather than this one.
-const DATE_PROPERTIES = '/api/v1/me/notion/date-properties'
 
 const state = reactive({
   ready: false,
-  settings: null, // { enabled, eligible, due_date_property, last_run_at, last_status }
-  dateProperties: [], // date columns on the selected database, fetched on demand
+  settings: null, // { enabled, eligible, mapping_count, last_run_at, last_status }
   busy: false,
-  pending: false, // a run was queued by turning syncing on and has not reported back
+  pending: false, // a run was queued and has not reported back
 })
 
 // Turning syncing on queues a background run that takes seconds. We poll until
@@ -25,6 +21,8 @@ function sleep(ms) {
   })
 }
 
+// Exported as reloadSync too: adding a sync turns the master switch on, so the
+// page that did it has to re-read this.
 async function load() {
   const result = await send(BASE)
 
@@ -37,18 +35,7 @@ async function load() {
   state.ready = true
 }
 
-async function fetchDateProperties() {
-  state.busy = true
-  const result = await send(DATE_PROPERTIES, {}, 'could not read your database columns')
-  state.busy = false
-
-  if (result.error) {
-    return { error: result.error }
-  }
-
-  state.dateProperties = result.data
-  return {}
-}
+export { load as reloadSync }
 
 async function update(body) {
   state.busy = true
@@ -68,9 +55,17 @@ async function update(body) {
   return {}
 }
 
-// Watches the queued run to completion. Stops on a new last_run_at, or on the
+// Watches a queued run to completion. Stops on a new last_run_at, or on the
 // server turning the user off, which is what a rejected credential does.
-async function watchRun(previousRunAt) {
+//
+// Exported because a sync's own switch queues the same run, so the Syncs page
+// needs to watch it too.
+export async function watchRun() {
+  let previousRunAt = null
+  if (state.settings) {
+    previousRunAt = state.settings.last_run_at
+  }
+
   state.pending = true
 
   try {
@@ -97,11 +92,6 @@ async function watchRun(previousRunAt) {
 }
 
 async function setEnabled(enabled) {
-  let previousRunAt = null
-  if (state.settings) {
-    previousRunAt = state.settings.last_run_at
-  }
-
   const result = await update({ enabled })
   if (result.error) {
     return { error: result.error }
@@ -109,22 +99,16 @@ async function setEnabled(enabled) {
 
   // Deliberately not awaited: the switch flips now, the run reports later.
   if (enabled) {
-    watchRun(previousRunAt)
+    watchRun()
   }
 
   return {}
-}
-
-async function setDueDateProperty(name) {
-  return update({ due_date_property: name })
 }
 
 export function useSync() {
   return {
     state: readonly(state),
     load,
-    fetchDateProperties,
     setEnabled,
-    setDueDateProperty,
   }
 }

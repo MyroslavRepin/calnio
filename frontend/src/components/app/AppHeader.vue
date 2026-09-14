@@ -40,7 +40,7 @@ async function signOut() {
 <template>
   <header class="bar">
     <div class="row headerrow">
-      <router-link to="/" class="wordmark">calnio</router-link>
+      <router-link to="/" class="wordmark">Calnio</router-link>
 
       <div class="row session">
         <router-link to="/me" class="account" :title="state.user?.email">

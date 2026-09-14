@@ -1,22 +1,23 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class SyncStatus(BaseModel):
-    """The switch, its setting, and how the last run went."""
+    """The master switch and how the last tick went across every sync."""
 
     enabled: bool
-    # False while a connection is unfinished or no date column is picked, which
-    # the client renders as a disabled toggle.
+    # False while there is no sync ready to run, which the client renders as a
+    # disabled toggle.
     eligible: bool
-    due_date_property: str | None
+    # How many syncs the user has, so the client can say "nothing set up yet"
+    # without fetching the list.
+    mapping_count: int
     last_run_at: datetime | None
     last_status: str | None
 
 
 class UpdateSyncRequest(BaseModel):
-    """Both fields optional: the toggle and the picker PUT independently."""
+    """Only the master switch. Each sync's own settings live on the mapping."""
 
     enabled: bool | None = None
-    due_date_property: str | None = Field(default=None, min_length=1)

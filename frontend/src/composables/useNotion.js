@@ -6,7 +6,7 @@ const LOGIN = '/auth/oauth/notion/login'
 
 const state = reactive({
   ready: false, // first load finished, so the wizard never flashes at a connected user
-  connection: null, // { connected, workspace_name, data_source_id, data_source_name, last_verified_at }
+  connection: null, // { connected, workspace_name, workspace_icon, last_verified_at }
   databases: [], // only the ones ticked in Notion's picker, fetched on demand
   busy: false,
   error: null, // set when the OAuth dance bounced back with ?notion_error=
@@ -102,23 +102,6 @@ async function fetchDatabases() {
   return {}
 }
 
-async function selectDatabase(dataSourceId) {
-  state.busy = true
-  const result = await send(
-    BASE + '/database',
-    { method: 'PUT', json: { data_source_id: dataSourceId } },
-    'could not save the database',
-  )
-  state.busy = false
-
-  if (result.error) {
-    return { error: result.error }
-  }
-
-  state.connection = result.data
-  return {}
-}
-
 async function disconnect() {
   state.busy = true
   const result = await send(BASE, { method: 'DELETE' }, 'could not disconnect')
@@ -140,7 +123,6 @@ export function useNotion() {
     load,
     connect,
     fetchDatabases,
-    selectDatabase,
     disconnect,
   }
 }
