@@ -230,7 +230,8 @@
   background: var(--app-canvas-subtle);
 }
 
-.app-ui .picklist input[type='radio'] {
+.app-ui .picklist input[type='radio'],
+.app-ui .picklist input[type='checkbox'] {
   accent-color: var(--app-accent);
   margin: 0;
 }
@@ -365,4 +366,58 @@
   background: var(--app-canvas-subtle);
   color: var(--app-fg-muted);
   font-weight: var(--app-weight-bold);
+}
+
+/* The sync switch. Used by the master switch in Settings and by every sync's own
+   switch on the Syncs page. State is carried by colour and by the knob's side,
+   with no transition: it reads as a control, not as an animation. */
+.app-ui .switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--app-space-2);
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--app-text-body);
+  color: var(--app-fg);
+}
+
+.app-ui .switch:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.app-ui .track {
+  display: inline-flex;
+  align-items: center;
+  width: 48px;
+  height: 28px;
+  padding: 3px;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+  background: var(--app-canvas-subtle);
+}
+
+.app-ui .track.on {
+  background: var(--app-accent);
+  border-color: var(--app-accent);
+}
+
+.app-ui .knob {
+  width: var(--app-marker);
+  height: var(--app-marker);
+  border-radius: var(--app-radius-sm);
+  background: var(--app-canvas);
+  border: 1px solid var(--app-border);
+}
+
+.app-ui .track.on .knob {
+  margin-left: auto;
+  border-color: var(--app-border-emphasis);
+}
+
+.app-ui .switchlabel {
+  font-weight: var(--app-weight-medium);
 }

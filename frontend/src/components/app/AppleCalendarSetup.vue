@@ -1,14 +1,15 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { isReminderCalendar, useAppleCalendar } from '../../composables/useAppleCalendar'
+import { useAppleCalendar } from '../../composables/useAppleCalendar'
 
-// See NotionSetup: numbered 3 and 4 when the welcome page runs both wizards as
-// one sequence, 1 and 2 when it stands alone in a Connections row.
+// One step: store the credential. Which calendar each sync writes to is picked
+// per sync, so this wizard no longer chooses one. The number is a prop so the
+// welcome page can run this and the Notion wizard as one sequence.
 defineProps({
   numbers: {
     type: Array,
     default: function () {
-      return ['1', '2']
+      return ['1']
     },
   },
 })
@@ -17,34 +18,14 @@ defineProps({
 const appleResult = useAppleCalendar()
 const state = appleResult.state
 const connect = appleResult.connect
-const createCalendar = appleResult.createCalendar
-const selectCalendar = appleResult.selectCalendar
 
 const email = ref('')
 const password = ref('')
-const newName = ref('Calnio')
-const picked = ref('')
 const error = ref('')
 
-// Step 1 until the credentials are stored, step 2 until a calendar is picked.
-const step = computed(function () {
-  if (state.connection) {
-    return 2
-  } else {
-    return 1
-  }
-})
-
-// The chosen calendar's full row, looked up by url, so its name is available.
-const pickedCalendar = computed(function () {
-  return state.calendars.find(function (calendar) {
-    return calendar.url === picked.value
-  })
-})
-
-// Blocks saving a calendar that is really iCloud's Reminders list.
-const isReminderPicked = computed(function () {
-  return isReminderCalendar(pickedCalendar.value)
+// Done once the credential is stored.
+const connected = computed(function () {
+  return Boolean(state.connection)
 })
 
 async function submitCredentials() {
@@ -57,38 +38,6 @@ async function submitCredentials() {
   }
 
   password.value = '' // no reason to keep it in memory once it is stored
-
-  // Pre-select a calendar named Calnio if the account already has one.
-  const existing = state.calendars.find(function (calendar) {
-    return calendar.name === 'Calnio'
-  })
-
-  if (existing) {
-    picked.value = existing.url
-  } else {
-    picked.value = ''
-  }
-}
-
-async function submitNewCalendar() {
-  error.value = ''
-
-  const result = await createCalendar(newName.value.trim())
-  if (result.error) {
-    error.value = result.error
-    return
-  }
-
-  picked.value = result.calendar.url
-}
-
-async function submitCalendar() {
-  error.value = ''
-
-  const result = await selectCalendar(picked.value)
-  if (result.error) {
-    error.value = result.error
-  }
 }
 </script>
 
@@ -96,12 +45,12 @@ async function submitCalendar() {
   <div class="column setup">
     <section class="column step">
       <div class="row stephead">
-        <span class="num" :class="{ done: step > 1 }">{{ numbers[0] }}</span>
+        <span class="num" :class="{ done: connected }">{{ numbers[0] }}</span>
         <h3>Connect your iCloud account</h3>
       </div>
 
       <div class="column stepbody">
-        <template v-if="step === 1">
+        <template v-if="!connected">
           <!-- The short version, for a Connections row. The welcome page fills
                the slot with the full walkthrough instead of repeating this. -->
           <p v-if="!$slots.help" class="body">
@@ -134,7 +83,7 @@ async function submitCalendar() {
 
           <p class="note">
             Calnio stores this password encrypted and uses it only to write events
-            into the calendar you choose. Revoking it in your Apple Account
+            into the calendars you choose. Revoking it in your Apple Account
             settings disconnects Calnio immediately.
           </p>
         </template>
@@ -142,53 +91,6 @@ async function submitCalendar() {
         <p v-else class="body">
           Connected as <strong>{{ state.connection.icloud_email }}</strong>
         </p>
-      </div>
-    </section>
-
-    <section class="column step" :class="{ ahead: step < 2 }">
-      <div class="row stephead">
-        <span class="num">{{ numbers[1] }}</span>
-        <h3>Choose a calendar</h3>
-      </div>
-
-      <div class="column stepbody">
-        <template v-if="step === 2">
-          <p class="body">
-            Calnio writes your Notion due dates here. A dedicated calendar is
-            easiest to live with, you can hide it in the Calendar app without
-            touching anything else.
-          </p>
-
-          <ul class="picklist">
-            <li v-for="cal in state.calendars" :key="cal.url">
-              <label>
-                <input type="radio" :value="cal.url" v-model="picked" />
-                <span>{{ cal.name }}</span>
-                <span v-if="isReminderCalendar(cal)" class="label attention">Reminders</span>
-              </label>
-            </li>
-          </ul>
-
-          <p v-if="isReminderPicked" class="error">
-            {{ pickedCalendar.name }} is a Reminders list, not a calendar. Pick a
-            calendar instead.
-          </p>
-
-          <div class="row newcalendar">
-            <input v-model="newName" class="text" type="text" placeholder="Calnio" />
-            <button type="button" class="btn plain" :disabled="state.busy || !newName.trim()"
-              @click="submitNewCalendar">
-              Create calendar
-            </button>
-          </div>
-
-          <button class="btn" type="button" :disabled="state.busy || !picked || isReminderPicked"
-            @click="submitCalendar">
-            {{ state.busy ? 'Saving…' : 'Use this calendar' }}
-          </button>
-        </template>
-
-        <p v-else class="body">Available once your iCloud account is connected.</p>
       </div>
     </section>
 
@@ -201,14 +103,5 @@ async function submitCalendar() {
   --gap: var(--app-gap-block);
   align-items: flex-start;
   width: 100%;
-}
-
-.newcalendar {
-  --gap: var(--app-gap-inline);
-}
-
-.newcalendar .text {
-  width: 200px;
-  /* wide enough for a calendar name, narrow enough to stay on the row */
 }
 </style>

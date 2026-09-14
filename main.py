@@ -10,6 +10,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from backend.api.account import router as account_router
 from backend.api.apple_calendar import router as apple_calendar_router
+from backend.api.mapping import router as mapping_router
 from backend.api.notion import router as notion_router
 from backend.api.oauth import router as oauth_router
 from backend.api.sync import router as sync_router
@@ -78,6 +79,7 @@ app.include_router(oauth_router)
 app.include_router(apple_calendar_router)
 app.include_router(notion_router)
 app.include_router(sync_router)
+app.include_router(mapping_router)
 app.include_router(account_router)
 
 # The built Vue app, served same-origin in prod. Resolved from this file rather

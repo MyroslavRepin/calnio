@@ -1,6 +1,7 @@
 <script setup>
 const pages = [
   { name: 'dashboard', label: 'Overview' },
+  { name: 'syncs', label: 'Syncs' },
   { name: 'connections', label: 'Connections' },
   { name: 'settings', label: 'Settings' },
 ]

@@ -73,7 +73,7 @@ async function toggle() {
         @click="toggle"
       >
         <span class="track" :class="{ on: enabled }"><span class="knob"></span></span>
-        <span class="switch-label">
+        <span class="switchlabel">
           {{ enabled ? 'Syncing is on' : 'Syncing is off' }}
         </span>
       </button>
@@ -97,62 +97,8 @@ async function toggle() {
     </div>
   </section>
 </template>
-
 <style scoped>
 .card-body > * + * {
   margin-top: var(--app-gap-stack);
-}
-
-/* State is carried by colour and by the knob's side, with no transition: it
-   reads as a control, not as an animation. */
-.switch {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--app-space-2);
-  padding: 0;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: var(--app-text-body);
-  color: var(--app-fg);
-}
-
-.switch:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-.track {
-  display: inline-flex;
-  align-items: center;
-  width: 48px;
-  height: 28px;
-  padding: 3px;
-  border: 1px solid var(--app-border);
-  border-radius: var(--app-radius);
-  background: var(--app-canvas-subtle);
-}
-
-.track.on {
-  background: var(--app-accent);
-  border-color: var(--app-accent);
-}
-
-.knob {
-  width: var(--app-marker);
-  height: var(--app-marker);
-  border-radius: var(--app-radius-sm);
-  background: var(--app-canvas);
-  border: 1px solid var(--app-border);
-}
-
-.track.on .knob {
-  margin-left: auto;
-  border-color: var(--app-border-emphasis);
-}
-
-.switch-label {
-  font-weight: var(--app-weight-medium);
 }
 </style>

@@ -1,9 +1,9 @@
 <script setup>
 import AppHeader from '../../components/app/AppHeader.vue'
 import SidebarMenu from '../../components/app/SidebarMenu.vue'
-import RecentSyncs from './RecentSyncs.vue'
 import { useAppleCalendar } from '../../composables/useAppleCalendar'
 import { loadWhenSignedIn, useAuth } from '../../composables/useAuth'
+import { useMappings } from '../../composables/useMappings'
 import { useNotion } from '../../composables/useNotion'
 import { useSync } from '../../composables/useSync'
 
@@ -16,10 +16,16 @@ const login = authResult.login
 const appleResult = useAppleCalendar()
 const notionResult = useNotion()
 const syncResult = useSync()
+const mappingsResult = useMappings()
 
 // The cheap facts every child page needs, loaded once here rather than per view
 // because the composable state is shared.
-loadWhenSignedIn(appleResult.load, notionResult.load, syncResult.load)
+loadWhenSignedIn(
+  appleResult.load,
+  notionResult.load,
+  syncResult.load,
+  mappingsResult.load,
+)
 </script>
 
 <template>

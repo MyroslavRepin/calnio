@@ -14,23 +14,23 @@ const apple = appleResult.state
 const notionResult = useNotion()
 const notion = notionResult.state
 
-// Both connections are two-stage: a stored credential or grant, then the target
-// the user picked inside it. "Configured" is the second stage.
-const appleConfigured = computed(() => {
-  return Boolean(apple.connection?.calendar_url)
+// This page is only about the two grants: the Notion token and the iCloud
+// password. Which database goes into which calendar lives on the Syncs page.
+const appleConnected = computed(() => {
+  return Boolean(apple.connection)
 })
 
-const notionConfigured = computed(() => {
-  return Boolean(notion.connection?.data_source_id)
+const notionConnected = computed(() => {
+  return Boolean(notion.connection)
 })
 
-// Rows open by default until their setup is finished, so a first-time user
-// lands straight in the wizard. Clicking a row sets an explicit override.
+// Rows open by default until the grant is stored, so a first-time user lands
+// straight in the wizard. Clicking a row sets an explicit override.
 const overrides = reactive({ apple: null, notion: null })
 
 const appleOpen = computed(() => {
   if (overrides.apple === null) {
-    return !appleConfigured.value
+    return !appleConnected.value
   } else {
     return overrides.apple
   }
@@ -38,22 +38,19 @@ const appleOpen = computed(() => {
 
 const notionOpen = computed(() => {
   if (overrides.notion === null) {
-    return !notionConfigured.value
+    return !notionConnected.value
   } else {
     return overrides.notion
   }
 })
 
-// The one-line summary in each row's header.
+// The one-line summary in each row's header: who we are connected as.
 const appleStatus = computed(() => {
   if (!apple.ready) {
     return { text: 'Checking…', tone: 'neutral' }
   }
-  if (appleConfigured.value) {
+  if (appleConnected.value) {
     return { text: apple.connection.icloud_email, tone: 'success' }
-  }
-  if (apple.connection) {
-    return { text: 'No calendar selected', tone: 'attention' }
   }
   return { text: 'Not connected', tone: 'neutral' }
 })
@@ -62,11 +59,11 @@ const notionStatus = computed(() => {
   if (!notion.ready) {
     return { text: 'Checking…', tone: 'neutral' }
   }
-  if (notionConfigured.value) {
-    return { text: notion.connection.data_source_name, tone: 'success' }
-  }
-  if (notion.connection) {
-    return { text: 'No database selected', tone: 'attention' }
+  if (notionConnected.value) {
+    if (notion.connection.workspace_name) {
+      return { text: notion.connection.workspace_name, tone: 'success' }
+    }
+    return { text: 'Connected', tone: 'success' }
   }
   return { text: 'Not connected', tone: 'neutral' }
 })
@@ -76,7 +73,8 @@ const notionStatus = computed(() => {
   <header class="column page-head">
     <h1 class="title">Connections</h1>
     <p class="lead">
-      Where Calnio reads your tasks from, and where it writes your events to.
+      The two accounts Calnio needs: the Notion workspace it reads, and the
+      iCloud account it writes to.
     </p>
   </header>
 
@@ -84,12 +82,12 @@ const notionStatus = computed(() => {
     name="Notion"
     :status="notionStatus.text"
     :tone="notionStatus.tone"
-    :action="notionConfigured ? 'Manage' : 'Connect'"
+    :action="notionConnected ? 'Manage' : 'Connect'"
     :open="notionOpen"
     @toggle="overrides.notion = !notionOpen"
   >
     <p v-if="!notion.ready" class="loading">Loading…</p>
-    <NotionStatus v-else-if="notionConfigured" />
+    <NotionStatus v-else-if="notionConnected" />
     <NotionSetup v-else />
   </ConnectionRow>
 
@@ -97,19 +95,18 @@ const notionStatus = computed(() => {
     name="Apple Calendar"
     :status="appleStatus.text"
     :tone="appleStatus.tone"
-    :action="appleConfigured ? 'Manage' : 'Connect'"
+    :action="appleConnected ? 'Manage' : 'Connect'"
     :open="appleOpen"
     @toggle="overrides.apple = !appleOpen"
   >
     <p v-if="!apple.ready" class="loading">Loading…</p>
-    <AppleCalendarStatus v-else-if="appleConfigured" />
+    <AppleCalendarStatus v-else-if="appleConnected" />
     <AppleCalendarSetup v-else />
   </ConnectionRow>
 
   <p class="note">
-    Connecting Notion links your workspace and records which database Calnio
-    should read. During beta the sync still runs on Calnio's own workspace, so
-    your database is not being read yet.
+    With both connected, set up what actually syncs on the
+    <router-link :to="{ name: 'syncs' }">Syncs</router-link> page.
   </p>
 </template>
 

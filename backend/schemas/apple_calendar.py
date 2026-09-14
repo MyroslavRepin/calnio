@@ -14,10 +14,6 @@ class CreateCalendarRequest(BaseModel):
     name: str = Field(default="Calnio", min_length=1, max_length=64)
 
 
-class SelectCalendarRequest(BaseModel):
-    calendar_url: str
-
-
 class ConnectionStatus(BaseModel):
     """What the dashboard is allowed to see. Never carries the password."""
 
@@ -25,8 +21,6 @@ class ConnectionStatus(BaseModel):
 
     connected: bool = True
     icloud_email: str
-    calendar_url: str | None
-    calendar_name: str | None
     last_verified_at: datetime | None
 
 

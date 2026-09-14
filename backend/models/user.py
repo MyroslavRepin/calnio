@@ -7,6 +7,7 @@ from backend.core.base import Base
 from backend.models.caldav_credential import CaldavCredential
 from backend.models.notion_connection import NotionConnection
 from backend.models.oauth_account import OAuthAccount
+from backend.models.sync_mapping import SyncMapping
 from backend.models.sync_settings import SyncSettings
 
 
@@ -42,4 +43,8 @@ class User(Base):
 
     sync_settings: Mapped["SyncSettings | None"] = relationship(
         back_populates="user", cascade="all, delete-orphan", uselist=False
+    )
+
+    sync_mappings: Mapped[list["SyncMapping"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
     )

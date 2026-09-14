@@ -72,12 +72,6 @@ class NotionConnectionRepo:
         row.last_verified_at = now
         return row
 
-    def set_data_source(
-        self, row: NotionConnection, data_source_id: str, data_source_name: str
-    ) -> None:
-        row.data_source_id = data_source_id
-        row.data_source_name = data_source_name
-
     def delete(self, row: NotionConnection) -> None:
         self.db.delete(row)
 

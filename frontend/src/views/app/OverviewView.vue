@@ -2,11 +2,11 @@
 import { computed } from 'vue'
 import { useAppleCalendar } from '../../composables/useAppleCalendar'
 import { useAuth } from '../../composables/useAuth'
+import { useMappings } from '../../composables/useMappings'
 import { useNotion } from '../../composables/useNotion'
 import { useSetup } from '../../composables/useSetup'
 import { useSync } from '../../composables/useSync'
 import { formatDateTime } from '../../format'
-import RecentSyncs from './RecentSyncs.vue'
 
 // Read state from every composable this page needs. Nothing here
 // fetches or changes anything, it only reads what is already loaded.
@@ -15,6 +15,9 @@ const apple = appleResult.state
 
 const notionResult = useNotion()
 const notion = notionResult.state
+
+const mappingsResult = useMappings()
+const mappings = mappingsResult.state
 
 const syncResult = useSync()
 const sync = syncResult.state
@@ -28,8 +31,8 @@ const doneCount = setupResult.doneCount
 const allDone = setupResult.allDone
 const setupReady = setupResult.ready
 
-// Is the page allowed to render yet? Two composables load independently,
-// so we wait until both say they are ready.
+// Is the page allowed to render yet? The composables load independently,
+// so we wait until they all say they are ready.
 const ready = computed(function () {
   if (setupReady.value && sync.ready) {
     return true
@@ -56,37 +59,12 @@ const greeting = computed(function () {
   }
 })
 
-// Calendar name for display. The backend stores it alongside the url, so
-// this is the normal case. Older rows saved before that existed fall back to
-// this session's fetched list, then to the raw url.
-const calendarName = computed(function () {
-  if (apple.connection?.calendar_name) {
-    return apple.connection.calendar_name
-  }
-
-  const url = apple.connection?.calendar_url
-
-  if (!url) {
-    return '—'
-  }
-
-  const match = apple.calendars.find(function (calendar) {
-    return calendar.url === url
-  })
-
-  if (match) {
-    return match.name
-  } else {
-    return url
-  }
-})
-
-// Last sync run, formatted for humans.
+// Last tick across every sync, formatted for humans.
 const lastRun = computed(function () {
   return formatDateTime(sync.settings?.last_run_at, 'never')
 })
 
-// Sync status badge (on / off / currently running). This page only
+// Master switch badge (on / off / currently running). This page only
 // reports the switch, the switch itself lives in Settings.
 const syncLabel = computed(function () {
   if (sync.pending) {
@@ -98,7 +76,7 @@ const syncLabel = computed(function () {
   return { text: 'Sync off', tone: 'neutral' }
 })
 
-// Result of the last sync run.
+// Result of the last tick.
 const lastResult = computed(function () {
   const status = sync.settings?.last_status
 
@@ -106,7 +84,7 @@ const lastResult = computed(function () {
     return { text: 'Finished normally', tone: 'success' }
   }
   if (status === 'error') {
-    return { text: 'Failed, retrying on the next run', tone: 'danger' }
+    return { text: 'A sync failed, retrying on the next run', tone: 'danger' }
   }
   if (status === 'auth_error') {
     return { text: 'A connection was rejected, reconnect it', tone: 'danger' }
@@ -116,20 +94,36 @@ const lastResult = computed(function () {
 
 // The Notion workspace, or a dash when Notion did not give us a name.
 const workspaceName = computed(function () {
-  if (notion.connection.workspace_name) {
+  if (notion.connection?.workspace_name) {
     return notion.connection.workspace_name
   } else {
     return '—'
   }
 })
 
-// The date column the sync reads, or a dash when none is picked yet.
-const dueDateColumn = computed(function () {
-  if (sync.settings?.due_date_property) {
-    return sync.settings.due_date_property
-  } else {
-    return '—'
-  }
+// One line per sync: which database goes where, and whether it is running. The
+// detail lives on the Syncs page, this is the glance.
+const summaries = computed(function () {
+  return mappings.list.map(function (mapping) {
+    let database = mapping.data_source_name
+    if (!database) {
+      database = mapping.data_source_id
+    }
+
+    let calendar = mapping.calendar_name
+    if (!calendar) {
+      calendar = 'no calendar'
+    }
+
+    let state = 'Paused'
+    if (!mapping.eligible) {
+      state = 'Unfinished'
+    } else if (mapping.enabled) {
+      state = 'On'
+    }
+
+    return { id: mapping.id, database, calendar, state }
+  })
 })
 </script>
 
@@ -162,7 +156,7 @@ const dueDateColumn = computed(function () {
           </li>
         </ul>
         <p class="body">
-          The walkthrough takes four steps and covers the app-specific password
+          The walkthrough takes three steps and covers the app-specific password
           Apple requires.
         </p>
         <router-link class="btn" :to="{ name: 'welcome' }">Continue setup</router-link>
@@ -172,22 +166,14 @@ const dueDateColumn = computed(function () {
     <template v-else>
       <section class="card">
         <div class="card-head">
-          <h2>Notion</h2>
-          <router-link :to="{ name: 'connections' }">Manage</router-link>
+          <h2>Your syncs</h2>
+          <router-link :to="{ name: 'syncs' }">Manage</router-link>
         </div>
         <div class="card-body">
           <dl class="datarows">
-            <div>
-              <dt>Workspace</dt>
-              <dd>{{ workspaceName }}</dd>
-            </div>
-            <div>
-              <dt>Database</dt>
-              <dd>{{ notion.connection.data_source_name }}</dd>
-            </div>
-            <div>
-              <dt>Due date column</dt>
-              <dd>{{ dueDateColumn }}</dd>
+            <div v-for="summary in summaries" :key="summary.id">
+              <dt>{{ summary.database }}</dt>
+              <dd>{{ summary.calendar }} · {{ summary.state }}</dd>
             </div>
           </dl>
         </div>
@@ -195,18 +181,22 @@ const dueDateColumn = computed(function () {
 
       <section class="card">
         <div class="card-head">
-          <h2>Apple Calendar</h2>
-          <router-link :to="{ name: 'connections' }">Manage</router-link>
+          <h2>Last run</h2>
+          <span class="label" :class="lastResult.tone">{{ lastResult.text }}</span>
         </div>
         <div class="card-body">
           <dl class="datarows">
             <div>
-              <dt>Apple Account</dt>
-              <dd>{{ apple.connection.icloud_email }}</dd>
+              <dt>Finished</dt>
+              <dd>{{ lastRun }}</dd>
             </div>
             <div>
-              <dt>Calendar</dt>
-              <dd>{{ calendarName }}</dd>
+              <dt>Notion workspace</dt>
+              <dd>{{ workspaceName }}</dd>
+            </div>
+            <div>
+              <dt>Apple Account</dt>
+              <dd>{{ apple.connection.icloud_email }}</dd>
             </div>
           </dl>
         </div>
@@ -254,9 +244,5 @@ const dueDateColumn = computed(function () {
 
 .card-body .body {
   margin-bottom: var(--app-gap-block);
-}
-
-.syncoffnote {
-  margin-top: var(--app-gap-stack);
 }
 </style>

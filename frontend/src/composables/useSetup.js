@@ -1,15 +1,27 @@
 import { computed } from 'vue'
 import { useAppleCalendar } from './useAppleCalendar'
+import { useMappings } from './useMappings'
 import { useNotion } from './useNotion'
 
-// The four stages of getting Calnio set up: a grant stored, then a target
-// picked, for each of the two connections. The dashboard and the welcome page
-// both count them and they have to agree, so they are defined once here.
+// The three stages of getting Calnio set up: the two grants, then at least one
+// sync that can actually run. The dashboard and the welcome page both count them
+// and they have to agree, so they are defined once here.
 const appleResult = useAppleCalendar()
 const apple = appleResult.state
 
 const notionResult = useNotion()
 const notion = notionResult.state
+
+const mappingsResult = useMappings()
+const mappings = mappingsResult.state
+
+// A sync counts as ready once it has both a date column and a calendar. Whether
+// its switch is on is the user's business, not part of setup.
+const hasReadySync = computed(function () {
+  return mappings.list.some(function (mapping) {
+    return mapping.eligible
+  })
+})
 
 const stages = computed(function () {
   return [
@@ -18,23 +30,19 @@ const stages = computed(function () {
       done: Boolean(notion.connection),
     },
     {
-      label: 'Notion database chosen',
-      done: Boolean(notion.connection?.data_source_id),
-    },
-    {
       label: 'iCloud account connected',
       done: Boolean(apple.connection),
     },
     {
-      label: 'Apple calendar chosen',
-      done: Boolean(apple.connection?.calendar_url),
+      label: 'First sync set up',
+      done: hasReadySync.value,
     },
   ]
 })
 
-// Both connections have to be loaded before the count means anything.
+// All three sources have to be loaded before the count means anything.
 const ready = computed(function () {
-  if (notion.ready && apple.ready) {
+  if (notion.ready && apple.ready && mappings.ready) {
     return true
   } else {
     return false

@@ -1,14 +1,10 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict
 
 
 class AuthorizeUrlResponse(BaseModel):
     authorize_url: str
-
-
-class SelectDatabaseRequest(BaseModel):
-    data_source_id: str = Field(min_length=1)
 
 
 class ConnectionStatus(BaseModel):
@@ -19,8 +15,6 @@ class ConnectionStatus(BaseModel):
     connected: bool = True
     workspace_name: str | None
     workspace_icon: str | None
-    data_source_id: str | None
-    data_source_name: str | None
     last_verified_at: datetime | None
 
 

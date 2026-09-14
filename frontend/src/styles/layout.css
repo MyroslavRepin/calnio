@@ -1,6 +1,6 @@
 /* The three ways anything is laid out in this app. They are the only classes
-   that are not scoped to .app-ui or .landing-ui, because a column is a column
-   on both. They carry no colour and no type, only arrangement.
+   that are not scoped to .app-ui, because arrangement is not styling. They
+   carry no colour and no type, only arrangement.
 
    The gap is always different, so it comes from the element itself:
 

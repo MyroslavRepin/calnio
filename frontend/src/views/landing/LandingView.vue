@@ -1,10 +1,6 @@
 <script setup>
 import { computed } from 'vue'
 import { useAuth } from '../../composables/useAuth'
-import AtmosphereField from '../../components/landing/AtmosphereField.vue'
-import BetaStrip from '../../components/landing/BetaStrip.vue'
-import ChipBand from '../../components/landing/ChipBand.vue'
-import FeatureGrid from '../../components/landing/FeatureGrid.vue'
 import GetStarted from '../../components/landing/GetStarted.vue'
 import HeroSection from '../../components/landing/HeroSection.vue'
 import HowItWorks from '../../components/landing/HowItWorks.vue'
@@ -30,19 +26,14 @@ const errorMessage = computed(function () {
 </script>
 
 <template>
-  <div class="landing-ui page">
-    <AtmosphereField />
-
+  <div class="app-ui column page">
     <LandingNav />
 
-    <p v-if="errorMessage" class="wrap auth-error" role="alert">{{ errorMessage }}</p>
+    <main class="column main">
+      <p v-if="errorMessage" class="error" role="alert">{{ errorMessage }}</p>
 
-    <main>
       <HeroSection />
-      <ChipBand />
-      <BetaStrip />
       <HowItWorks />
-      <FeatureGrid />
       <GetStarted />
     </main>
 
@@ -51,21 +42,16 @@ const errorMessage = computed(function () {
 </template>
 
 <style scoped>
-/* The circles hang off this element, so it is what crops them. `clip` rather
-   than `hidden`, because `hidden` would make this a scroll container and break
-   any sticky child. Without it the bottom glow runs on past the footer. */
 .page {
-  position: relative;
-  overflow: clip;
+  min-height: 100vh;
 }
 
-.auth-error {
-  position: relative;
-  z-index: 1;
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-  color: var(--ink);
-  padding-top: 12px;
-  padding-bottom: 12px;
+.main {
+  --gap: var(--app-space-8);
+  flex: 1;
+  width: 100%;
+  max-width: var(--app-width-page);
+  margin: 0 auto;
+  padding: var(--app-space-7) var(--app-pad-page) var(--app-space-8);
 }
 </style>
