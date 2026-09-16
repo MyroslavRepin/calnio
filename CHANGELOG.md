@@ -15,6 +15,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [0.4.0] - 2026-09-15
+
+### Added
+- A user can sync several Notion databases at once, each into its own Apple calendar, with its own switch and its own status.
+- Setup is one action: ticking databases infers each date column, reuses or creates the calendar, and turns syncing on.
+- Two-way sync, per sync and off by default: moving, renaming or deleting an event in Apple Calendar changes its Notion page, and an event made in that calendar becomes a new page.
+- Every sync card states its direction, and the Notion connection states whether Calnio may write.
+
+### Changed
+- Link rows hold the state both sides last agreed on, and change detection compares content rather than timestamps, so neither direction echoes the other.
+- Calendar reads use an RFC 6578 sync token, so a run fetches only what changed and hears about deletions.
+- A calendar event is edited in place instead of replaced, keeping alarms, notes and location the user set.
+- Notion wins a conflict on a tie, since its edit timestamps are rounded to the minute.
+- A grant that may only read keeps its one-way sync running and asks the user to reconnect.
+- Landing page and dashboard copy describe what two-way does instead of promising Notion is never written to.
+
+### Fixed
+- All-day dates no longer shift by a day when Postgres returns timestamps in the server's zone.
+- Calendars served from iCloud's sharded host work, instead of failing on every run.
+- A uid iCloud refuses to reuse is replaced with a fresh one rather than failing forever.
+
+### Removed
+- synced_events.etag and synced_events.notion_last_edited, which nothing read.
+
 ## [0.3.0] - 2026-08-11
 
 ### Changed

@@ -73,6 +73,10 @@ Notion parsing rules (real payload shapes): title = the property whose `type == 
 - Needs `features="icloud"` and app-specific-password auth.
 - Server-side search unreliable → client-side fallback filtering.
 - Calendar home URL discovery is slow; the target calendar (named "Calnio") is resolved via `get_calendar_url` at sync start.
+- **A uid is never free again.** Delete an event, or the whole calendar holding it, and iCloud still answers 404 to a PUT that reuses its uid. `create_event` in `services/sync.py` catches that and retries under a fresh uuid, which is why `synced_events.caldav_uid` is separate from `notion_page_id`.
+- **Hrefs are compared by path, never whole.** The same event is named `https://caldav.icloud.com/...` in a stored row and `https://p48-caldav.icloud.com:443/...` in a listing, depending on which response it came from. `href_path` in `repo/caldav.py` is the only thing that matches them, and a write always uses the spelling the server just gave.
+- `CalDavEventRepo` builds its client on the calendar's own url rather than `CALDAV_URL`, because the library refuses to join a url onto a client living on another host.
+- iCloud supports the RFC 6578 sync-collection report, which is how deletions are heard. `caldav` falls back to a full listing on its own when a token is rejected, and answers a `fake-` token when it did.
 - Known issue: events occasionally duplicate with the same UID (see README "Known errors").
 
 ## Conventions
