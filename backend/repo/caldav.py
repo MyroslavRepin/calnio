@@ -76,8 +76,12 @@ class CalDavEventRepo:
         password: str,
         calendar_url: str,
     ) -> None:
+        # Built on the calendar's own url, not the configured one. iCloud hands
+        # calendars out on a sharded host (p48-caldav.icloud.com) while the
+        # front door stays caldav.icloud.com, and the library refuses to join a
+        # url onto a client that lives on another host.
         client = caldav.DAVClient(  # pyright: ignore[reportCallIssue]
-            url=caldav_url,
+            url=calendar_url or caldav_url,
             username=username,
             password=password,
         )

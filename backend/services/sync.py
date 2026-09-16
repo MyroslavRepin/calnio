@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import timedelta, timezone
 
 import caldav.lib.error as caldav_error
 from notion_client.errors import APIResponseError
@@ -112,9 +112,15 @@ def same_event(event: CalDavEvent, row: SyncedEvent) -> bool:
     if event.all_day != row.all_day:
         return False
     if event.all_day:
-        return (event.start.date(), event.end.date()) == (
-            row.start_at.date(),
-            row.end_at.date(),
+        # Both sides are read as UTC first. Postgres hands a timestamptz back in
+        # the server's own zone, and a midnight UTC date read as 20:00 the day
+        # before compares as a different day.
+        return (
+            event.start.astimezone(timezone.utc).date(),
+            event.end.astimezone(timezone.utc).date(),
+        ) == (
+            row.start_at.astimezone(timezone.utc).date(),
+            row.end_at.astimezone(timezone.utc).date(),
         )
     return (event.start, event.end) == (row.start_at, row.end_at)
 
