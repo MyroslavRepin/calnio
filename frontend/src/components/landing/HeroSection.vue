@@ -4,15 +4,15 @@ import GoogleButton from './GoogleButton.vue'
 
 <template>
   <section class="column hero">
-    <span class="label accent">Notion to Apple Calendar, one way</span>
+    <span class="label accent">Notion and Apple Calendar, in step</span>
 
     <h1 class="display">Your Notion dates, already in your calendar.</h1>
 
     <p class="lead">
       Point Calnio at the Notion databases you live in. Each one gets its own
       Apple calendar, so you can colour them, hide them, and see them next to
-      everything else you have on. Notion stays the source of truth, and nothing
-      is ever written back to it.
+      everything else you have on. Turn two-way on for a database and moving an
+      event in your calendar moves the Notion date with it.
     </p>
 
     <div class="row cta">

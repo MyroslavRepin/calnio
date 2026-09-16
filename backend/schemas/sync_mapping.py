@@ -17,6 +17,7 @@ class MappingStatus(BaseModel):
     calendar_url: str | None
     calendar_name: str | None
     enabled: bool
+    write_back: bool
     eligible: bool
     last_run_at: datetime | None
     last_status: str | None
@@ -34,3 +35,4 @@ class UpdateMappingRequest(BaseModel):
     due_date_property: str | None = Field(default=None, min_length=1)
     calendar_url: str | None = Field(default=None, min_length=1)
     enabled: bool | None = None
+    write_back: bool | None = None

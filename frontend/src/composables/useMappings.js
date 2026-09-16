@@ -114,6 +114,22 @@ async function setEnabled(mappingId, enabled) {
   return {}
 }
 
+// Turns writing back to Notion on or off for one sync. The server refuses it
+// while the Notion grant may only read, so the error belongs on screen.
+async function setWriteBack(mappingId, writeBack) {
+  const result = await update(mappingId, { write_back: writeBack })
+  if (result.error) {
+    return { error: result.error }
+  }
+
+  // Turning it on queues a run, same as the sync switch does.
+  if (writeBack) {
+    watchRun()
+  }
+
+  return {}
+}
+
 // Removes a sync and the events it pushed. The server talks to iCloud here, so
 // it is slower than the other calls.
 async function remove(mappingId) {
@@ -166,6 +182,7 @@ export function useMappings() {
     setDateProperty,
     setCalendar,
     setEnabled,
+    setWriteBack,
     remove,
     fetchDateProperties,
   }

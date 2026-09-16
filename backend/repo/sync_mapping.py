@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from backend.models.sync_mapping import SyncMapping
@@ -53,6 +53,20 @@ class SyncMappingRepo:
         ).all()
         return list(rows)
 
+    def count_on_calendar(self, user_id: int, calendar_url: str) -> int:
+        """How many of the user's syncs write into one calendar."""
+        return (
+            self.db.scalar(
+                select(func.count())
+                .select_from(SyncMapping)
+                .where(
+                    SyncMapping.user_id == user_id,
+                    SyncMapping.calendar_url == calendar_url,
+                )
+            )
+            or 0
+        )
+
     def create(
         self, user_id: int, data_source_id: str, data_source_name: str
     ) -> SyncMapping:
@@ -74,6 +88,16 @@ class SyncMappingRepo:
     ) -> None:
         row.calendar_url = calendar_url
         row.calendar_name = calendar_name
+
+    def set_write_back(self, row: SyncMapping, enabled: bool) -> None:
+        """Turn two-way on or off, stamping when it went on.
+
+        The stamp is what keeps a calendar's existing events out of Notion:
+        only an event made after it was switched on is ever imported.
+        """
+        row.write_back = enabled
+        if enabled:
+            row.write_back_since = datetime.now(timezone.utc)
 
     def record_run(self, row: SyncMapping, status: str) -> None:
         row.last_run_at = datetime.now(timezone.utc)

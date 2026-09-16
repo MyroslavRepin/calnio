@@ -138,7 +138,7 @@ const summaries = computed(function () {
       </div>
       <p class="lead">
         Calnio pushes your Notion due dates into Apple Calendar. Notion stays the
-        source of truth, nothing is ever written back to it.
+        source of truth, and each sync can send calendar edits back to it.
       </p>
     </header>
 

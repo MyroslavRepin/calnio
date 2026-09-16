@@ -57,6 +57,28 @@ class SyncMapping(Base):
         Boolean, nullable=False, default=False, server_default="false"
     )
 
+    # Two-way switch for this sync, under `enabled`. False means the calendar
+    # is written but never read back, which is what every sync was before
+    # two-way existed. Turning it on needs a Notion grant that may write.
+    write_back: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+
+    # When write_back was last switched on. A calendar event older than this is
+    # never imported into Notion: pointing a sync at a calendar that already
+    # holds a year of somebody's appointments must not copy them all into their
+    # database.
+    write_back_since: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    # RFC 6578 cursor for this mapping's calendar. iCloud answers a
+    # sync-collection report with only what changed since the token, deletions
+    # included, which is the one way a deleted event is ever heard about. NULL
+    # asks for the full listing, which is also what a rejected token falls back
+    # to.
+    caldav_sync_token: Mapped[str | None] = mapped_column(String, nullable=True)
+
     # How this mapping's last run went, separately from the user's tick, so a
     # single unshared database can be pointed at without blaming the others.
     last_run_at: Mapped[datetime | None] = mapped_column(

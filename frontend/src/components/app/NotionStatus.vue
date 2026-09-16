@@ -28,6 +28,17 @@ const workspaceName = computed(function () {
   }
 })
 
+// Whether this grant may write. Notion fixes what an integration may do when
+// the user consents, so a grant older than two-way sync reads only, and
+// reconnecting is what changes that.
+const canWrite = computed(function () {
+  if (state.connection && state.connection.can_write) {
+    return true
+  } else {
+    return false
+  }
+})
+
 // The error to show: the one from this block, otherwise the one the OAuth
 // callback left behind.
 const message = computed(function () {
@@ -71,13 +82,22 @@ async function confirmDisconnect() {
         <dt>Connected</dt>
         <dd>{{ verified }}</dd>
       </div>
+      <div>
+        <dt>Access</dt>
+        <dd>{{ canWrite ? 'Read and write' : 'Read only' }}</dd>
+      </div>
     </dl>
+
+    <p v-if="!canWrite" class="note">
+      This connection was made before Calnio could write. Reconnect it with
+      Share more databases to turn two-way syncing on.
+    </p>
 
     <template v-if="confirming">
       <p class="body">
         Disconnecting revokes Calnio's access to your Notion workspace and
-        removes every sync you set up from it. Nothing in Notion changes, Calnio
-        only ever reads it. Events already in your calendars stay.
+        removes every sync you set up from it. Pages Calnio wrote stay as they
+        are, and events already in your calendars stay too.
       </p>
       <div class="row actions">
         <button
