@@ -1,4 +1,5 @@
 from datetime import timedelta, timezone
+from uuid import uuid4
 
 import caldav.lib.error as caldav_error
 from notion_client.errors import APIResponseError
@@ -19,7 +20,7 @@ from backend.models.sync_settings import (
     SyncSettings,
 )
 from backend.models.synced_event import SyncedEvent
-from backend.repo.caldav import CalDavAccountRepo, CalDavEventRepo
+from backend.repo.caldav import CalDavAccountRepo, CalDavEventRepo, href_path
 from backend.repo.caldav_credential import CaldavCredentialRepo
 from backend.repo.notion import NotionPageRepo
 from backend.repo.notion_connection import NotionConnectionRepo
@@ -135,6 +136,22 @@ def remember(row: SyncedEvent, event: CalDavEvent) -> None:
         row.caldav_href = event.href
 
 
+def create_event(calendar: CalDavEventRepo, event: CalDavEvent) -> CalDavEvent:
+    """Create the event, taking a fresh uid if the server refuses the old one.
+
+    iCloud remembers a uid long after its event is gone, the whole calendar
+    included, and answers 404 to any PUT that reuses it. The link row keeps the
+    uid apart from the page id for exactly this: the page stays, the uid moves.
+    """
+    event.href = None
+    try:
+        return calendar.create(event)
+    except caldav_error.PutError:
+        logger.warning("icloud refused uid {}, creating it under a new one", event.uid)
+        event.uid = str(uuid4())
+        return calendar.create(event)
+
+
 def link_row(mapping: SyncMapping, page_id: str, event: CalDavEvent) -> SyncedEvent:
     """A fresh link between a page and an event, holding their agreed state."""
     row = SyncedEvent(
@@ -230,10 +247,14 @@ def merge_pages(
     and iCloud answers 412 to a duplicate.
     """
     counts = SyncCounts()
-    events_by_href = {
-        event.href: event for event in changes.events if event.href is not None
+    # Keyed by path, never by the whole href: the same event is named one way in
+    # a stored row and another in the server's own listing.
+    events_by_path = {
+        href_path(event.href): event
+        for event in changes.events
+        if event.href is not None
     }
-    gone = set(changes.deleted_hrefs)
+    gone = {href_path(href) for href in changes.deleted_hrefs}
     rows_by_page = {row.notion_page_id: row for row in rows_for(db, mapping.id)}
 
     for page, date in live.values():
@@ -247,13 +268,18 @@ def merge_pages(
 
         try:
             if row is None:
-                db.add(link_row(mapping, page.id, calendar.create(wanted)))
+                db.add(link_row(mapping, page.id, create_event(calendar, wanted)))
                 counts.created += 1
                 db.commit()
                 continue
 
-            wanted.href = row.caldav_href
-            event = events_by_href.get(row.caldav_href)
+            event = events_by_path.get(href_path(row.caldav_href))
+            # The server's own href when it just named one, since a stored href
+            # can be stale. remember() writes the working one back to the row.
+            if event is not None and event.href is not None:
+                wanted.href = event.href
+            else:
+                wanted.href = row.caldav_href
             notion_edited = not same_event(wanted, row)
             # A row with no baseline cannot say the calendar moved, only that
             # nothing is known yet, so Notion rebuilds it instead.
@@ -263,12 +289,12 @@ def merge_pages(
                 and not same_event(event, row)
             )
 
-            if row.caldav_href in gone:
+            if href_path(row.caldav_href) in gone:
                 # A delete carries no time of death, so it cannot be weighed
                 # against a Notion edit. A page that was edited is a page
                 # somebody still wants, and its event comes back.
                 if notion_edited:
-                    remember(row, calendar.create(wanted))
+                    remember(row, create_event(calendar, wanted))
                     counts.created += 1
                 else:
                     notion.trash_page(page.id)
@@ -298,8 +324,14 @@ def merge_pages(
                 continue
 
             if notion_edited:
-                remember(row, calendar.update(wanted))
-                counts.updated += 1
+                try:
+                    remember(row, calendar.update(wanted))
+                    counts.updated += 1
+                except caldav_error.NotFoundError:
+                    # The event is no longer where the row says it is, and the
+                    # page is still live, so it goes back into the calendar.
+                    remember(row, create_event(calendar, wanted))
+                    counts.created += 1
                 db.commit()
 
         except Exception as exc:
@@ -354,10 +386,10 @@ def import_events(
 ) -> int:
     """Make a Notion page out of every event the user added to the calendar."""
     imported = 0
-    known = {row.caldav_href for row in rows_for(db, mapping.id)}
+    known = {href_path(row.caldav_href) for row in rows_for(db, mapping.id)}
 
     for event in changes.events:
-        if event.href is None or event.href in known:
+        if event.href is None or href_path(event.href) in known:
             continue
         # A repeating event has no single date and an invite belongs to whoever
         # sent it, so neither has a shape a Notion page could hold.

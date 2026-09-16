@@ -130,11 +130,10 @@ class CalDavEventRepo:
                 if known is not None:
                     deleted.append(known)
                 continue
-            event = self.parser.parse_event(obj, self.calendar_url)
-            # Answered in the caller's own spelling of the href, so it can find
-            # the event's row without normalising anything itself.
-            event.href = known_by_path.get(path, event.href)
-            events.append(event)
+            # Kept in the server's own spelling. iCloud lists events on a
+            # sharded host and only that host answers a read or a write of one,
+            # so an href copied from an older row is not usable.
+            events.append(self.parser.parse_event(obj, self.calendar_url))
 
         if listed_everything:
             deleted = [href for path, href in known_by_path.items() if path not in seen]
