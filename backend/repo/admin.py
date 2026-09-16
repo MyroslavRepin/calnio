@@ -11,6 +11,7 @@ from backend.models.synced_event import SyncedEvent
 from backend.models.user import User
 from backend.schemas.admin import (
     AdminEventTotals,
+    AdminFailure,
     AdminFunnelStep,
     AdminSignups,
     AdminStats,
@@ -43,6 +44,7 @@ class AdminRepo:
             events=self.event_totals(),
             funnel=self.funnel(totals),
             signups=self.signups(),
+            failures=self.failures(),
             users=self.users(),
         )
 
@@ -195,6 +197,28 @@ class AdminRepo:
                 count=counted.get(first_day + timedelta(days=offset), 0),
             )
             for offset in range(SIGNUP_DAYS)
+        ]
+
+    def failures(self) -> list[AdminFailure]:
+        """Every sync whose last run did not work, worst first by recency."""
+        statement = (
+            select(SyncMapping, User.email)
+            .join(User, User.id == SyncMapping.user_id)
+            .where(SyncMapping.last_status.in_([STATUS_ERROR, STATUS_AUTH_ERROR]))
+            .order_by(SyncMapping.last_run_at.desc())
+        )
+        return [
+            AdminFailure(
+                mapping_id=mapping.id,
+                user_id=mapping.user_id,
+                email=email,
+                database=mapping.data_source_name,
+                status=mapping.last_status or STATUS_ERROR,
+                error=mapping.last_error,
+                run_id=mapping.last_run_id,
+                last_run_at=mapping.last_run_at,
+            )
+            for mapping, email in self.db.execute(statement)
         ]
 
     def users(self) -> list[AdminUserRow]:

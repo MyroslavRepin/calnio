@@ -79,6 +79,23 @@ class AdminUserRow(BaseModel):
     last_status: str | None
 
 
+class AdminFailure(BaseModel):
+    """A sync that is currently failing, and everything needed to chase it.
+
+    run_id is the point of this: `grep "run=<id>"` over the log file gives that
+    run's lines and its traceback.
+    """
+
+    mapping_id: int
+    user_id: int
+    email: str
+    database: str | None
+    status: str
+    error: str | None
+    run_id: str | None
+    last_run_at: datetime | None
+
+
 class AdminStats(BaseModel):
     """Everything the admin dashboard draws, in one answer."""
 
@@ -87,4 +104,5 @@ class AdminStats(BaseModel):
     events: AdminEventTotals
     funnel: list[AdminFunnelStep]
     signups: list[AdminSignups]
+    failures: list[AdminFailure]
     users: list[AdminUserRow]

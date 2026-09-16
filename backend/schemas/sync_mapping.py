@@ -21,6 +21,9 @@ class MappingStatus(BaseModel):
     eligible: bool
     last_run_at: datetime | None
     last_status: str | None
+    # Why the last run failed, shown on the card so the user is not left with
+    # the word "failed" and nowhere to go.
+    last_error: str | None
 
 
 class CreateMappingRequest(BaseModel):

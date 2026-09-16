@@ -94,4 +94,5 @@ def mapping_status(mapping: SyncMapping) -> MappingStatus:
         eligible=mapping_eligible(mapping),
         last_run_at=mapping.last_run_at,
         last_status=mapping.last_status,
+        last_error=mapping.last_error,
     )

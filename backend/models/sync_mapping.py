@@ -86,6 +86,13 @@ class SyncMapping(Base):
     )
     last_status: Mapped[str | None] = mapped_column(String, nullable=True)
 
+    # Why the last run failed, in the words the remote used, and the id of the
+    # run that said so. The id is what turns "it failed" into a log search:
+    # grep "run=<id>" over logs/calnio.log gives the whole story with its
+    # traceback. Both are cleared by a run that succeeds.
+    last_error: Mapped[str | None] = mapped_column(String, nullable=True)
+    last_run_id: Mapped[str | None] = mapped_column(String, nullable=True)
+
     row_created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

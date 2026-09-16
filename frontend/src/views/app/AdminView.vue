@@ -60,6 +60,14 @@ const signups = computed(function () {
   }
 })
 
+const failures = computed(function () {
+  if (admin.stats) {
+    return admin.stats.failures
+  } else {
+    return []
+  }
+})
+
 const people = computed(function () {
   if (admin.stats) {
     return admin.stats.users
@@ -99,6 +107,21 @@ function dayLabel(value) {
 // The height of one signup bar, as a share of the busiest day.
 function dayHeight(count) {
   return Math.round((count * 100) / busiestDay.value) + '%'
+}
+
+// What to grep for on the server, handed over ready to paste.
+function grepCommand(runId) {
+  return 'grep "run=' + runId + '" /srv/calnio/logs/calnio.log'
+}
+
+// A failure with no recorded reason predates this column, or crashed before
+// anything could be written down.
+function failureReason(error) {
+  if (error) {
+    return error
+  } else {
+    return 'No reason recorded. Check the log around that time.'
+  }
 }
 
 // A person's last tick, said the way the sync cards say it.
@@ -273,6 +296,36 @@ function joinedLabel(value) {
       </div>
     </section>
 
+    <!-- What is broken right now, with the reason and the way to chase it. -->
+    <section class="card">
+      <div class="card-head">
+        <h2>Failing syncs</h2>
+        <span class="label" :class="failures.length ? 'danger' : 'success'">
+          {{ failures.length }}
+        </span>
+      </div>
+      <div class="card-body column failures">
+        <p v-if="!failures.length" class="note">
+          Nothing is failing. Every sync's last run finished.
+        </p>
+
+        <div v-for="failure in failures" :key="failure.mapping_id" class="column failure">
+          <div class="row failurehead">
+            <span class="failurewho">{{ failure.email }}</span>
+            <span class="label" :class="statusLabel(failure.status).tone">
+              {{ statusLabel(failure.status).text }}
+            </span>
+          </div>
+          <p class="note">
+            Sync {{ failure.mapping_id }} · {{ failure.database }} ·
+            {{ joinedLabel(failure.last_run_at) }}
+          </p>
+          <p class="error">{{ failureReason(failure.error) }}</p>
+          <code v-if="failure.run_id">{{ grepCommand(failure.run_id) }}</code>
+        </div>
+      </div>
+    </section>
+
     <!-- One row per account. Wide, so it scrolls inside its own box. -->
     <section class="card">
       <div class="card-head">
@@ -402,6 +455,25 @@ function joinedLabel(value) {
 .dayname {
   font-size: var(--app-text-meta);
   color: var(--app-fg-subtle);
+}
+
+.failures {
+  --gap: var(--app-gap-block);
+}
+
+.failure {
+  --gap: var(--app-space-1);
+}
+
+.failurehead {
+  --gap: var(--app-gap-inline);
+  justify-content: space-between;
+}
+
+.failurewho {
+  font-size: var(--app-text-body);
+  font-weight: var(--app-weight-medium);
+  color: var(--app-fg);
 }
 
 /* The table is wider than the page on a laptop, so it scrolls inside the card

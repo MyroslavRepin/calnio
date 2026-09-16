@@ -203,6 +203,20 @@ def is_read_only_grant(exc: BaseException) -> bool:
     return isinstance(exc, APIResponseError) and exc.code == "restricted_resource"
 
 
+def reason(exc: BaseException) -> str:
+    """One line a person can act on, short enough for a card.
+
+    The class name carries as much as the text half the time (NotFoundError,
+    AuthorizationError), so both go in, and the whole thing is cut to something
+    a card can hold.
+    """
+    text = f"{type(exc).__name__}: {exc}".strip()
+    text = " ".join(text.split())
+    if len(text) > 300:
+        return text[:297] + "..."
+    return text
+
+
 def rows_for(db: Session, mapping_id: int) -> list[SyncedEvent]:
     """This mapping's link rows, the only events a run may touch."""
     rows = db.scalars(
@@ -522,6 +536,7 @@ def sync_mapping(
     credential: CaldavCredential,
     *,
     can_write: bool,
+    run_id: str,
 ) -> str:
     """Run one mapping and return the status it recorded.
 
@@ -553,16 +568,25 @@ def sync_mapping(
     except Exception as exc:
         db.rollback()
         if is_auth_failure(exc):
-            mapping_repo.record_run(mapping, STATUS_AUTH_ERROR)
+            mapping_repo.record_run(
+                mapping, STATUS_AUTH_ERROR, error=reason(exc), run_id=run_id
+            )
             raise
         if isinstance(exc, NotionReadOnly):
-            mapping_repo.record_run(mapping, STATUS_ERROR)
+            mapping_repo.record_run(
+                mapping,
+                STATUS_ERROR,
+                error="Notion refused the write, reconnect Calnio to allow it",
+                run_id=run_id,
+            )
             raise
-        mapping_repo.record_run(mapping, STATUS_ERROR)
+        mapping_repo.record_run(
+            mapping, STATUS_ERROR, error=reason(exc), run_id=run_id
+        )
         logger.opt(exception=exc).error("sync failed for this mapping: {}", exc)
         return STATUS_ERROR
 
-    mapping_repo.record_run(mapping, STATUS_OK)
+    mapping_repo.record_run(mapping, STATUS_OK, run_id=run_id)
     logger.info(
         "sync done: {} created, {} updated, {} deleted, "
         "{} written back, {} imported, {} trashed",
@@ -584,9 +608,10 @@ def sync_user(user_id: int) -> None:
     """
     # run= ties every line of this pass together, user= every line about this
     # person. Both sit in a fixed column on every log line, grep does the rest.
+    run_id = uuid4().hex[:8]
     with (
         SessionLocal() as db,
-        logger.contextualize(run=uuid4().hex[:8], user=user_id),
+        logger.contextualize(run=run_id, user=user_id),
     ):
         settings_repo = SyncSettingsRepo(db)
         row = settings_repo.get(user_id)
@@ -616,7 +641,12 @@ def sync_user(user_id: int) -> None:
             with logger.contextualize(sync=mapping.id):
                 try:
                     status = sync_mapping(
-                        db, mapping, notion, credential, can_write=connection.can_write
+                        db,
+                        mapping,
+                        notion,
+                        credential,
+                        can_write=connection.can_write,
+                        run_id=run_id,
                     )
                 except NotionReadOnly as exc:
                     # The grant is older than two-way sync, or its capabilities
@@ -634,7 +664,12 @@ def sync_user(user_id: int) -> None:
                     if is_auth_failure(exc):
                         settings_repo.disable(row)
                         settings_repo.record_run(row, STATUS_AUTH_ERROR)
-                        SyncMappingRepo(db).record_run(mapping, STATUS_AUTH_ERROR)
+                        SyncMappingRepo(db).record_run(
+                            mapping,
+                            STATUS_AUTH_ERROR,
+                            error=reason(exc),
+                            run_id=run_id,
+                        )
                         db.commit()
                         logger.opt(exception=exc).error(
                             "syncing disabled for this user: credentials rejected ({})",
@@ -642,6 +677,10 @@ def sync_user(user_id: int) -> None:
                         )
                         return
                     failed = True
+                    SyncMappingRepo(db).record_run(
+                        mapping, STATUS_ERROR, error=reason(exc), run_id=run_id
+                    )
+                    db.commit()
                     logger.opt(exception=exc).error("sync crashed: {}", exc)
                     continue
 

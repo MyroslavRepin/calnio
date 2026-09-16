@@ -349,6 +349,10 @@ async function confirmRemove() {
             </span>
           </button>
 
+          <p v-if="mapping.last_error" class="error">
+            Last run failed. {{ mapping.last_error }}
+          </p>
+
           <p v-if="!mapping.eligible" class="note">
             Choose a date column and a calendar before turning this sync on.
           </p>

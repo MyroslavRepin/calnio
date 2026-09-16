@@ -99,9 +99,21 @@ class SyncMappingRepo:
         if enabled:
             row.write_back_since = datetime.now(timezone.utc)
 
-    def record_run(self, row: SyncMapping, status: str) -> None:
+    def record_run(
+        self,
+        row: SyncMapping,
+        status: str,
+        *,
+        error: str | None = None,
+        run_id: str | None = None,
+    ) -> None:
+        """Stamp how a run went, keeping the reason when it did not go well."""
         row.last_run_at = datetime.now(timezone.utc)
         row.last_status = status
+        row.last_run_id = run_id
+        # A good run clears the old reason, otherwise a card would keep showing
+        # a failure that has since fixed itself.
+        row.last_error = error
 
     def disable(self, row: SyncMapping) -> None:
         row.enabled = False
