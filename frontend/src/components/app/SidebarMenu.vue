@@ -1,10 +1,26 @@
 <script setup>
+import { computed } from 'vue'
+import { useAuth } from '../../composables/useAuth'
+
 const pages = [
   { name: 'dashboard', label: 'Overview' },
   { name: 'syncs', label: 'Syncs' },
   { name: 'connections', label: 'Connections' },
   { name: 'settings', label: 'Settings' },
 ]
+
+const authResult = useAuth()
+const auth = authResult.state
+
+// Hiding the link is tidiness, not protection: the admin API answers 404 to
+// everybody else whether or not they find the URL.
+const isAdmin = computed(function () {
+  if (auth.user && auth.user.is_admin) {
+    return true
+  } else {
+    return false
+  }
+})
 </script>
 
 <template>
@@ -19,6 +35,13 @@ const pages = [
     <nav class="column menu">
       <router-link :to="{ name: 'me' }">Profile</router-link>
     </nav>
+
+    <template v-if="isAdmin">
+      <p class="group">Admin</p>
+      <nav class="column menu">
+        <router-link :to="{ name: 'admin' }">Stats</router-link>
+      </nav>
+    </template>
   </aside>
 </template>
 

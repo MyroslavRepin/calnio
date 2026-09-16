@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [0.5.0] - 2026-09-16
+
+### Added
+- Admin dashboard at /dashboard/admin: signups, how many people connected each service, a setup funnel showing where people stop, sync and event totals, and one row per account.
+- An is_admin flag on users, granted by hand in the database. The admin API answers 404 to everybody else.
+
 ## [0.4.0] - 2026-09-15
 
 ### Added

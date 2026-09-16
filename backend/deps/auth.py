@@ -3,6 +3,7 @@ from fastapi import Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
 from backend.core.config import settings
+from backend.core.logging import logger
 from backend.core.security import jwt_service
 from backend.deps.db import get_session
 from backend.models.user import User
@@ -32,6 +33,18 @@ def get_current_user(request: Request, db: Session = Depends(get_session)) -> Us
             status_code=status.HTTP_401_UNAUTHORIZED, detail="user not found"
         )
 
+    return user
+
+
+def get_admin_user(user: User = Depends(get_current_user)) -> User:
+    """The signed-in user, provided they are an admin, else 404.
+
+    404 rather than 403: an ordinary account learns nothing about whether an
+    admin area exists, and the dashboard never links there anyway.
+    """
+    if not user.is_admin:
+        logger.warning("admin route refused for user {}", user.id)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="not found")
     return user
 
 

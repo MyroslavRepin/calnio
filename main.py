@@ -9,6 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
 from backend.api.account import router as account_router
+from backend.api.admin import router as admin_router
 from backend.api.apple_calendar import router as apple_calendar_router
 from backend.api.mapping import router as mapping_router
 from backend.api.notion import router as notion_router
@@ -81,6 +82,7 @@ app.include_router(notion_router)
 app.include_router(sync_router)
 app.include_router(mapping_router)
 app.include_router(account_router)
+app.include_router(admin_router)
 
 # The built Vue app, served same-origin in prod. Resolved from this file rather
 # than the working directory, and present only inside the Docker image. In dev
