@@ -20,6 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Admin dashboard at /dashboard/admin: signups, how many people connected each service, a setup funnel showing where people stop, sync and event totals, and one row per account.
 - An is_admin flag on users, granted by hand in the database. The admin API answers 404 to everybody else.
+- Logs carry run, user and sync ids in a fixed column, so one grep follows one sync from its first query to its last write.
+- A rotating log file at logs/calnio.log, mapped to the host in production, so logs survive a restart.
+
+### Changed
+- Sync failures log a traceback instead of one line of exception text, and messages no longer repeat the ids the context already carries.
+- httpx, httpcore, urllib3 and apscheduler log at WARNING, since their per-request lines buried everything else.
 
 ## [0.4.0] - 2026-09-15
 

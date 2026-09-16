@@ -340,7 +340,13 @@ def merge_pages(
                 raise  # not this event's problem, the whole run is dead
             if is_read_only_grant(exc):
                 raise NotionReadOnly(str(exc)) from exc
-            logger.error("sync failed for {} ({}): {}", page.id, page.title, exc)
+            logger.opt(exception=exc).error(
+                "sync failed for page {} ({}) at {}: {}",
+                page.id,
+                page.title,
+                row.caldav_href if row is not None else "no event yet",
+                exc,
+            )
 
     return counts
 
@@ -371,7 +377,12 @@ def drop_pages(
             db.rollback()
             if is_auth_failure(exc):
                 raise
-            logger.error("delete failed for {}: {}", row.notion_page_id, exc)
+            logger.opt(exception=exc).error(
+                "delete failed for page {} at {}: {}",
+                row.notion_page_id,
+                row.caldav_href,
+                exc,
+            )
 
     return deleted
 
@@ -423,7 +434,13 @@ def import_events(
                 raise
             if is_read_only_grant(exc):
                 raise NotionReadOnly(str(exc)) from exc
-            logger.error("import failed for {} ({}): {}", event.uid, event.title, exc)
+            logger.opt(exception=exc).error(
+                "import failed for event {} ({}) at {}: {}",
+                event.uid,
+                event.title,
+                event.href,
+                exc,
+            )
 
     return imported
 
@@ -542,19 +559,13 @@ def sync_mapping(
             mapping_repo.record_run(mapping, STATUS_ERROR)
             raise
         mapping_repo.record_run(mapping, STATUS_ERROR)
-        logger.error(
-            "sync failed for mapping {} of user {}: {}",
-            mapping.id,
-            mapping.user_id,
-            exc,
-        )
+        logger.opt(exception=exc).error("sync failed for this mapping: {}", exc)
         return STATUS_ERROR
 
     mapping_repo.record_run(mapping, STATUS_OK)
     logger.info(
-        "sync done for mapping {}: {} created, {} updated, {} deleted, "
+        "sync done: {} created, {} updated, {} deleted, "
         "{} written back, {} imported, {} trashed",
-        mapping.id,
         counts.created,
         counts.updated,
         counts.deleted,
@@ -571,7 +582,12 @@ def sync_user(user_id: int) -> None:
     Opens its own session because it runs on the scheduler thread, both from
     the interval loop and as a one-off job when the user flips a switch on.
     """
-    with SessionLocal() as db:
+    # run= ties every line of this pass together, user= every line about this
+    # person. Both sit in a fixed column on every log line, grep does the rest.
+    with (
+        SessionLocal() as db,
+        logger.contextualize(run=uuid4().hex[:8], user=user_id),
+    ):
         settings_repo = SyncSettingsRepo(db)
         row = settings_repo.get(user_id)
         connection_repo = NotionConnectionRepo(db)
@@ -581,12 +597,12 @@ def sync_user(user_id: int) -> None:
         # Re-checked here rather than trusted from the caller: a one-off job
         # fires against a user whose setup could have changed since.
         if row is None or connection is None or credential is None or not row.enabled:
-            logger.warning("sync skipped for user {}: setup incomplete", user_id)
+            logger.warning("sync skipped: setup incomplete")
             return
 
         mappings = SyncMappingRepo(db).eligible(user_id)
         if not mappings:
-            logger.warning("sync skipped for user {}: no configured syncs", user_id)
+            logger.warning("sync skipped: no configured syncs")
             return
 
         # One Notion repo for the whole user: the grant is theirs, not a
@@ -595,44 +611,42 @@ def sync_user(user_id: int) -> None:
 
         failed = False
         for mapping in mappings:
-            try:
-                status = sync_mapping(
-                    db, mapping, notion, credential, can_write=connection.can_write
-                )
-            except NotionReadOnly as exc:
-                # The grant is older than two-way sync, or its capabilities
-                # were taken away. Reading still works, so the user keeps a
-                # one-way sync until they connect Calnio again.
-                connection_repo.set_can_write(connection, False)
-                db.commit()
-                failed = True
-                logger.warning(
-                    "two-way disabled for user {}: notion grant may only read ({})",
-                    user_id,
-                    exc,
-                )
-                continue
-            except Exception as exc:
-                db.rollback()
-                if is_auth_failure(exc):
-                    settings_repo.disable(row)
-                    settings_repo.record_run(row, STATUS_AUTH_ERROR)
-                    SyncMappingRepo(db).record_run(mapping, STATUS_AUTH_ERROR)
-                    db.commit()
-                    logger.error(
-                        "sync disabled for user {}: credentials rejected ({})",
-                        user_id,
-                        exc,
+            # Every line written from here down carries this sync's id, so one
+            # grep follows one sync from its first query to its last write.
+            with logger.contextualize(sync=mapping.id):
+                try:
+                    status = sync_mapping(
+                        db, mapping, notion, credential, can_write=connection.can_write
                     )
-                    return
-                failed = True
-                logger.error(
-                    "sync crashed for mapping {} of user {}: {}", mapping.id, user_id, exc
-                )
-                continue
+                except NotionReadOnly as exc:
+                    # The grant is older than two-way sync, or its capabilities
+                    # were taken away. Reading still works, so the user keeps a
+                    # one-way sync until they connect Calnio again.
+                    connection_repo.set_can_write(connection, False)
+                    db.commit()
+                    failed = True
+                    logger.warning(
+                        "two-way disabled: notion grant may only read ({})", exc
+                    )
+                    continue
+                except Exception as exc:
+                    db.rollback()
+                    if is_auth_failure(exc):
+                        settings_repo.disable(row)
+                        settings_repo.record_run(row, STATUS_AUTH_ERROR)
+                        SyncMappingRepo(db).record_run(mapping, STATUS_AUTH_ERROR)
+                        db.commit()
+                        logger.opt(exception=exc).error(
+                            "syncing disabled for this user: credentials rejected ({})",
+                            exc,
+                        )
+                        return
+                    failed = True
+                    logger.opt(exception=exc).error("sync crashed: {}", exc)
+                    continue
 
-            if status != STATUS_OK:
-                failed = True
+                if status != STATUS_OK:
+                    failed = True
 
         # The user's own status summarises the tick, so the dashboard can say
         # "something failed" without the reader opening every mapping.
@@ -682,7 +696,7 @@ def run_all_users() -> None:
         try:
             sync_user(user_id)
         except Exception as exc:
-            logger.error("sync crashed for user {}: {}", user_id, exc)
+            logger.opt(exception=exc).error("sync crashed for user {}: {}", user_id, exc)
 
 
 def reset_all() -> int:

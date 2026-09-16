@@ -31,7 +31,7 @@ FastAPI app in `main.py`: lifespan starts an APScheduler `BackgroundScheduler` t
 
 Layers under `backend/` (import modules directly — **no `__init__.py` anywhere**, e.g. `from backend.schemas.notion_page import NotionPage`):
 
-- `core/` — stateless infra, no DB access: `config.py` (`Settings` from `.env`, singleton `settings`), `db.py` (engine + `SessionLocal`), `base.py` (ORM `Base`), `oauth.py` (authlib Google client), `security.py` (`JWTService`, PyJWT HS256, access + refresh tokens), `crypto.py` (Fernet `encrypt`/`decrypt` — **the only module importing Fernet**), `scheduler.py`, `logging.py` (loguru).
+- `core/` — stateless infra, no DB access: `config.py` (`Settings` from `.env`, singleton `settings`), `db.py` (engine + `SessionLocal`), `base.py` (ORM `Base`), `oauth.py` (authlib Google client), `security.py` (`JWTService`, PyJWT HS256, access + refresh tokens), `crypto.py` (Fernet `encrypt`/`decrypt` — **the only module importing Fernet**), `scheduler.py`, `logging.py` (loguru, see "Logs" below).
 - `models/` — SQLAlchemy ORM, one per file: `user.py` (`is_admin` is granted by hand in the database, never by a route), `sync_mapping.py` (**N per user**, unique `(user_id, data_source_id)`: the data source, its date column, its calendar, its switch, its `write_back` switch + `write_back_since`, its `caldav_sync_token`, its last run + status), `sync_settings.py` (1 per user: the master switch, last tick + status; its `due_date_property` is vestigial), `oauth_account.py` (N per user, unique `(provider, provider_account_id)`, lookup by Google `sub` never email), `caldav_credential.py` (1 per user, iCloud password Fernet-encrypted; its `calendar_url`/`calendar_name` are vestigial), `notion_connection.py` (1 per user, the grant, plus `can_write`; its `data_source_id`/`data_source_name` are vestigial), `synced_event.py` (scoped by `mapping_id`, holds the merge baseline).
 - Five columns are **vestigial**: `notion_connections.data_source_id` + `data_source_name`, `caldav_credentials.calendar_url` + `calendar_name`, `sync_settings.due_date_property`. Migration `b7c1e4d2f8a3` copied them into `sync_mappings` and left them in place so a downgrade restores working old code. Nothing reads or writes them. A follow-up release drops them.
 - `schemas/` — pydantic v2 domain models: `caldav_event.py`, `notion_page.py`, `notion_database.py` (both read-only projections of raw Notion payloads), `synced_event.py`, `sync_mapping.py` (`MappingStatus`, built by hand rather than `model_validate` because `eligible` is not a column; `CreateMappingRequest` carries a **list** of data source ids; `UpdateMappingRequest`).
@@ -131,6 +131,31 @@ Binding rules. Existing code that breaks them is wrong and gets rewritten, not c
 25. Raw payload parsing lives in `backend/parsers/<topic>.py` as a class with instance methods, held by the repo as `self.parser`. Verb-first method names: `parse_page`, `parse_database`, `parse_event`, `render_event`. Pagination and other transport concerns stay in the repo.
 26. Repos raise `RuntimeError` on a failed lookup. A custom exception class waits until something needs to catch that specific failure and act on it.
 27. A repo returns a bare row unless a caller genuinely branches on extra information. `(row, created)` exists only where a route answers 201 versus 200.
+
+## Logs
+
+Every line carries the same three identifiers in a fixed column, so one grep follows one story:
+
+```
+2026-09-15 22:24:07 | INFO    | run=c81e702b user=4 sync=5 | backend.services.sync:sync_mapping:566 | sync done: 0 created, ...
+```
+
+- `run` is one pass over one user, `user` is the account, `sync` is the mapping id. `-` means the line was written outside a sync.
+- Bound in `services/sync.py`: `sync_user` opens `logger.contextualize(run=..., user=...)` and the mapping loop adds `sync=`. Anything called underneath inherits them, repos included, so a repo never has to be told who it is working for.
+- **A message never repeats what the context already says.** No "sync failed for mapping 3 of user 11", just "sync failed".
+- Failures log through `logger.opt(exception=exc)`, so the file sink holds the traceback. `diagnose=False` on that sink is deliberate: loguru's variable dump would print access tokens.
+- Two sinks: stdout (coloured, for `docker compose logs`) and `logs/calnio.log` (20 MB rotation, 14 days retention, `enqueue=True` because the scheduler thread writes too). docker-compose maps it to `./logs` on the host, so in prod it is `/srv/calnio/logs/calnio.log`.
+- httpx, httpcore, urllib3 and apscheduler are pinned to WARNING. They narrate every request and every tick, which buried everything else. APScheduler's "maximum number of running instances" warning still comes through.
+
+Finding things:
+
+```bash
+grep "user=11" /srv/calnio/logs/calnio.log          # one person, everything
+grep "sync=3" /srv/calnio/logs/calnio.log           # one sync, everything
+grep "run=c81e702b" /srv/calnio/logs/calnio.log     # one pass, start to finish
+grep -E "ERROR|WARNING" /srv/calnio/logs/calnio.log # what broke
+grep -A 20 "sync crashed" /srv/calnio/logs/calnio.log  # a crash with its traceback
+```
 
 ## Config
 

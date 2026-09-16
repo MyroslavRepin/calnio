@@ -11,3 +11,7 @@ services:
     env_file: .env.prod
     network_mode: host
     restart: unless-stopped
+    # The rotating log file, kept on the host so it survives a rebuild and can
+    # be grepped without entering the container: /srv/calnio/logs/calnio.log
+    volumes:
+      - ./logs:/app/logs
