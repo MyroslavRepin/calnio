@@ -68,9 +68,9 @@ const calendarName = computed(function () {
 // Which way this sync runs, said in words rather than left to the switch.
 const directionName = computed(function () {
   if (props.mapping.write_back) {
-    return 'Both ways'
+    return 'Two way, Notion and Apple Calendar'
   } else {
-    return 'Notion to Apple Calendar'
+    return 'One way, Notion to Apple Calendar'
   }
 })
 
@@ -86,9 +86,9 @@ const canWriteBack = computed(function () {
 
 const writeBackLabel = computed(function () {
   if (props.mapping.write_back) {
-    return 'Calendar edits go back to Notion'
+    return 'Two-way sync is on'
   } else {
-    return 'Calendar edits stay in the calendar'
+    return 'Two-way sync is off'
   }
 })
 
@@ -332,47 +332,61 @@ async function confirmRemove() {
       </template>
 
       <template v-else>
-        <button
-          class="switch"
-          type="button"
-          role="switch"
-          :aria-checked="mapping.enabled"
-          :disabled="!mapping.eligible || mappings.busy"
-          @click="toggle"
-        >
-          <span class="track" :class="{ on: mapping.enabled }"><span class="knob"></span></span>
-          <span class="switchlabel">
-            {{ mapping.enabled ? 'This sync is on' : 'This sync is off' }}
-          </span>
-        </button>
+        <!-- Both switches stack, because a .switch is inline and two of them
+             would otherwise share a line and read as one control. -->
+        <div class="column switches">
+          <button
+            class="switch"
+            type="button"
+            role="switch"
+            :aria-checked="mapping.enabled"
+            :disabled="!mapping.eligible || mappings.busy"
+            @click="toggle"
+          >
+            <span class="track" :class="{ on: mapping.enabled }"><span class="knob"></span></span>
+            <span class="switchlabel">
+              {{ mapping.enabled ? 'This sync is on' : 'This sync is off' }}
+            </span>
+          </button>
 
-        <p v-if="!mapping.eligible" class="note">
-          Choose a date column and a calendar before turning this sync on.
-        </p>
+          <p v-if="!mapping.eligible" class="note">
+            Choose a date column and a calendar before turning this sync on.
+          </p>
 
-        <button
-          class="switch"
-          type="button"
-          role="switch"
-          :aria-checked="mapping.write_back"
-          :disabled="!mapping.eligible || !canWriteBack || mappings.busy"
-          @click="toggleWriteBack"
-        >
-          <span class="track" :class="{ on: mapping.write_back }"><span class="knob"></span></span>
-          <span class="switchlabel">{{ writeBackLabel }}</span>
-        </button>
+          <button
+            class="switch"
+            type="button"
+            role="switch"
+            :aria-checked="mapping.write_back"
+            :disabled="!mapping.eligible || !canWriteBack || mappings.busy"
+            @click="toggleWriteBack"
+          >
+            <span class="track" :class="{ on: mapping.write_back }"><span class="knob"></span></span>
+            <span class="switchlabel">{{ writeBackLabel }}</span>
+          </button>
 
-        <p v-if="!canWriteBack" class="note">
-          Calnio may only read your workspace. Reconnect Notion on the
-          <router-link :to="{ name: 'connections' }">Connections</router-link>
-          page to let calendar edits go back to it.
-        </p>
+          <p v-if="!canWriteBack" class="note">
+            Two-way needs permission to write into Notion, and this connection
+            only has permission to read. Reconnect Notion on the
+            <router-link :to="{ name: 'connections' }">Connections</router-link>
+            page to turn it on.
+          </p>
 
-        <p v-else-if="mapping.write_back" class="note">
-          Moving, renaming or deleting one of these events in Apple Calendar
-          changes the Notion page too. New events you make in that calendar
-          become new pages. Notion wins when both sides changed at once.
-        </p>
+          <p v-else-if="mapping.write_back" class="note">
+            Anything you do in the <strong>{{ calendarName }}</strong> calendar
+            now reaches <strong>{{ databaseName }}</strong>: a new event becomes
+            a new page, moving an event moves its date, renaming renames the
+            page, deleting one sends the page to Notion's trash. Repeating
+            events and invites are skipped, and Notion wins if you changed both
+            sides between runs.
+          </p>
+
+          <p v-else class="note">
+            Off, this sync only copies Notion into the calendar. Events you add
+            or change in <strong>{{ calendarName }}</strong> are left alone and
+            never reach Notion.
+          </p>
+        </div>
 
         <div class="row actions">
           <button class="btn plain" type="button" :disabled="mappings.busy" @click="startColumn">
@@ -391,5 +405,10 @@ async function confirmRemove() {
 <style scoped>
 .card-body > * + * {
   margin-top: var(--app-gap-stack);
+}
+
+.switches {
+  --gap: var(--app-gap-stack);
+  align-items: flex-start;
 }
 </style>
