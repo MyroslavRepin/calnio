@@ -39,6 +39,10 @@ class NotionConnectionRepo:
     ) -> NotionConnection:
         """Create or replace the user's grant.
 
+        A grant is always written as able to write, because Notion fixes an
+        integration's capabilities at consent time and consent is what just
+        happened. A write that comes back refused corrects it.
+
         Reconnecting to a different workspace clears the selected data source,
         since an id from the old workspace means nothing under the new one.
         Re-authorizing the same workspace keeps it, which is what makes
@@ -55,6 +59,7 @@ class NotionConnectionRepo:
                 workspace_id=workspace_id,
                 workspace_name=workspace_name,
                 workspace_icon=workspace_icon,
+                can_write=True,
                 last_verified_at=now,
             )
             self.db.add(row)
@@ -69,8 +74,15 @@ class NotionConnectionRepo:
         row.workspace_id = workspace_id
         row.workspace_name = workspace_name
         row.workspace_icon = workspace_icon
+        # Consent just happened, so the grant carries the capabilities Calnio
+        # asks for now. This is the one thing that clears a read-only grant.
+        row.can_write = True
         row.last_verified_at = now
         return row
+
+    def set_can_write(self, row: NotionConnection, can_write: bool) -> None:
+        """Record whether this grant is allowed to write into the workspace."""
+        row.can_write = can_write
 
     def delete(self, row: NotionConnection) -> None:
         self.db.delete(row)

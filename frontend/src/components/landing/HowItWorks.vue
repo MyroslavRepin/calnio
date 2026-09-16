@@ -4,7 +4,7 @@
 const steps = [
   {
     title: 'Notion is the truth',
-    body: 'Calnio recomputes your events from Notion on every run. Change a date there and the calendar follows. Nothing is ever written back to Notion.',
+    body: 'Calnio recomputes your events from Notion on every run. Change a date there and the calendar follows. If both sides changed at once, Notion wins.',
   },
   {
     title: 'One database, one calendar',
@@ -15,8 +15,8 @@ const steps = [
     body: 'Each Notion page maps to a single calendar event. Events do not pile up between runs, and anything Calnio did not create is left alone.',
   },
   {
-    title: 'Last edit wins',
-    body: 'Move a due date and the next run updates the event. Delete the page in Notion and the event goes with it.',
+    title: 'Two-way when you ask',
+    body: 'Off by default, and a switch per database. On, a moved event moves its Notion date, a renamed event renames the page, a new event becomes a new page.',
   },
 ]
 </script>
@@ -42,8 +42,8 @@ const steps = [
     </div>
 
     <p class="note">
-      Calnio writes one way: Notion to Apple Calendar. Two-way sync does not
-      exist yet, and I would rather say so than imply it.
+      Two-way is opt-in, one database at a time, and every sync starts one way.
+      Repeating events and invites are left alone: neither fits in a Notion row.
     </p>
   </section>
 </template>

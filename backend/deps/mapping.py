@@ -90,6 +90,7 @@ def mapping_status(mapping: SyncMapping) -> MappingStatus:
         calendar_url=mapping.calendar_url,
         calendar_name=mapping.calendar_name,
         enabled=mapping.enabled,
+        write_back=mapping.write_back,
         eligible=mapping_eligible(mapping),
         last_run_at=mapping.last_run_at,
         last_status=mapping.last_status,

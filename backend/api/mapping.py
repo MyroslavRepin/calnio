@@ -25,6 +25,7 @@ from backend.models.user import User
 from backend.repo.caldav import CalDavAccountRepo, CalDavEventRepo
 from backend.repo.caldav_credential import CaldavCredentialRepo
 from backend.repo.notion import NotionPageRepo
+from backend.repo.notion_connection import NotionConnectionRepo
 from backend.repo.sync_mapping import SyncMappingRepo
 from backend.repo.sync_settings import SyncSettingsRepo
 from backend.schemas.sync_mapping import (
@@ -168,7 +169,7 @@ async def configure_sync(
     repo: NotionPageRepo = Depends(get_notion_repo),
     db: Session = Depends(get_session),
 ):
-    """Set this sync's date column, its calendar, its switch, or any of them."""
+    """Set this sync's date column, its calendar, either switch, or any of them."""
     mapping_repo = SyncMappingRepo(db)
 
     if body.due_date_property is not None:
@@ -216,13 +217,29 @@ async def configure_sync(
         mapping_repo.set_calendar(mapping, matched.url, matched.name)
 
     turned_on = False
+
+    if body.write_back is not None:
+        # Two-way needs a grant Notion minted with its write capabilities. An
+        # older grant reads perfectly well and will never gain them, so the
+        # only answer is to connect Calnio again.
+        connection = NotionConnectionRepo(db).get(mapping.user_id)
+        if body.write_back and (connection is None or not connection.can_write):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="reconnect notion before calnio can write back to it",
+            )
+        if body.write_back and not mapping.write_back:
+            turned_on = True
+        mapping_repo.set_write_back(mapping, body.write_back)
+
     if body.enabled is not None:
         if body.enabled and not mapping_eligible(mapping):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="pick a date column and a calendar before turning this on",
             )
-        turned_on = body.enabled and not mapping.enabled
+        if body.enabled and not mapping.enabled:
+            turned_on = True
         mapping.enabled = body.enabled
 
     db.commit()

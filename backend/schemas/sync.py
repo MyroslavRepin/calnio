@@ -17,6 +17,18 @@ class SyncStatus(BaseModel):
     last_status: str | None
 
 
+class SyncCounts(BaseModel):
+    """What one mapping's run did, in both directions, for its log line."""
+
+    created: int = 0
+    updated: int = 0
+    deleted: int = 0
+    # The other direction: pages Calnio wrote, made, or threw away.
+    pulled: int = 0
+    imported: int = 0
+    trashed: int = 0
+
+
 class UpdateSyncRequest(BaseModel):
     """Only the master switch. Each sync's own settings live on the mapping."""
 

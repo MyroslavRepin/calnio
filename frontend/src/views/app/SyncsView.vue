@@ -33,7 +33,7 @@ const error = ref(null)
       <h1 class="title">Syncs</h1>
       <p class="lead">
         Each sync reads one Notion database and writes its due dates into one
-        Apple calendar. Notion is never written to.
+        Apple calendar. Turn two-way on per sync to send calendar edits back.
       </p>
     </header>
 

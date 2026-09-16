@@ -5,7 +5,7 @@ from notion_client import Client
 from backend.core.logging import logger
 from backend.parsers.notion import NotionParser
 from backend.schemas.notion_database import NotionDatabase
-from backend.schemas.notion_page import NotionPage
+from backend.schemas.notion_page import NotionPage, NotionPageWrite
 
 
 def paginate(fetch: Callable[[str | None], dict[str, Any]]) -> list[dict[str, Any]]:
@@ -22,7 +22,12 @@ def paginate(fetch: Callable[[str | None], dict[str, Any]]) -> list[dict[str, An
 
 
 class NotionPageRepo:
-    """Read-only repository for Notion databases and their pages."""
+    """Notion databases and their pages.
+
+    Writing needs a grant that was consented to with Notion's update and insert
+    capabilities. An older grant answers 403 to every write, and no retry ever
+    changes that: the user has to connect Calnio again.
+    """
 
     def __init__(self, token: str) -> None:
         self.client = Client(auth=token)
@@ -63,6 +68,29 @@ class NotionPageRepo:
         pages = [self.parser.parse_page(page) for page in paginate(fetch)]
         logger.info("found {} notion pages in {}", len(pages), data_source_id)
         return pages
+
+    def create_page(
+        self, data_source_id: str, write: NotionPageWrite
+    ) -> NotionPage:
+        """Create a page in a data source, with its title and date set."""
+        return self.parser.parse_page(
+            self.client.pages.create(
+                parent={"data_source_id": data_source_id},
+                properties=self.parser.render_properties(write),
+            )
+        )
+
+    def update_page(self, page_id: str, write: NotionPageWrite) -> NotionPage:
+        """Set a page's title and date, leaving its other columns alone."""
+        return self.parser.parse_page(
+            self.client.pages.update(
+                page_id=page_id, properties=self.parser.render_properties(write)
+            )
+        )
+
+    def trash_page(self, page_id: str) -> None:
+        """Move a page to the workspace trash, which is what deleting one means."""
+        self.client.pages.update(page_id=page_id, in_trash=True)
 
     def list_databases(self) -> list[NotionDatabase]:
         """Discover every data source shared with the integration."""

@@ -4,8 +4,10 @@ Syncs Notion with Apple Calendar. Notion holds tasks; Apple Calendar is where
 people look. Calnio pushes Notion due dates into Apple Calendar via CalDAV on
 a schedule.
 
-One-way sync only: Notion → Apple Calendar. Notion is read-only, nothing
-writes back.
+Notion → Apple Calendar runs by default. Two-way is opt-in, one sync at a
+time: switch it on and a moved, renamed or deleted event changes its Notion
+page, and an event you add to that calendar becomes a new page. Notion wins
+when both sides changed since the last run.
 
 ## Setup
 

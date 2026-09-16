@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, String, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.core.base import Base
@@ -46,6 +46,14 @@ class NotionConnection(Base):
     # here is the one `data_sources.query` takes.
     data_source_id: Mapped[str | None] = mapped_column(String, nullable=True)
     data_source_name: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    # Whether this grant is allowed to write. Notion fixes an integration's
+    # capabilities at consent time, so a grant minted before Calnio asked for
+    # write access can only read, and no amount of retrying changes that. The
+    # user reconnects, or two-way stays unavailable.
+    can_write: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
 
     last_verified_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True

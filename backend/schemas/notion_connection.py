@@ -13,6 +13,9 @@ class ConnectionStatus(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     connected: bool = True
+    # False for a grant minted before Calnio asked Notion for write access. The
+    # dashboard offers a reconnect instead of a two-way switch that cannot work.
+    can_write: bool
     workspace_name: str | None
     workspace_icon: str | None
     last_verified_at: datetime | None

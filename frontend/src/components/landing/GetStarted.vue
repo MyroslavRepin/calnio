@@ -12,7 +12,7 @@ const steps = [
   {
     number: '2',
     title: 'Connect Notion',
-    body: 'Notion asks which pages Calnio may read. Tick every database you want to see in your calendar.',
+    body: 'Notion asks which pages Calnio may use. Tick every database you want to see in your calendar.',
   },
   {
     number: '3',
