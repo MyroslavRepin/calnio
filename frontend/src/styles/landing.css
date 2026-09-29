@@ -1,0 +1,221 @@
+/* The landing page's own look, scoped under .landing-ui and nowhere else. The
+   signed-in app keeps its own tokens. Values come from the slide deck the page
+   was designed as. */
+
+.landing-ui {
+  /* Ground and ink */
+  --l-ink: #0a0a0a;
+  --l-bg: #f5f5f7;
+  --l-muted: #6e6e73;
+  --l-line: #e3e3e8;
+  --l-blue: #2d62d6;
+  /* The second line of a two-tone headline, and small print on dark. */
+  --l-dim: #8e8e93;
+  --l-muted-dark: #a1a1a6;
+  --l-line-dark: #2c2c2e;
+
+  /* Event chip tints. Four tones, each a tint plus the text that reads on it.
+     No left border: the fill is the whole signal. */
+  --l-blue-tint: #e6edfb;
+  --l-blue-text: #1e4bb0;
+  --l-amber-tint: #f3eee2;
+  --l-amber-text: #7a5a12;
+  --l-green-tint: #e8f4ea;
+  --l-green-text: #23692f;
+  --l-pink-tint: #f6e8ee;
+  --l-pink-text: #8f2a54;
+
+  /* Shape */
+  --l-radius: 22px;
+  --l-radius-small: 8px;
+  --l-shadow: 0 1px 0 rgba(0, 0, 0, 0.04), 0 20px 50px -20px rgba(0, 0, 0, 0.18);
+  --l-shadow-dark: 0 30px 80px -20px rgba(0, 0, 0, 0.6);
+
+  /* Type. Every headline is 800 at -0.035em and 1.04. */
+  --l-text-hero: clamp(32px, 5.2vw, 62px);
+  --l-text-section: clamp(28px, 4.4vw, 54px);
+  --l-text-stat: clamp(42px, 4.6vw, 62px);
+  --l-text-lead: clamp(16px, 1.5vw, 22px);
+  --l-text-eyebrow: clamp(15px, 1.2vw, 18px);
+  --l-text-row: clamp(15px, 1.2vw, 20px);
+
+  /* Rhythm */
+  --l-pad-page: 16px;
+  --l-pad-section: clamp(56px, 8vw, 104px);
+  --l-width: 1180px;
+
+  background: var(--l-bg);
+  color: var(--l-ink);
+  font-family: var(--app-font);
+  line-height: var(--app-lh-body);
+}
+
+/* A full-bleed band. .dark is the only thing that flips the ground. */
+.landing-ui .section {
+  background: var(--l-bg);
+  color: var(--l-ink);
+  padding: var(--l-pad-section) 0;
+}
+
+.landing-ui .section.dark {
+  background: var(--l-ink);
+  color: #fff;
+}
+
+/* The one width every band's content sits in. */
+.landing-ui .container {
+  width: 100%;
+  max-width: var(--l-width);
+  margin: 0 auto;
+  padding: 0 var(--l-pad-page);
+}
+
+/* The small label above a headline. The only place the blue appears. */
+.landing-ui .eyebrow {
+  color: var(--l-blue);
+  font-size: var(--l-text-eyebrow);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.landing-ui .headline {
+  font-size: var(--l-text-section);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.04;
+}
+
+.landing-ui .headline.hero {
+  font-size: var(--l-text-hero);
+}
+
+/* The second line of a two-tone headline. */
+.landing-ui .dim {
+  color: var(--l-dim);
+}
+
+.landing-ui .tagline {
+  color: var(--l-muted);
+  font-size: var(--l-text-lead);
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+}
+
+.landing-ui .section.dark .tagline {
+  color: var(--l-muted-dark);
+}
+
+/* The white card everything sits on, light ground or dark. */
+.landing-ui .card {
+  background: #fff;
+  color: var(--l-ink);
+  border-radius: var(--l-radius);
+  box-shadow: var(--l-shadow);
+}
+
+.landing-ui .section.dark .card {
+  box-shadow: var(--l-shadow-dark);
+}
+
+/* The shape a synced item takes, in a mockup or inside a sentence. */
+.landing-ui .ev {
+  border-radius: var(--l-radius-small);
+  padding: 6px 7px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.landing-ui .ev small {
+  display: block;
+  font-weight: 500;
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.landing-ui .ev.blue {
+  background: var(--l-blue-tint);
+  color: var(--l-blue-text);
+}
+
+.landing-ui .ev.amber {
+  background: var(--l-amber-tint);
+  color: var(--l-amber-text);
+}
+
+.landing-ui .ev.green {
+  background: var(--l-green-tint);
+  color: var(--l-green-text);
+}
+
+.landing-ui .ev.pink {
+  background: var(--l-pink-tint);
+  color: var(--l-pink-text);
+}
+
+/* The call to action: filled ink on a light band, filled white on a dark one. */
+.landing-ui .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 999px;
+  padding: 0 clamp(20px, 2.4vw, 28px);
+  height: clamp(44px, 4vw, 52px);
+  background: var(--l-ink);
+  color: #fff;
+  font-family: inherit;
+  font-size: clamp(15px, 1.2vw, 17px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+}
+
+.landing-ui .btn:hover {
+  background: #2c2c2e;
+}
+
+.landing-ui .section.dark .btn,
+.landing-ui .navbar .btn {
+  background: #fff;
+  color: var(--l-ink);
+}
+
+.landing-ui .section.dark .btn:hover,
+.landing-ui .navbar .btn:hover {
+  background: #e3e3e8;
+}
+
+/* Smallest button on the page: it reads as a link with a shape. */
+.landing-ui .navbar .btn {
+  height: 38px;
+  padding: 0 18px;
+  font-size: 15px;
+}
+
+.landing-ui .wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: clamp(18px, 1.6vw, 22px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+/* The label above a fact inside a card. */
+.landing-ui .kicker {
+  color: var(--l-muted);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.landing-ui .error {
+  background: var(--app-danger-tint);
+  border: 1px solid var(--app-danger-line);
+  border-radius: var(--app-radius);
+  color: var(--app-danger);
+  font-size: var(--app-text-body);
+  padding: var(--app-space-3) var(--app-space-4);
+}

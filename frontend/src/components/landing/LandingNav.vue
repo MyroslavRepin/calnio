@@ -2,76 +2,63 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../../composables/useAuth'
+import CalnioMark from './CalnioMark.vue'
 
 const authResult = useAuth()
 const state = authResult.state
 const login = authResult.login
-const logout = authResult.logout
 
 const router = useRouter()
 
-// The shortest honest label for the account link. No avatar here: the header
-// inside the app has one, the front door does not need it.
-const account = computed(function () {
-  if (state.user?.name) {
-    return state.user.name
+// One call to action in the bar, worded for whether the visitor has an account.
+const label = computed(function () {
+  if (state.ready && state.user) {
+    return 'Open dashboard'
   }
-  if (state.user?.email) {
-    return state.user.email
-  }
-  return ''
+  return 'Get started'
 })
 
-async function signOut() {
-  await logout()
-  router.push('/')
+// Signed in goes to the app, signed out starts the Google flow.
+function start() {
+  if (state.ready && state.user) {
+    router.push('/dashboard')
+    return
+  }
+  login()
 }
 </script>
 
 <template>
   <header class="navbar">
-    <div class="row navrow">
-      <router-link to="/" class="wordmark">Calnio</router-link>
+    <div class="container row navrow">
+      <router-link to="/" class="wordmark">
+        <span class="plate"><CalnioMark /></span>
+        Calnio
+      </router-link>
 
-      <div class="row links">
-        <a v-if="$route.name === 'landing'" href="#how">How it works</a>
-
-        <template v-if="state.ready && state.user">
-          <router-link to="/dashboard">Dashboard</router-link>
-          <router-link to="/me" :title="state.user.email" class="account">
-            {{ account }}
-          </router-link>
-          <button class="btn plain" type="button" @click="signOut">Log out</button>
-        </template>
-
-        <button v-else class="btn plain" type="button" @click="login">Log in</button>
-      </div>
+      <button class="btn" type="button" @click="start">{{ label }}</button>
     </div>
   </header>
 </template>
 
 <style scoped>
+/* The bar sits on the hero's own black, so it carries no line under it. */
 .navbar {
-  border-bottom: 1px solid var(--app-border);
-  background: var(--app-canvas);
+  background: var(--l-ink);
+  color: #fff;
+  padding: clamp(20px, 2.6vw, 34px) 0;
+  --mark-plate: #ffffff;
+  --mark-glyph: #0a0a0a;
 }
 
 .navrow {
   --gap: var(--app-gap-block);
   justify-content: space-between;
-  max-width: var(--app-width-page);
-  margin: 0 auto;
-  padding: var(--app-space-3) var(--app-pad-page);
 }
 
-.links {
-  --gap: var(--app-gap-block);
-}
-
-.account {
-  max-width: 20ch;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+.plate {
+  width: clamp(30px, 3vw, 40px);
+  height: clamp(30px, 3vw, 40px);
+  flex: none;
 }
 </style>

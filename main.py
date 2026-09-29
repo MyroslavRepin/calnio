@@ -97,11 +97,19 @@ if DIST.is_dir():
     # for a path that is not a file and has to be answered with index.html.
     @app.get("/{spa_path:path}", include_in_schema=False)
     async def spa(spa_path: str) -> FileResponse:
-        """Serve index.html for any path the routers did not claim."""
+        """Serve the built file at that path, or index.html when there is none."""
         # An unmatched API path stays JSON: HTML with a 200 would make a typo'd
         # endpoint look like a successful request.
         if spa_path.startswith(("api/", "auth/")):
             raise HTTPException(status_code=404, detail="Not Found")
+        # Everything Vite copies out of frontend/public lands in the root of dist
+        # rather than under /assets, so the favicon, the touch icon and the og
+        # image arrive here. Answering them with index.html would hand a crawler
+        # HTML where it asked for a JPEG. The path comes from the URL, so it is
+        # resolved and confined to dist before anything is read off disk.
+        candidate = (DIST / spa_path).resolve()
+        if candidate.is_relative_to(DIST.resolve()) and candidate.is_file():
+            return FileResponse(candidate)
         # index.html must not be cached: it references hashed bundle names that
         # a redeploy replaces, and a stale copy points at files that are gone.
         return FileResponse(DIST / "index.html", headers={"Cache-Control": "no-cache"})

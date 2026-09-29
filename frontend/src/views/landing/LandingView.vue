@@ -1,11 +1,14 @@
 <script setup>
 import { computed } from 'vue'
 import { useAuth } from '../../composables/useAuth'
-import GetStarted from '../../components/landing/GetStarted.vue'
+import FinalCta from '../../components/landing/FinalCta.vue'
 import HeroSection from '../../components/landing/HeroSection.vue'
-import HowItWorks from '../../components/landing/HowItWorks.vue'
+import IndieDev from '../../components/landing/IndieDev.vue'
 import LandingFooter from '../../components/landing/LandingFooter.vue'
 import LandingNav from '../../components/landing/LandingNav.vue'
+import RealAlerts from '../../components/landing/RealAlerts.vue'
+import SetupShot from '../../components/landing/SetupShot.vue'
+import TwoWaySync from '../../components/landing/TwoWaySync.vue'
 
 const authResult = useAuth()
 const state = authResult.state
@@ -26,15 +29,20 @@ const errorMessage = computed(function () {
 </script>
 
 <template>
-  <div class="app-ui column page">
+  <div class="landing-ui column page">
     <LandingNav />
 
-    <main class="column main">
-      <p v-if="errorMessage" class="error" role="alert">{{ errorMessage }}</p>
+    <main class="column bands">
+      <div v-if="errorMessage" class="notice">
+        <p class="container error" role="alert">{{ errorMessage }}</p>
+      </div>
 
       <HeroSection />
-      <HowItWorks />
-      <GetStarted />
+      <RealAlerts />
+      <TwoWaySync />
+      <SetupShot />
+      <IndieDev />
+      <FinalCta />
     </main>
 
     <LandingFooter />
@@ -46,12 +54,15 @@ const errorMessage = computed(function () {
   min-height: 100vh;
 }
 
-.main {
-  --gap: var(--app-space-8);
+/* Sections space themselves, so the stack carries no gap of its own. */
+.bands {
+  --gap: 0px;
   flex: 1;
-  width: 100%;
-  max-width: var(--app-width-page);
-  margin: 0 auto;
-  padding: var(--app-space-7) var(--app-pad-page) var(--app-space-8);
+}
+
+/* The sign-in failure sits on the hero's own black, above everything else. */
+.notice {
+  background: var(--l-ink);
+  padding-top: 24px;
 }
 </style>

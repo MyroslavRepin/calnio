@@ -186,7 +186,7 @@ Vue 3 with `<script setup>`, Vite, vue-router. Two dependencies total: `vue` and
 
 ## How it works, read this before changing anything
 
-**One look, one system.** The landing page at `/` and every signed-in page share the same tokens, the same `.card`, the same `.btn`. Everything is scoped under `.app-ui`, which every page root carries. The second design system (`.landing-ui`, `styles/landing.css`, the blue atmosphere circles) has been deleted, along with the only web font the project loaded.
+**Two systems, one font.** Every signed-in page is scoped under `.app-ui` and shares one set of tokens, one `.card`, one `.btn`. The landing page at `/` is scoped under `.landing-ui` and runs its own scale, its own card and its own alternating dark and light bands, because a marketing page and a settings screen do not want the same thing. The two overlap in exactly two places: the three layout classes, and `--app-font`, which is Inter for both. A landing component never reads an `--app-*` colour or size token, and an app component never reads an `--l-*` one.
 
 **A composable is one shared box of data, not a layer.** In `composables/useNotion.js` the `reactive({...})` sits at the top level of the file, outside the exported function. JavaScript runs a module's top level once no matter how many components import it, so there is exactly one `state` object in the whole app, and every `useNotion()` call hands back that same object. Put it inside the function and each caller gets its own copy, which is what breaks things: `ConnectionsView` draws the status pill from `notion.connection` while `NotionStatus` sets that same object to `null` on disconnect, and the pill updates only because both point at one object.
 
@@ -212,9 +212,9 @@ Binding. Existing code that breaks them is wrong and gets rewritten, not copied.
 
 **Layout**
 
-1. `views/` holds one file per route, `components/` holds pieces. Both split into `landing/` and `app/`, and a file in one half never imports from the other. They share the stylesheet, not code.
+1. `views/` holds one file per route, `components/` holds pieces. Both split into `landing/` and `app/`, and a file in one half never imports from the other, nor reads the other's stylesheet.
 2. Filenames say what the thing is. A view ends in `View`, a layout in `Layout`, everything else is a plain noun. No `The` prefix.
-3. Styles live in `styles/`: `tokens.css` (variables on `:root, .app-ui`, plus the page reset), `layout.css` (the three arrangement classes), `base.css` (page-level type, headers, status text), `components.css` (card, label, button, form, list, datarows, wizard, switch). `main.js` imports them in that order, because each reads from the ones before it. There is no fifth file.
+3. Styles live in `styles/`: `tokens.css` (variables on `:root, .app-ui`, plus the page reset), `layout.css` (the three arrangement classes), `base.css` (page-level type, headers, status text), `components.css` (card, label, button, form, list, datarows, wizard, switch), `landing.css` (everything under `.landing-ui`, the marketing page alone). `main.js` imports them in that order, because each reads from the ones before it. There is no sixth file.
 
 **Styles**
 
@@ -259,29 +259,53 @@ The frontend is written to be read by someone learning it, not to be short. Verb
 
 # Calnio Landing
 
-The landing page has **no design system of its own any more.** It was a separate
-one (atmosphere circles, IBM Plex Mono, 104px display type, `.landing-ui`) and it
-is gone: `styles/landing.css`, `AtmosphereField.vue`, `ChipBand.vue`,
-`BetaStrip.vue` and `FeatureGrid.vue` are deleted, and the page renders under
-`.app-ui` with the app's tokens and the app's `.card` / `.btn` / `.label` /
-`.picklist` primitives. Tokens live once, on `:root, .app-ui`, so the page ground
-outside a component can read them too. The app loads zero font files.
+The landing page **has its own design system again**, in `styles/landing.css`,
+scoped under `.landing-ui`. `LandingView` is the only page root carrying that
+class; every signed-in page still carries `.app-ui` and is untouched by it. The
+values come from the slide deck the page was designed as, not from the app
+tokens: ink `#0a0a0a`, ground `#f5f5f7`, muted `#6e6e73`, line `#e3e3e8`, blue
+`#2d62d6` (small eyebrow labels only), 22px radius, the shadow pair
+`0 1px 0 rgba(0,0,0,.04), 0 20px 50px -20px rgba(0,0,0,.18)`, and every headline
+at weight 800 / `-0.035em` / `1.04`. Four event chip tints carry a synced item
+wherever it appears: blue `#e6edfb`/`#1e4bb0`, amber `#f3eee2`/`#7a5a12`, green
+`#e8f4ea`/`#23692f`, pink `#f6e8ee`/`#8f2a54`. No coloured left border on a chip.
 
-What is left under `components/landing/`: `LandingNav`, `HeroSection`,
-`HowItWorks`, `GetStarted`, `LandingFooter`, `GoogleButton`. They follow the app
-design system below, with one documented exception: `--app-text-display`
-(`clamp(28px, 5vw, 40px)`), used by the hero headline and nowhere else, because
-a 24px headline reads as an unfinished page.
+**The app loads Inter**, via `@fontsource/inter`, latin subset, weights 400 to
+800, imported at the top of `main.js`. `--app-font` names it, so the dashboard
+gets it too; the dashboard keeps its own colours, sizes and components. That is
+the only font, and the only reason the app went from two dependencies to three.
 
-**Product truth (never contradict in copy):** Calnio syncs **Notion → Apple
-Calendar** always, and back the other way **only when the user switches two-way
-on for that database**, which is off by default. Notion wins when both sides
-changed at once. Repeating events and invites are never imported. A user picks **several databases**, and each one
-gets **its own Apple calendar**. Ticking a database is the whole setup: the date
-column is inferred and the calendar is created. It is **hosted** — nothing to
-install, no server to run. It is **free while in beta** because the developer
-self-hosts it. It is **not open source** — never mention GitHub, MIT, Docker,
-pip, or a CLI install.
+**Sections alternate dark and light**, and `.section.dark` is the only thing that
+flips the ground. In order: nav and hero dark, real alerts light, two-way light,
+setup light, indie dark, final call to action light, footer light.
+
+Under `components/landing/`: `LandingNav`, `HeroSection`, `RealAlerts`,
+`TwoWaySync`, `SetupShot`, `IndieDev`, `FinalCta`, `LandingFooter`, plus
+`CalnioMark` (the logo, inline SVG so its plate can flip per band) and
+`GetStartedButton` (the one call to action, which routes a signed-in visitor to
+the dashboard instead of Google).
+
+**The illustrations are HTML and CSS, not images.** The task table, the week
+calendar, the swap circle, the phone lock screen and the browser frame are all
+drawn. The only real images are in `frontend/public/`: `dashboard.png` inside the
+browser frame, plus `favicon.ico`, `apple-touch-icon.png`, `og.jpg` and the logo
+files, which Vite copies to the root of `dist`. `main.py`'s SPA catch-all serves
+a real file when one exists at that path, so a crawler asking for `/og.jpg` is
+not handed `index.html`. `design-ref/` holds the source jpgs and `slides.html`
+and is gitignored and dockerignored: reference only, never shipped.
+
+**No motion anywhere**, same as the app: no `transition`, no `@keyframes`.
+
+**Product truth (never contradict in copy):** Calnio syncs **both ways**. Notion
+→ Apple Calendar always, and Apple Calendar → Notion when the user switches
+two-way on for that database. Never describe it as one-way. Notion wins when both
+sides changed at once. Repeating events and invites are never imported. A user
+picks **several databases**, and each one gets **its own Apple calendar**. Ticking
+a database is the whole setup: the date column is inferred and the calendar is
+created. It is **hosted**, so nothing to install and no server to run. It is
+**free**, because the developer runs it on a Raspberry Pi on his desk; the `$0`
+stat card is where the page says so, and there is no pricing card. It is **not
+open source** — never mention GitHub, MIT, Docker, pip, or a CLI install.
 
 **Voice:** plain, honest, quietly confident. First person singular when the
 developer speaks ("I host Calnio myself"). No hype, no "revolutionize", no
@@ -290,13 +314,13 @@ out loud instead of hiding it.
 
 # Calnio App Design System
 
-**Scope: every page, the landing page included.** `/`, `/dashboard`, `/dashboard/syncs`, `/dashboard/connections`, `/dashboard/settings`, `/welcome`, `/me`. Source of truth: `frontend/src/styles/tokens.css`, `base.css`, `components.css`, `layout.css`. If this document and those files disagree, the files win.
+**Scope: every signed-in page.** `/dashboard`, `/dashboard/syncs`, `/dashboard/connections`, `/dashboard/settings`, `/welcome`, `/me`. **Not `/`**, which runs the landing system above. Source of truth: `frontend/src/styles/tokens.css`, `base.css`, `components.css`, `layout.css`. If this document and those files disagree, the files win.
 
 It should read like a settings screen a bank could ship: the marketing page reports what the product does in the same voice the app reports state.
 
 **Rules that hold everywhere here**
 
-1. Every rule lives under `.app-ui` and nothing else, apart from the three layout classes. Every page root carries that class: `DashboardLayout`, `WelcomeView` and `LandingView`.
+1. Every rule lives under `.app-ui` and nothing else, apart from the three layout classes. Every page root carries that class: `DashboardLayout` and `WelcomeView`. `LandingView` carries `.landing-ui` instead.
 2. **Components read tokens, never raw values.** A hex, a px gap or a font size written in a component's scoped block is a bug: it means a token is missing from `app.css`. The only literals left in components are one-off geometry (progress bar height, toggle track).
 3. **No motion.** No `transition`, no `@keyframes`. Hover changes colour, state changes colour, a toggle knob simply sits at the other end.
 4. **No icons, no emoji, no images** other than the user's Google avatar. A tick in the setup checklist is the character `✓`.
