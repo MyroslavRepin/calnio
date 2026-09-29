@@ -15,9 +15,9 @@ const state = reactive({
 // Why the dance can fail, in the user's terms. The backend never redirects with
 // a flag it did not put here.
 const OAUTH_ERRORS = {
-  session: 'your session expired while you were in Notion — connect again',
+  session: 'your session expired while you were in Notion, connect again',
   oauth: 'notion did not finish the authorization',
-  token: 'notion sent back an unexpected response — try again',
+  token: 'notion sent back an unexpected response, try again',
 }
 
 // Reads the failure flag off the URL once and strips it, so a refresh does not
@@ -75,7 +75,7 @@ async function connect() {
     LOGIN,
     {},
     'could not start the Notion connection',
-    'network error — is the API running?',
+    'network error, is the API running?',
   )
 
   if (result.error) {

@@ -2,13 +2,14 @@
    component needs it; anything used once stays in that component's scoped
    block. */
 
-/* Card, the only container. No shadows, no nesting: a card never holds another
-   card. */
+/* Card, the only container. White on the grey page ground, one hairline, the
+   faintest shadow. No nesting: a card never holds another card. */
 
 .app-ui .card {
   background: var(--app-canvas);
   border: 1px solid var(--app-border);
-  border-radius: var(--app-radius);
+  border-radius: var(--app-radius-card);
+  box-shadow: var(--app-shadow-card);
 }
 
 .app-ui .card + .card {
@@ -22,9 +23,9 @@
   flex-wrap: wrap;
   gap: var(--app-gap-inline) var(--app-gap-block);
   padding: var(--app-pad-card-head);
-  border-bottom: 1px solid var(--app-border);
+  border-bottom: 1px solid var(--app-border-subtle);
   background: var(--app-canvas-subtle);
-  border-radius: var(--app-radius) var(--app-radius) 0 0;
+  border-radius: var(--app-radius-card) var(--app-radius-card) 0 0;
 }
 
 .app-ui .card-head h2 {
@@ -83,8 +84,8 @@
   background: var(--app-accent-tint);
 }
 
-/* Buttons. One shape, three tones: bare .btn is green and commits, .plain is
-   grey and is the default, .danger destroys. At most one green per view. */
+/* Buttons. One shape, three tones: bare .btn is ink and commits, .plain is
+   white and is the default, .danger destroys. At most one ink button per view. */
 
 .app-ui .btn,
 .app-ui button.btn,
@@ -100,8 +101,10 @@
   font-family: var(--app-font);
   font-size: var(--app-text-body);
   font-weight: var(--app-weight-medium);
+  letter-spacing: -0.01em;
   color: var(--app-fg-on-emphasis);
   background: var(--app-btn-primary);
+  border-color: transparent;
   cursor: pointer;
   text-decoration: none;
 }
@@ -282,60 +285,35 @@
   overflow-wrap: anywhere;
 }
 
-/* Numbered wizard, shared by the Notion and the Apple setup. */
-
-.app-ui .setup {
-  --gap: var(--app-space-5);
-}
-
-.app-ui .step {
-  --gap: var(--app-gap-inline);
-}
-
-/* A step the user has not reached yet stays visible but recedes. */
-.app-ui .step.ahead {
-  opacity: 0.55;
-}
-
-/* The numeral and the heading of one wizard step. */
-.app-ui .stephead {
-  --gap: var(--app-gap-inline);
-}
-
-.app-ui .step h3 {
-  margin: 0;
-  font-size: var(--app-text-body);
-  font-weight: var(--app-weight-bold);
-  color: var(--app-fg);
-}
-
 /* The only place the app numbers anything, so the disc carries the sequence
-   without an icon set. */
+   without an icon set. Shared because SetupStep and anything that grows a
+   sequence later must draw the same marker. */
 .app-ui .num {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex: none;
   width: var(--app-marker);
   height: var(--app-marker);
   border-radius: var(--app-radius-pill);
   border: 1px solid var(--app-border);
-  background: var(--app-canvas-subtle);
+  background: var(--app-canvas);
   font-size: var(--app-text-meta);
   font-weight: var(--app-weight-bold);
-  color: var(--app-fg-muted);
+  color: var(--app-fg-subtle);
+}
+
+/* The step being worked on, so the eye lands on it before anything else. */
+.app-ui .num.now {
+  background: var(--app-fg);
+  border-color: var(--app-fg);
+  color: var(--app-fg-on-emphasis);
 }
 
 .app-ui .num.done {
   background: var(--app-success-tint);
   border-color: var(--app-success-line);
   color: var(--app-success);
-}
-
-/* Indented under the numeral, so the sequence reads as one column. */
-.app-ui .stepbody {
-  --gap: var(--app-gap-stack);
-  align-items: flex-start;
-  padding-left: calc(var(--app-marker) + var(--app-gap-inline));
 }
 
 /* A connected account: its stored facts, then the actions on it. Shared by the
@@ -396,7 +374,7 @@
   height: 28px;
   padding: 3px;
   border: 1px solid var(--app-border);
-  border-radius: var(--app-radius);
+  border-radius: var(--app-radius-pill);
   background: var(--app-canvas-subtle);
 }
 
@@ -408,7 +386,7 @@
 .app-ui .knob {
   width: var(--app-marker);
   height: var(--app-marker);
-  border-radius: var(--app-radius-sm);
+  border-radius: var(--app-radius-pill);
   background: var(--app-canvas);
   border: 1px solid var(--app-border);
 }

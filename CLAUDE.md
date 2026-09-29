@@ -212,7 +212,7 @@ Binding. Existing code that breaks them is wrong and gets rewritten, not copied.
 
 **Layout**
 
-1. `views/` holds one file per route, `components/` holds pieces. Both split into `landing/` and `app/`, and a file in one half never imports from the other, nor reads the other's stylesheet.
+1. `views/` holds one file per route, `components/` holds pieces. Both split into `landing/` and `app/`, and a file in one half never imports from the other, nor reads the other's stylesheet. The single exception is `components/CalnioMark.vue`, which sits above the split: it is the logo, it is pure brand, and it carries no design system.
 2. Filenames say what the thing is. A view ends in `View`, a layout in `Layout`, everything else is a plain noun. No `The` prefix.
 3. Styles live in `styles/`: `tokens.css` (variables on `:root, .app-ui`, plus the page reset), `layout.css` (the three arrangement classes), `base.css` (page-level type, headers, status text), `components.css` (card, label, button, form, list, datarows, wizard, switch), `landing.css` (everything under `.landing-ui`, the marketing page alone). `main.js` imports them in that order, because each reads from the ones before it. There is no sixth file.
 
@@ -372,7 +372,9 @@ Layout widths: `--app-width-page` 1280px (dashboard shell) · `--app-width-narro
 
 Sizes: `--app-control-height` 32px (buttons, inputs) · `--app-row-height` 40px (clickable list row) · `--app-marker` 20px (step numeral, pill height, toggle knob) · `--app-avatar` 24px · `--app-avatar-lg` 48px.
 
-Radii: `--app-radius` 6px (cards, buttons, inputs, lists) · `--app-radius-sm` 4px (code chip, toggle knob) · `--app-radius-pill` 999px (labels, avatars). Nothing is bigger than 6px except a pill.
+Radii: `--app-radius-card` 12px (cards) · `--app-radius` 8px (buttons, inputs, lists) · `--app-radius-sm` 6px (code chip) · `--app-radius-pill` 999px (labels, avatars, the toggle track and knob). A card is rounder than a control, which is rounder than a code chip. Nothing is bigger than 12px except a pill.
+
+Shadow: `--app-shadow-card` `0 1px 2px rgba(0,0,0,0.04)`, on `.card` and nothing else. It is a whisper, so a card lifts off the grey ground without looking glossy. The landing page's big `20px 50px -20px` shadow never appears in the app.
 
 **No breakpoints.** Columns reflow with `flex-wrap` and a `min()` basis, same discipline as the landing page.
 
@@ -380,34 +382,39 @@ Radii: `--app-radius` 6px (cards, buttons, inputs, lists) · `--app-radius-sm` 4
 
 | Token | Value | Use |
 |---|---|---|
-| `--app-fg` | `#1f2328` | headings, values, anything you must read |
-| `--app-fg-muted` | `#59636e` | labels, body copy, `dt`, secondary rows |
-| `--app-fg-subtle` | `#818b98` | disabled, placeholder, unmet checklist item |
+| `--app-fg` | `#0a0a0a` | headings, values, anything you must read |
+| `--app-fg-muted` | `#6e6e73` | labels, body copy, `dt`, secondary rows |
+| `--app-fg-subtle` | `#8e8e93` | disabled, placeholder, unmet checklist item |
 | `--app-fg-on-emphasis` | `#fff` | text on a filled button |
-| `--app-canvas` | `#fff` | page and card background |
-| `--app-canvas-subtle` | `#f6f8fa` | card headers, hover, neutral fills |
-| `--app-border` | `#d1d9e0` | card, input, list outlines |
-| `--app-border-subtle` | `#e4e8ec` | dividers inside a card |
-| `--app-border-emphasis` | `rgba(31,35,40,0.15)` | edge of a filled button |
+| `--app-ground` | `#f5f5f7` | the page behind the cards |
+| `--app-canvas` | `#fff` | card background, header bars |
+| `--app-canvas-subtle` | `#f5f5f7` | card headers, neutral fills |
+| `--app-border` | `#e3e3e8` | card, input, list outlines |
+| `--app-border-subtle` | `#ececf0` | dividers inside a card |
+| `--app-border-emphasis` | `rgba(10,10,10,0.12)` | edge of a filled button |
+
+**The page ground is grey and a card is white.** That is the one structural change from the old palette: a card is a surface sitting on the page, not an outline drawn on it. Anything that used `--app-canvas-subtle` as a hover or active fill **on the page ground** is now invisible and has to lift to `--app-canvas` instead. The sidebar's active row is the one place this bit.
 
 Four roles, each with a text colour, a tint and a line, so a state can be a word, a pill or a whole panel without inventing a colour:
 
 | Role | Text | Tint | Line | Means |
 |---|---|---|---|---|
-| accent | `#0969da` | `#ddf4ff` | `rgba(9,105,218,0.4)` | links, focus, "syncing now" |
-| success | `#1a7f37` | `#dafbe1` | `rgba(31,136,61,0.4)` | connected, done, sync on |
-| attention | `#9a6700` | `#fff8c5` | `rgba(154,103,0,0.4)` | half-configured, needs a decision |
-| danger | `#d1242f` | `#ffebe9` | `rgba(255,129,130,0.5)` | failed, destructive |
+| accent | `#2d62d6` | `#e6edfb` | `rgba(45,98,214,0.35)` | links, focus, "syncing now" |
+| success | `#23692f` | `#e8f4ea` | `rgba(35,105,47,0.3)` | connected, done, sync on |
+| attention | `#7a5a12` | `#f3eee2` | `rgba(122,90,18,0.3)` | half-configured, needs a decision |
+| danger | `#8f2a54` | `#f6e8ee` | `rgba(143,42,84,0.3)` | failed, destructive |
 
-Buttons carry their own tokens: `--app-btn-bg` `#f6f8fa` / `--app-btn-bg-hover` `#eef1f4` (neutral), `--app-btn-primary` `#1f883d` / `--app-btn-primary-hover` `#1a7f37` (the one affirmative fill), `--app-btn-danger-hover` `#a40e26`.
+These are the landing page's four event chip tints, reused as state roles, so a synced item looks the same on the marketing page and in the dashboard.
 
-Rules: the green button is a role of its own, not `success` reused. A saturated fill appears only on a button, a toggle track or a progress fill. Everything else states its role with text on a tint. Focus is `--app-focus-ring` on inputs and a 2px accent outline elsewhere.
+Buttons carry their own tokens: `--app-btn-bg` `#fff` / `--app-btn-bg-hover` `#f5f5f7` (neutral), `--app-btn-primary` `#0a0a0a` / `--app-btn-primary-hover` `#2c2c2e` (the one affirmative fill), `--app-btn-danger-hover` `#71203f`.
+
+Rules: **the affirmative button is ink**, the same button the landing page uses. It is a role of its own, never `accent` or `success` reused, and there is still at most one per view. A saturated fill appears only on a button, a toggle track or a progress fill. Everything else states its role with text on a tint. Focus is `--app-focus-ring` on inputs and a 2px accent outline elsewhere.
 
 ## 2. Components (all in `components.css`)
 
-- **`.card`**: the only container: white, 1px `--app-border`, 6px radius, no shadow. `.card-head` (subtle background, hairline under it, `h2` at 14px/600, one action or one `.label` on the right) plus `.card-body` (16px padding). Consecutive cards space themselves; a card never contains another card.
+- **`.card`**: the only container: white on the grey ground, 1px `--app-border`, 12px radius, `--app-shadow-card`. `.card-head` (subtle background, hairline under it, `h2` at 14px/600, one action or one `.label` on the right) plus `.card-body` (16px padding). Consecutive cards space themselves; a card never contains another card, which is why `MappingAdd` carries no card of its own and its two callers wrap it.
 - **`.label`**: the state pill. 20px tall, `--app-radius-pill`, 12px/500, one tone class: `neutral` `accent` `success` `attention` `danger`. Colour repeats what the text already says, it never carries the meaning alone.
-- **`.btn`**: one shape, three tones. Bare `.btn` is green and commits (max one per view), `.btn.plain` is grey and is the default for everything else, `.btn.danger` is red and destroys. 32px tall, 14px/500, 6px radius. Disabled is `opacity: 0.6`.
+- **`.btn`**: one shape, three tones. Bare `.btn` is ink and commits (max one per view), `.btn.plain` is white with a hairline and is the default for everything else, `.btn.danger` destroys. 32px tall, 14px/500, 8px radius. Disabled is `opacity: 0.6`.
 - **`.actions`**: a wrapping row of buttons, `--app-gap-inline`. Buttons wrap rather than shrink.
 - **`.field`**: stacked label (14px/600) over an input (32px, 6px radius, focus ring). Max `--app-width-field`.
 - **`.picklist`**: bordered list box for a short set of radio choices, 40px rows, hover on `--app-canvas-subtle`. Max `--app-width-list`.
@@ -417,9 +424,23 @@ Rules: the green button is a role of its own, not `success` reused. A saturated 
 - **`.note`**: 12px muted small print. **`.error`**: 14px on the danger tint with a danger line, 6px radius. **`.loading`**: 14px muted, the single word while data is in flight.
 - **`code`**: mono 12px on `--app-canvas-subtle` with a subtle border, 4px radius.
 
-Layout pieces that stay local to their component: `AppHeader` (wordmark, avatar, sign out), the sidebar menu in `DashboardLayout` (36px rows, active = subtle fill + 600 weight, **no coloured bar**), the welcome progress bar, the settings toggle, the setup step numeral.
+- **`.num`**: the step numeral, the only place the app numbers anything. Outlined by default, `.now` is filled ink (the step being worked on), `.done` is the success tint with a tick. Shared, because `SetupStep` and anything that grows a sequence later must draw the same marker.
+
+Layout pieces that stay local to their component: `AppHeader` (mark, wordmark, avatar, sign out), the sidebar menu in `DashboardLayout` (36px rows, active = white fill + hairline + 600 weight, **no coloured bar**), the settings toggle, `SetupStep`'s row and indented body.
 
 ## 3. Page anatomy
+
+## Setup, and why it is shaped this way
+
+`/welcome` is onboarding, outside the dashboard shell. **Three steps, one open at a time.** `SetupStep` draws a row (numeral, title, and once done the answer it produced as a `.label success`); only the step being worked on renders its body, a finished one collapses to its answer, a later one is dimmed and marked Next. The current step is derived, not stored: it is the first stage in `useSetup` that is not done, so a user who disconnects something lands back on it without any extra state.
+
+**The order is forced by the API, not by taste.** `POST /api/v1/me/syncs` creates iCloud calendars, so the Apple credential must exist before a database can be picked. Notion, then iCloud, then databases. Do not reorder without changing the backend first.
+
+**Step 2 is where users leave.** Apple offers no sign-in button for CalDAV, so it needs an app-specific password the user generates by hand, and it needs two-factor authentication on their Apple Account. That walkthrough lives inside `AppleCalendarSetup` rather than being passed in through a slot: the requirement is the same wherever the form is shown, and stating it late is what turns the step into a dead end. The two-factor requirement is stated **before** the fields, not after a failure.
+
+The three wizards are chrome-free. `NotionSetup`, `AppleCalendarSetup` and `MappingAdd` render a body and nothing else, so whatever holds them owns the heading: `SetupStep` on `/welcome`, `ConnectionRow` on Connections, a plain card on Syncs. None of them takes a step number.
+
+Copy rule for this page: it must never suggest the product is not finished. It previously said syncing "switches on later in beta", which read as "not ready" and cost real signups.
 
 Shell: `AppHeader` (hairline bottom) → `.shell` (max `--app-width-page`, `--app-gap-section` between sidebar and content) → sidebar (Overview / **Syncs** / Connections / Settings, then Account → Profile) → content, a `.page-head` followed by cards. `/me` renders inside this shell as an absolute child route, so the sidebar stays visible. `/welcome` sits outside it: sticky bar with a progress fill, one narrow column, three steps. `/` sits outside it too: `LandingNav`, a centred `main`, `LandingFooter`.
 

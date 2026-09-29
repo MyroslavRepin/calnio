@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../../composables/useAuth'
-import CalnioMark from './CalnioMark.vue'
+import CalnioMark from '../CalnioMark.vue'
 
 const authResult = useAuth()
 const state = authResult.state

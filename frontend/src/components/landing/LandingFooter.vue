@@ -1,5 +1,5 @@
 <script setup>
-import CalnioMark from './CalnioMark.vue'
+import CalnioMark from '../CalnioMark.vue'
 </script>
 
 <template>

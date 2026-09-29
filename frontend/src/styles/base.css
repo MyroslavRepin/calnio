@@ -4,7 +4,7 @@
 
 .app-ui {
   min-height: 100vh;
-  background: var(--app-canvas);
+  background: var(--app-ground);
   color: var(--app-fg);
   font-family: var(--app-font);
   font-size: var(--app-text-body);
@@ -31,9 +31,9 @@
 
 .app-ui .title {
   font-size: var(--app-text-page);
-  font-weight: var(--app-weight-bold);
+  font-weight: 700;
   line-height: var(--app-lh-tight);
-  letter-spacing: normal;
+  letter-spacing: -0.02em;
   color: var(--app-fg);
 }
 
@@ -110,7 +110,7 @@
   align-items: flex-start;
   max-width: var(--app-width-panel);
   margin: var(--app-space-7) auto;
-  padding: var(--app-space-5);
+  padding: var(--app-space-6);
 }
 
 /* Status */

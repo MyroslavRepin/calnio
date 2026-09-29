@@ -96,9 +96,8 @@ const lastResult = computed(function () {
 const workspaceName = computed(function () {
   if (notion.connection?.workspace_name) {
     return notion.connection.workspace_name
-  } else {
-    return '—'
   }
+  return 'Not named'
 })
 
 // One line per sync: which database goes where, and whether it is running. The
@@ -156,8 +155,8 @@ const summaries = computed(function () {
           </li>
         </ul>
         <p class="body">
-          The walkthrough takes three steps and covers the app-specific password
-          Apple requires.
+          Three steps, about two minutes. The walkthrough covers the
+          app-specific password Apple requires.
         </p>
         <router-link class="btn" :to="{ name: 'welcome' }">Continue setup</router-link>
       </div>

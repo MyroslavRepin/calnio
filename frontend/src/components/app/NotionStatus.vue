@@ -16,16 +16,15 @@ const error = ref('')
 
 // When the workspace was last checked.
 const verified = computed(function () {
-  return formatDateTime(state.connection?.last_verified_at, '—')
+  return formatDateTime(state.connection?.last_verified_at, 'Never')
 })
 
 // Notion gives us a workspace name most of the time, but not always.
 const workspaceName = computed(function () {
   if (state.connection.workspace_name) {
     return state.connection.workspace_name
-  } else {
-    return '—'
   }
+  return 'Not named'
 })
 
 // Whether this grant may write. Notion fixes what an integration may do when

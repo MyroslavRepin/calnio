@@ -36,7 +36,7 @@ async function connect(icloudEmail, appSpecificPassword) {
       },
     },
     'could not connect',
-    'network error — is the API running?',
+    'network error, is the API running?',
   )
   state.busy = false
 
