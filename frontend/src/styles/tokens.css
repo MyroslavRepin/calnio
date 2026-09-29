@@ -47,8 +47,8 @@
   --app-btn-danger-hover: #a40e26;
 
   /* Type */
-  --app-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica,
-    Arial, sans-serif;
+  --app-font: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans',
+    Helvetica, Arial, sans-serif;
   --app-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
 
   /* Five sizes, no more, plus one. Anything that fits none of them is being
@@ -58,8 +58,8 @@
   --app-text-head: 16px;
   --app-text-title: 20px;
   --app-text-page: 24px;
-  /* The sixth, and the only place the app's five are not enough: the landing
-     hero, where a 24px headline reads as an unfinished page. Used nowhere else. */
+  /* The sixth. The landing page runs its own scale on top of these, in
+     landing.css, because a marketing headline is not a settings screen. */
   --app-text-display: clamp(28px, 5vw, 40px);
 
   --app-weight-normal: 400;
