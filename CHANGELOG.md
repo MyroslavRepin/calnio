@@ -15,6 +15,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [0.6.0] - 2026-09-29
+
+### Added
+
+- Landing page rebuilt on its own design system, with alternating dark and light sections
+- Hero task table is interactive: ticking a task greys out its calendar event
+- Telegram alerts for signup, login, Notion connected, iCloud connected, setup complete and account deleted
+- Telegram buttons for stats, funnel, failures and health, answered by a webhook
+- Health endpoint at /api/v1/health, reporting whether the database answers
+- Greppable run, user and sync ids on every log line, plus a rotating log file
+- A failed sync records why it failed and which run said so
+
+### Changed
+
+- Dashboard rebranded onto the landing palette: ink, grey page ground, white cards
+- Inter replaces the system font stack across the whole app
+- Setup is three steps with one open at a time, rather than three open at once
+- The Apple walkthrough states the two-factor requirement before the fields, not after a failure
+- The SPA catch-all serves a real file when the build holds one, so images stop answering with index.html
+
+### Fixed
+
+- og:image is an absolute URL, so link previews render when the page is shared
+- Sidebar active row is visible again against the grey page ground
+- Welcome page no longer claims syncing switches on later in beta
+- Em dashes removed from the frontend, per the style guide
+
+### Removed
+
+- The pricing card, replaced by the free stat card on the landing page
+- GoogleButton, HowItWorks and GetStarted, folded into the rebuilt landing page
+
 ## [0.5.0] - 2026-09-16
 
 ### Added
