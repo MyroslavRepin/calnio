@@ -1,6 +1,14 @@
 import jwt
 from authlib.integrations.starlette_client import OAuthError
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
+    Request,
+    Response,
+    status,
+)
 from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
@@ -11,6 +19,7 @@ from backend.core.security import jwt_service
 from backend.deps.auth import clear_auth_cookies, get_current_user, set_auth_cookies
 from backend.deps.db import get_session
 from backend.models.user import User
+from backend.repo.telegram import notify
 from backend.repo.user import UserRepo
 from backend.schemas.auth import MeResponse
 
@@ -26,7 +35,11 @@ async def google_login(request: Request):
 
 
 @router.get("/auth/oauth/google/callback")
-async def google_callback(request: Request, db: Session = Depends(get_session)):
+async def google_callback(
+    request: Request,
+    background: BackgroundTasks,
+    db: Session = Depends(get_session),
+):
     """Exchange Google's code, mint tokens, land on the dashboard."""
     try:
         token = await oauth.google.authorize_access_token(request)
@@ -39,7 +52,7 @@ async def google_callback(request: Request, db: Session = Depends(get_session)):
         logger.warning("google oauth: missing userinfo in token response")
         return RedirectResponse(f"{settings.frontend_url}/?auth_error=userinfo")
 
-    user = UserRepo(db).get_or_create_user_oauth(
+    user, created = UserRepo(db).get_or_create_user_oauth(
         "google",
         info["sub"],
         email=info["email"],
@@ -47,6 +60,15 @@ async def google_callback(request: Request, db: Session = Depends(get_session)):
         picture=info.get("picture"),
     )
     db.commit()
+
+    if created:
+        logger.info("new user signed up: id={}", user.id)
+        # After the response, so Telegram never sits between a new user and
+        # their dashboard. notify swallows its own failures on top of that.
+        background.add_task(
+            notify,
+            f"New Calnio user\n{user.name or 'no name'}\n{user.email}\nid {user.id}",
+        )
 
     access_token, refresh_token = jwt_service.create_token_pair(str(user.id))
     response = RedirectResponse(f"{settings.frontend_url}/dashboard")

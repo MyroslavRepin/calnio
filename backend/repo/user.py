@@ -44,15 +44,22 @@ class UserRepo:
         email: str,
         name: str | None = None,
         picture: str | None = None,
-    ) -> User:
+    ) -> tuple[User, bool]:
+        """Return the user for this grant, and whether the account is new.
+
+        The flag is not decoration: the callback notifies on a signup and stays
+        quiet on a login, and linking a second provider to an existing email is
+        a login, not a signup.
+        """
         user = self.get_by_oauth(provider, provider_account_id)
         if user:
             # Profile may have changed on the provider side since last login.
             user.name = name
             user.picture = picture
-            return user
+            return user, False
 
         user = self.get_by_email(email)
+        created = user is None
         if user is None:
             user = User(email=email, name=name, picture=picture)
             self.db.add(user)
@@ -61,4 +68,4 @@ class UserRepo:
             OAuthAccount(provider=provider, provider_account_id=provider_account_id)
         )
         self.db.flush()  # assign ids so caller can mint tokens before commit
-        return user
+        return user, created
