@@ -6,45 +6,47 @@
 :root,
 .app-ui {
   /* Text */
-  --app-fg: #1f2328;
-  --app-fg-muted: #59636e;
-  --app-fg-subtle: #818b98;
+  --app-fg: #0a0a0a;
+  --app-fg-muted: #6e6e73;
+  --app-fg-subtle: #8e8e93;
   --app-fg-on-emphasis: #ffffff;
 
-  /* Surfaces */
+  /* Surfaces. The page ground is grey and a card is white, so a card is a
+     surface rather than an outline drawn on the page. */
+  --app-ground: #f5f5f7;
   --app-canvas: #ffffff;
-  --app-canvas-subtle: #f6f8fa;
+  --app-canvas-subtle: #f5f5f7;
 
   /* Lines */
-  --app-border: #d1d9e0;
-  --app-border-subtle: #e4e8ec;
-  --app-border-emphasis: rgba(31, 35, 40, 0.15);
+  --app-border: #e3e3e8;
+  --app-border-subtle: #ececf0;
+  --app-border-emphasis: rgba(10, 10, 10, 0.12);
 
   /* Roles. Each has a text colour, a tint and a line, so a state can be a
      word, a pill or a panel without inventing a new colour. */
-  --app-accent: #0969da;
-  --app-accent-tint: #ddf4ff;
-  --app-accent-line: rgba(9, 105, 218, 0.4);
+  --app-accent: #2d62d6;
+  --app-accent-tint: #e6edfb;
+  --app-accent-line: rgba(45, 98, 214, 0.35);
 
-  --app-success: #1a7f37;
-  --app-success-tint: #dafbe1;
-  --app-success-line: rgba(31, 136, 61, 0.4);
+  --app-success: #23692f;
+  --app-success-tint: #e8f4ea;
+  --app-success-line: rgba(35, 105, 47, 0.3);
 
-  --app-attention: #9a6700;
-  --app-attention-tint: #fff8c5;
-  --app-attention-line: rgba(154, 103, 0, 0.4);
+  --app-attention: #7a5a12;
+  --app-attention-tint: #f3eee2;
+  --app-attention-line: rgba(122, 90, 18, 0.3);
 
-  --app-danger: #d1242f;
-  --app-danger-tint: #ffebe9;
-  --app-danger-line: rgba(255, 129, 130, 0.5);
+  --app-danger: #8f2a54;
+  --app-danger-tint: #f6e8ee;
+  --app-danger-line: rgba(143, 42, 84, 0.3);
 
-  /* The green is the one affirmative fill, a role of its own rather than the
-     success colour reused. */
-  --app-btn-bg: #f6f8fa;
-  --app-btn-bg-hover: #eef1f4;
-  --app-btn-primary: #1f883d;
-  --app-btn-primary-hover: #1a7f37;
-  --app-btn-danger-hover: #a40e26;
+  /* Ink is the one affirmative fill, the same button the landing page uses. It
+     is a role of its own, never the accent or the success colour reused. */
+  --app-btn-bg: #ffffff;
+  --app-btn-bg-hover: #f5f5f7;
+  --app-btn-primary: #0a0a0a;
+  --app-btn-primary-hover: #2c2c2e;
+  --app-btn-danger-hover: #71203f;
 
   /* Type */
   --app-font: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans',
@@ -90,16 +92,20 @@
   --app-pad-card: var(--app-space-4);
   --app-pad-card-head: var(--app-space-3) var(--app-space-4);
 
-  /* Shape and size */
-  --app-radius: 6px;
-  --app-radius-sm: 4px;
+  /* Shape and size. A card is rounder than a control, which is rounder than a
+     code chip. Nothing is a pill except a label. */
+  --app-radius-card: 12px;
+  --app-radius: 8px;
+  --app-radius-sm: 6px;
   --app-radius-pill: 999px;
   --app-control-height: 32px;
   --app-row-height: 40px;
   --app-marker: 20px;
   --app-avatar: 24px;
   --app-avatar-lg: 48px;
-  --app-focus-ring: 0 0 0 3px rgba(9, 105, 218, 0.3);
+  --app-focus-ring: 0 0 0 3px rgba(45, 98, 214, 0.25);
+  /* A whisper, so a card lifts off the grey ground without looking glossy. */
+  --app-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04);
 
   /* Layout */
   --app-width-page: 1280px;
@@ -130,7 +136,7 @@ html {
 body {
   margin: 0;
   overflow-x: hidden;
-  background: var(--app-canvas);
+  background: var(--app-ground);
   color: var(--app-fg);
   font-family: var(--app-font);
   font-size: var(--app-text-body);

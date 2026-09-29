@@ -72,15 +72,20 @@ const isAdmin = computed(function () {
   color: var(--app-fg);
 }
 
+/* The sidebar sits on the grey page ground, so hover and active lift to white
+   rather than tinting. --app-canvas-subtle is that same grey and would leave
+   both states invisible here. */
 .menu a:hover {
-  background: var(--app-canvas-subtle);
+  background: var(--app-canvas);
   text-decoration: none;
 }
 
 /* Exact-match class: vue-router marks parents active too, which would light up
    Overview on every child route. */
 .menu a.router-link-exact-active {
-  background: var(--app-canvas-subtle);
+  background: var(--app-canvas);
+  border: 1px solid var(--app-border);
+  padding: 5px calc(var(--app-space-3) - 1px);
   font-weight: var(--app-weight-bold);
 }
 </style>

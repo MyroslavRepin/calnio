@@ -15,7 +15,7 @@ const error = ref('')
 
 // When the credentials were last checked against iCloud.
 const verified = computed(function () {
-  return formatDateTime(state.connection?.last_verified_at, '—')
+  return formatDateTime(state.connection?.last_verified_at, 'Never')
 })
 
 async function confirmDisconnect() {

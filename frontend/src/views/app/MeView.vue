@@ -33,9 +33,8 @@ const initial = computed(function () {
 const displayName = computed(function () {
   if (auth.user.name) {
     return auth.user.name
-  } else {
-    return '—'
   }
+  return 'Not set'
 })
 </script>
 

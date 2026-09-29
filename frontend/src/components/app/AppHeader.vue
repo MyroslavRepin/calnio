@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../../composables/useAuth'
+import CalnioMark from '../CalnioMark.vue'
 
 const authResult = useAuth()
 const state = authResult.state
@@ -40,7 +41,10 @@ async function signOut() {
 <template>
   <header class="bar">
     <div class="row headerrow">
-      <router-link to="/" class="wordmark">Calnio</router-link>
+      <router-link to="/" class="wordmark">
+        <span class="plate"><CalnioMark /></span>
+        Calnio
+      </router-link>
 
       <div class="row session">
         <router-link to="/me" class="account" :title="state.user?.email">
@@ -59,6 +63,13 @@ async function signOut() {
 .bar {
   background: var(--app-canvas);
   border-bottom: 1px solid var(--app-border);
+}
+
+.plate {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  margin-right: var(--app-gap-inline);
 }
 
 .headerrow {

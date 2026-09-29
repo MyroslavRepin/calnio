@@ -1,5 +1,5 @@
 <script setup>
-// One connection in the Connections list, as a card that expands in place —
+// One connection in the Connections list, as a card that expands in place.
 defineProps({
   name: { type: String, required: true },
   status: { type: String, required: true },

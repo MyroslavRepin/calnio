@@ -43,7 +43,7 @@ async function update(body) {
     BASE,
     { method: 'PUT', json: body },
     'could not save',
-    'network error — is the API running?',
+    'network error, is the API running?',
   )
   state.busy = false
 

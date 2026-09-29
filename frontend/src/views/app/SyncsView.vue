@@ -66,7 +66,14 @@ const error = ref(null)
         @error="error = $event"
       />
 
-      <MappingAdd @error="error = $event" />
+      <section class="card">
+        <div class="card-head">
+          <h2>Add a sync</h2>
+        </div>
+        <div class="card-body">
+          <MappingAdd @error="error = $event" />
+        </div>
+      </section>
     </template>
 
     <p v-if="error" class="error pageerror">{{ error }}</p>

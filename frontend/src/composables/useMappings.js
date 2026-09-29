@@ -51,7 +51,7 @@ async function create(dataSourceIds) {
     BASE,
     { method: 'POST', json: { data_source_ids: dataSourceIds } },
     'could not start syncing',
-    'network error — is the API running?',
+    'network error, is the API running?',
   )
   state.busy = false
 
@@ -78,7 +78,7 @@ async function update(mappingId, body) {
     BASE + '/' + mappingId,
     { method: 'PUT', json: body },
     'could not save',
-    'network error — is the API running?',
+    'network error, is the API running?',
   )
   state.busy = false
 

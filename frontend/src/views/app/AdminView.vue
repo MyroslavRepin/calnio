@@ -148,7 +148,7 @@ function yesNo(flag) {
 }
 
 function joinedLabel(value) {
-  return formatDateTime(value, '—')
+  return formatDateTime(value, 'Unknown')
 }
 </script>
 

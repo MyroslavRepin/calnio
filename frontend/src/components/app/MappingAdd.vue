@@ -5,7 +5,8 @@ import { useNotion } from '../../composables/useNotion'
 
 // Tick the databases, press one button, done. The server infers each date column
 // and gives each database its own calendar, so this is the whole setup. Anything
-// it guessed wrong is changed on the sync's own card afterwards.
+// it guessed wrong is changed on the sync's own card afterwards. No card of its
+// own: the setup page puts this inside a step, the Syncs page inside a card.
 const emit = defineEmits(['error', 'added'])
 
 const notionResult = useNotion()
@@ -50,9 +51,8 @@ const allTaken = computed(function () {
 const noneShared = computed(function () {
   if (fetched.value && notion.databases.length === 0) {
     return true
-  } else {
-    return false
   }
+  return false
 })
 
 // Said out loud before the button is pressed, because it writes to the user's
@@ -62,17 +62,17 @@ const calendarNote = computed(function () {
     return ''
   }
   if (ticked.value.length === 1) {
-    return 'Calnio will use a calendar of the same name, or create it.'
+    return 'Calnio will use an Apple calendar of the same name, or create it.'
   }
   return (
     'Calnio will use ' +
     ticked.value.length +
-    ' calendars of the same names, creating any that do not exist yet.'
+    ' Apple calendars of the same names, creating any that do not exist yet.'
   )
 })
 
-// The list is fetched on mount rather than behind a button: it is one Notion
-// call and the page exists to show it.
+// One Notion call, and the component exists to show its result, so it runs on
+// mount rather than behind a button.
 async function loadDatabases() {
   emit('error', null)
   loading.value = true
@@ -115,78 +115,75 @@ async function shareMore() {
 </script>
 
 <template>
-  <section class="card">
-    <div class="card-head">
-      <h2>Add a sync</h2>
-    </div>
+  <div class="column addsync">
+    <p v-if="loading && !fetched" class="loading">Reading your Notion databases…</p>
 
-    <div class="card-body">
-      <p v-if="loading && !fetched" class="loading">Reading your Notion databases…</p>
+    <template v-else-if="noneShared">
+      <p class="body">
+        Calnio can see your workspace, but no databases were shared with it.
+        Notion's dialog lets you finish without ticking anything, which is the
+        usual cause. Open it again and tick the ones you want in your calendar.
+      </p>
+      <div class="row actions">
+        <button class="btn" type="button" :disabled="notion.busy" @click="shareMore">
+          Share databases
+        </button>
+      </div>
+    </template>
 
-      <template v-else-if="noneShared">
-        <p class="body">
-          Calnio can see your workspace, but no databases were shared with it.
-          Re-open Notion's dialog and tick the ones you want in your calendar.
-        </p>
-        <div class="row actions">
-          <button class="btn" type="button" :disabled="notion.busy" @click="shareMore">
-            Share databases
-          </button>
-        </div>
-      </template>
+    <template v-else-if="allTaken">
+      <p class="body">
+        Every database you shared is already syncing. Share another one in Notion
+        to add more.
+      </p>
+      <div class="row actions">
+        <button class="btn plain" type="button" :disabled="notion.busy" @click="shareMore">
+          Share more databases
+        </button>
+        <button class="btn plain" type="button" :disabled="loading" @click="loadDatabases">
+          Refresh
+        </button>
+      </div>
+    </template>
 
-      <template v-else-if="allTaken">
-        <p class="body">
-          Every database you shared is already syncing. Share another one in
-          Notion to add more.
-        </p>
-        <div class="row actions">
-          <button class="btn plain" type="button" :disabled="notion.busy" @click="shareMore">
-            Share more databases
-          </button>
-          <button class="btn plain" type="button" :disabled="loading" @click="loadDatabases">
-            Refresh
-          </button>
-        </div>
-      </template>
+    <template v-else>
+      <p class="body">
+        Tick the databases you want in Apple Calendar. Each one gets its own
+        calendar, so you can colour and hide them separately.
+      </p>
 
-      <template v-else>
-        <p class="body">
-          Pick the databases to sync. Each one gets its own calendar, so you can
-          colour and hide them separately in the Calendar app.
-        </p>
+      <ul class="picklist">
+        <li v-for="db in available" :key="db.id">
+          <label>
+            <input type="checkbox" :value="db.id" v-model="ticked" />
+            <span>{{ db.title || 'Untitled' }}</span>
+          </label>
+        </li>
+      </ul>
 
-        <ul class="picklist">
-          <li v-for="db in available" :key="db.id">
-            <label>
-              <input type="checkbox" :value="db.id" v-model="ticked" />
-              <span>{{ db.title || 'Untitled' }}</span>
-            </label>
-          </li>
-        </ul>
+      <p v-if="calendarNote" class="note">{{ calendarNote }}</p>
 
-        <p v-if="calendarNote" class="note">{{ calendarNote }}</p>
-
-        <div class="row actions">
-          <button
-            class="btn"
-            type="button"
-            :disabled="mappings.busy || ticked.length === 0"
-            @click="submit"
-          >
-            {{ mappings.busy ? 'Setting up…' : 'Start syncing' }}
-          </button>
-          <button class="btn plain" type="button" :disabled="notion.busy" @click="shareMore">
-            Share more databases
-          </button>
-        </div>
-      </template>
-    </div>
-  </section>
+      <div class="row actions">
+        <button
+          class="btn"
+          type="button"
+          :disabled="mappings.busy || ticked.length === 0"
+          @click="submit"
+        >
+          {{ mappings.busy ? 'Setting up…' : 'Start syncing' }}
+        </button>
+        <button class="btn plain" type="button" :disabled="notion.busy" @click="shareMore">
+          Share more databases
+        </button>
+      </div>
+    </template>
+  </div>
 </template>
 
 <style scoped>
-.card-body > * + * {
-  margin-top: var(--app-gap-stack);
+.addsync {
+  --gap: var(--app-gap-stack);
+  align-items: flex-start;
+  width: 100%;
 }
 </style>
