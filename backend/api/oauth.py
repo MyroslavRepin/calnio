@@ -61,13 +61,20 @@ async def google_callback(
     )
     db.commit()
 
+    # After the response, so Telegram never sits between a user and their
+    # dashboard. notify swallows its own failures on top of that.
     if created:
         logger.info("new user signed up: id={}", user.id)
-        # After the response, so Telegram never sits between a new user and
-        # their dashboard. notify swallows its own failures on top of that.
         background.add_task(
             notify,
             f"New Calnio user\n{user.name or 'no name'}\n{user.email}\nid {user.id}",
+        )
+    else:
+        # Every sign-in, so this is the loud one: a returning user whose cookie
+        # expired lands here too.
+        background.add_task(
+            notify,
+            f"Login\n{user.name or 'no name'}\n{user.email}\nid {user.id}",
         )
 
     access_token, refresh_token = jwt_service.create_token_pair(str(user.id))
