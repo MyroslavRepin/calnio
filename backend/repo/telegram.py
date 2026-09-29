@@ -1,7 +1,22 @@
+from datetime import datetime
+
 import httpx
 
 from backend.core.config import settings
 from backend.core.logging import logger
+
+# The buttons under an alert. Kept here so a notification and the bot's own
+# menu offer the same things, and so the callback data has one definition.
+MENU = [
+    [
+        {"text": "Stats", "callback_data": "stats"},
+        {"text": "Funnel", "callback_data": "funnel"},
+    ],
+    [
+        {"text": "Failures", "callback_data": "failures"},
+        {"text": "Health", "callback_data": "health"},
+    ],
+]
 
 
 class TelegramRepo:
@@ -15,22 +30,39 @@ class TelegramRepo:
             timeout=10.0,
         )
 
-    def send(self, text: str) -> None:
+    def send(self, text: str, *, buttons: bool = False) -> None:
         """Post one message to the configured chat."""
+        payload: dict = {
+            "chat_id": self.chat_id,
+            "text": text,
+            # A workspace or a display name can contain the characters
+            # Telegram's markup would choke on, so the text stays plain.
+            "disable_web_page_preview": True,
+        }
+        if buttons:
+            payload["reply_markup"] = {"inline_keyboard": MENU}
+
+        response = self.client.post("/sendMessage", json=payload)
+        response.raise_for_status()
+
+    def answer_callback(self, callback_id: str) -> None:
+        """Stop the spinner on a tapped button.
+
+        Telegram keeps the button in a loading state for a minute if nothing
+        answers, which reads as a broken bot.
+        """
         response = self.client.post(
-            "/sendMessage",
-            json={
-                "chat_id": self.chat_id,
-                "text": text,
-                # A workspace or a display name can contain the characters
-                # Telegram's markup would choke on, so the text stays plain.
-                "disable_web_page_preview": True,
-            },
+            "/answerCallbackQuery", json={"callback_query_id": callback_id}
         )
         response.raise_for_status()
 
 
-def notify(text: str) -> None:
+def stamp() -> str:
+    """The server's local time, on its own line under every message."""
+    return datetime.now().strftime("%d %b %H:%M")
+
+
+def notify(text: str, *, buttons: bool = False) -> None:
     """Send a notification, swallowing every failure.
 
     Notifying the operator must never break the thing that triggered it, so a
@@ -40,6 +72,7 @@ def notify(text: str) -> None:
         return
 
     try:
-        TelegramRepo(settings.telegram_bot_token, settings.telegram_chat_id).send(text)
+        repo = TelegramRepo(settings.telegram_bot_token, settings.telegram_chat_id)
+        repo.send(f"{text}\n{stamp()}", buttons=buttons)
     except Exception as exc:
         logger.opt(exception=exc).warning("telegram notification failed")

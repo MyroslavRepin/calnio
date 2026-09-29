@@ -25,6 +25,7 @@ from backend.repo.caldav_credential import CaldavCredentialRepo
 from backend.repo.notion import NotionPageRepo
 from backend.repo.notion_connection import NotionConnectionRepo
 from backend.repo.sync_mapping import SyncMappingRepo
+from backend.repo.telegram import notify
 from backend.repo.sync_settings import SyncSettingsRepo
 from backend.schemas.caldav_event import CalDavChanges, CalDavEvent
 from backend.schemas.notion_page import NotionDate, NotionPage, NotionPageWrite
@@ -674,6 +675,16 @@ def sync_user(user_id: int) -> None:
                         logger.opt(exception=exc).error(
                             "syncing disabled for this user: credentials rejected ({})",
                             exc,
+                        )
+                        # Worth pushing: this switched the user's sync off, so
+                        # nothing else will happen until they reconnect. It
+                        # cannot repeat for the same reason. A mapping that
+                        # merely errors is left to the Failures button, which
+                        # would otherwise fire every tick.
+                        notify(
+                            f"Sync disabled: credentials rejected\n"
+                            f"user {user_id}\nrun={run_id}\n{reason(exc)}",
+                            buttons=True,
                         )
                         return
                     failed = True

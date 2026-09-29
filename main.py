@@ -17,6 +17,7 @@ from backend.api.mapping import router as mapping_router
 from backend.api.notion import router as notion_router
 from backend.api.oauth import router as oauth_router
 from backend.api.sync import router as sync_router
+from backend.api.telegram import router as telegram_router
 from backend.core.config import settings
 from backend.core.db import SessionLocal
 from backend.core.logging import setup_logging
@@ -99,6 +100,7 @@ app.include_router(sync_router)
 app.include_router(mapping_router)
 app.include_router(account_router)
 app.include_router(admin_router)
+app.include_router(telegram_router)
 
 # The built Vue app, served same-origin in prod. Resolved from this file rather
 # than the working directory, and present only inside the Docker image. In dev

@@ -43,6 +43,10 @@ class Settings(BaseSettings):
     telegram_bot_token: str | None = None
     telegram_chat_id: str | None = None
 
+    # Shared with Telegram at setWebhook time and sent back on every update.
+    # The webhook is a public URL, so an update without it is discarded.
+    telegram_webhook_secret: str | None = None
+
     # Where the OAuth callback redirects back to, and the CORS allow-origin.
     frontend_url: str = "http://localhost:5173"
 

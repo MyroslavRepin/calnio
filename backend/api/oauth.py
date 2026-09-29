@@ -19,6 +19,7 @@ from backend.core.security import jwt_service
 from backend.deps.auth import clear_auth_cookies, get_current_user, set_auth_cookies
 from backend.deps.db import get_session
 from backend.models.user import User
+from backend.repo.admin import AdminRepo
 from backend.repo.telegram import notify
 from backend.repo.user import UserRepo
 from backend.schemas.auth import MeResponse
@@ -65,9 +66,12 @@ async def google_callback(
     # dashboard. notify swallows its own failures on top of that.
     if created:
         logger.info("new user signed up: id={}", user.id)
+        total = AdminRepo(db).totals().users
         background.add_task(
             notify,
-            f"New Calnio user\n{user.name or 'no name'}\n{user.email}\nid {user.id}",
+            f"New Calnio user  (#{total})\n{user.name or 'no name'}\n{user.email}\n"
+            f"id {user.id}",
+            buttons=True,
         )
     else:
         # Every sign-in, so this is the loud one: a returning user whose cookie
