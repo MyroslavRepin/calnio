@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from backend.core.crypto import decrypt
@@ -8,6 +8,7 @@ from backend.deps.auth import clear_auth_cookies, get_current_user
 from backend.deps.db import get_session
 from backend.models.user import User
 from backend.repo.notion_connection import NotionConnectionRepo
+from backend.repo.telegram import notify
 from backend.repo.user import UserRepo
 from backend.schemas.account import DeleteAccountRequest
 
@@ -30,6 +31,7 @@ def cancel_queued_sync(user_id: int) -> None:
 async def delete_account(
     body: DeleteAccountRequest,
     response: Response,
+    background: BackgroundTasks,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_session),
 ):
@@ -46,6 +48,7 @@ async def delete_account(
         )
 
     user_id = user.id
+    email = user.email
     cancel_queued_sync(user_id)
 
     notion_connections = NotionConnectionRepo(db)
@@ -58,3 +61,4 @@ async def delete_account(
 
     clear_auth_cookies(response)
     logger.info("account deleted for user {}", user_id)
+    background.add_task(notify, f"Account deleted\n{email}\nid {user_id}")

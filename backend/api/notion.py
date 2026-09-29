@@ -1,5 +1,5 @@
 from authlib.integrations.starlette_client import OAuthError
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
@@ -13,6 +13,7 @@ from backend.deps.notion import get_connection, get_notion_repo, notion_errors
 from backend.models.notion_connection import NotionConnection
 from backend.models.user import User
 from backend.repo.notion_connection import NotionConnectionRepo
+from backend.repo.telegram import notify
 from backend.repo.notion import NotionPageRepo
 from backend.repo.sync_mapping import SyncMappingRepo
 from backend.schemas.notion_connection import (
@@ -49,7 +50,11 @@ async def notion_login(request: Request, user: User = Depends(get_current_user))
 
 
 @router.get("/auth/oauth/notion/callback")
-async def notion_callback(request: Request, db: Session = Depends(get_session)):
+async def notion_callback(
+    request: Request,
+    background: BackgroundTasks,
+    db: Session = Depends(get_session),
+):
     """Exchange the code, store the grant, send the browser back to the app."""
     # Called by hand, not as a dependency: a 401 here is a JSON body, and a
     # browser navigation has to end on a page.
@@ -80,6 +85,11 @@ async def notion_callback(request: Request, db: Session = Depends(get_session)):
     db.commit()
 
     logger.info("notion connected for user {}", user.id)
+    background.add_task(
+        notify,
+        f"Notion connected\n{user.email}\n"
+        f"workspace {token.get('workspace_name') or 'unnamed'}\nid {user.id}",
+    )
     return RedirectResponse(f"{settings.frontend_url}/dashboard/connections")
 
 

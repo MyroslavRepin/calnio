@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -27,6 +27,7 @@ from backend.repo.caldav_credential import CaldavCredentialRepo
 from backend.repo.notion import NotionPageRepo
 from backend.repo.notion_connection import NotionConnectionRepo
 from backend.repo.sync_mapping import SyncMappingRepo
+from backend.repo.telegram import notify
 from backend.repo.sync_settings import SyncSettingsRepo
 from backend.schemas.sync_mapping import (
     CreateMappingRequest,
@@ -53,6 +54,7 @@ async def list_syncs(
 )
 async def create_syncs(
     body: CreateMappingRequest,
+    background: BackgroundTasks,
     user: User = Depends(get_current_user),
     repo: NotionPageRepo = Depends(get_notion_repo),
     credential: CaldavCredential = Depends(get_credential),
@@ -137,10 +139,12 @@ async def create_syncs(
         settings_row.enabled = True
 
     db.commit()
-    logger.info(
-        "syncs created for user {}: {}",
-        user.id,
-        ", ".join(database.title for database in databases),
+    names = ", ".join(database.title for database in databases)
+    logger.info("syncs created for user {}: {}", user.id, names)
+    # Setup finished. This is the one that says a signup turned into a user.
+    background.add_task(
+        notify,
+        f"Setup complete\n{user.email}\n{len(created)} sync(s): {names}\nid {user.id}",
     )
 
     # After the commit: a queued job opens its own session and would otherwise

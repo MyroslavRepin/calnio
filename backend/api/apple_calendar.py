@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Response, status
 from sqlalchemy.orm import Session
 
 from backend.core.config import settings
@@ -11,6 +11,7 @@ from backend.models.caldav_credential import CaldavCredential
 from backend.models.user import User
 from backend.repo.caldav_credential import CaldavCredentialRepo
 from backend.repo.caldav import CalDavAccountRepo
+from backend.repo.telegram import notify
 from backend.schemas.apple_calendar import (
     ConnectionStatus,
     ConnectRequest,
@@ -26,6 +27,7 @@ router = APIRouter(tags=["apple-calendar"])
 async def connect_apple_calendar(
     body: ConnectRequest,
     response: Response,
+    background: BackgroundTasks,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_session),
 ):
@@ -45,6 +47,13 @@ async def connect_apple_calendar(
     db.commit()
 
     logger.info("apple calendar connected for user {}", user.id)
+    # upsert already says whether this is a first connect, so the message can
+    # tell a signup apart from somebody repairing a rejected password.
+    background.add_task(
+        notify,
+        f"iCloud {'connected' if created else 'reconnected'}\n{user.email}\n"
+        f"{len(calendars)} calendars visible\nid {user.id}",
+    )
     response.status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
     return ConnectResponse(
         icloud_email=row.icloud_email,
