@@ -6,11 +6,13 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
 from starlette.middleware.sessions import SessionMiddleware
 
 from backend.api.account import router as account_router
 from backend.api.admin import router as admin_router
 from backend.api.apple_calendar import router as apple_calendar_router
+from backend.api.health import router as health_router
 from backend.api.mapping import router as mapping_router
 from backend.api.notion import router as notion_router
 from backend.api.oauth import router as oauth_router
@@ -19,10 +21,21 @@ from backend.core.config import settings
 from backend.core.db import SessionLocal
 from backend.core.logging import setup_logging
 from backend.core.scheduler import init_scheduler
+from backend.repo.telegram import notify
 from backend.models.system_settings import SystemSettings
 from backend.services.sync import run_all_users
 
 setup_logging()
+
+
+def database_state() -> str:
+    """Say whether the database answers, for the startup notification."""
+    try:
+        with SessionLocal() as db:
+            db.execute(text("select 1"))
+        return "ok"
+    except Exception:
+        return "unreachable"
 
 
 def run_all_users_if_enabled() -> None:
@@ -39,6 +52,8 @@ async def lifespan(app: FastAPI):
     """Start the scheduler, schedule the sync tick, stop it on shutdown."""
     # The scheduler starts either way, because turning a user's sync on queues
     # a one-off job through it and that path is gated separately.
+    notify(f"Calnio started\ndatabase {database_state()}")
+
     scheduler = init_scheduler()
     if settings.scheduler_enabled:
         scheduler.add_job(
@@ -76,6 +91,7 @@ app.add_middleware(
     https_only=settings.cookie_secure,
 )
 
+app.include_router(health_router)
 app.include_router(oauth_router)
 app.include_router(apple_calendar_router)
 app.include_router(notion_router)
