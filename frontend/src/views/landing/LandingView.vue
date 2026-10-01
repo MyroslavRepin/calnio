@@ -7,6 +7,7 @@ import IndieDev from '../../components/landing/IndieDev.vue'
 import LandingFooter from '../../components/landing/LandingFooter.vue'
 import LandingNav from '../../components/landing/LandingNav.vue'
 import RealAlerts from '../../components/landing/RealAlerts.vue'
+import SecurityPrivacy from '../../components/landing/SecurityPrivacy.vue'
 import SetupShot from '../../components/landing/SetupShot.vue'
 import TwoWaySync from '../../components/landing/TwoWaySync.vue'
 
@@ -39,6 +40,7 @@ const errorMessage = computed(function () {
 
       <HeroSection />
       <RealAlerts />
+      <SecurityPrivacy />
       <TwoWaySync />
       <SetupShot />
       <IndieDev />

@@ -17,6 +17,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Dev server: `uv run uvicorn main:app --reload --port 8080`
 - Migrations: `uv run alembic upgrade head`; new one: `uv run alembic revision --autogenerate -m "..."` (autogenerate works — `alembic/env.py` imports all models and uses `Base.metadata`; a new model must be imported there or autogenerate won't see it)
 - Frontend dev server: `cd frontend && npm run dev` (Vite on 5173, cross-origin to the API on 8080 — that setup works, leave it alone)
+- Landing video: `cd video && npm run studio` to preview, `npm run render && npm run poster` to rebuild, then copy `out/setup.mp4`, `out/setup-phone.mp4` and `out/setup-poster.jpg` into `frontend/public/`. See "The setup video" below.
 - Docker: `docker compose up --build` — **production only**, serves on 8082 via `network_mode: host` (the container reaches a self-hosted Postgres on the same machine through `localhost`, and the port number itself dodges a collision with another service already on that host's 8080). Reads `.env.prod` (not `.env`), builds the Vue app in a `node:22-slim` stage, one uvicorn worker, no `--reload`. Migrations are **not** run by the container.
 - Type check: pyright (config in `pyrightconfig.json`, venv-aware)
 - No tests and no linter configured yet.
@@ -186,7 +187,7 @@ Vue 3 with `<script setup>`, Vite, vue-router. Two dependencies total: `vue` and
 
 ## How it works, read this before changing anything
 
-**Two systems, one font.** Every signed-in page is scoped under `.app-ui` and shares one set of tokens, one `.card`, one `.btn`. The landing page at `/` is scoped under `.landing-ui` and runs its own scale, its own card and its own alternating dark and light bands, because a marketing page and a settings screen do not want the same thing. The two overlap in exactly two places: the three layout classes, and `--app-font`, which is Inter for both. A landing component never reads an `--app-*` colour or size token, and an app component never reads an `--l-*` one.
+**Two systems, one font.** Every signed-in page is scoped under `.app-ui` and shares one set of tokens, one `.card`, one `.btn`. The landing page at `/` is scoped under `.landing-ui` and runs its own scale, its own card and its own alternating dark and light bands, because a marketing page and a settings screen do not want the same thing. The two overlap in exactly two places: the three layout classes, and `--app-font`, the system face (SF Pro on Apple devices) for both. A landing component never reads an `--app-*` colour or size token, and an app component never reads an `--l-*` one.
 
 **A composable is one shared box of data, not a layer.** In `composables/useNotion.js` the `reactive({...})` sits at the top level of the file, outside the exported function. JavaScript runs a module's top level once no matter how many components import it, so there is exactly one `state` object in the whole app, and every `useNotion()` call hands back that same object. Put it inside the function and each caller gets its own copy, which is what breaks things: `ConnectionsView` draws the status pill from `notion.connection` while `NotionStatus` sets that same object to `null` on disconnect, and the pill updates only because both point at one object.
 
@@ -264,37 +265,65 @@ scoped under `.landing-ui`. `LandingView` is the only page root carrying that
 class; every signed-in page still carries `.app-ui` and is untouched by it. The
 values come from the slide deck the page was designed as, not from the app
 tokens: ink `#0a0a0a`, ground `#f5f5f7`, muted `#6e6e73`, line `#e3e3e8`, blue
-`#2d62d6` (small eyebrow labels only), 22px radius, the shadow pair
+`#2d62d6` (links and focus only, no section labels), 22px radius, the shadow pair
 `0 1px 0 rgba(0,0,0,.04), 0 20px 50px -20px rgba(0,0,0,.18)`, and every headline
-at weight 800 / `-0.035em` / `1.04`. Four event chip tints carry a synced item
+at weight 700 / `-0.025em` / `1.06`. Four event chip tints carry a synced item
 wherever it appears: blue `#e6edfb`/`#1e4bb0`, amber `#f3eee2`/`#7a5a12`, green
 `#e8f4ea`/`#23692f`, pink `#f6e8ee`/`#8f2a54`. No coloured left border on a chip.
 
-**The app loads Inter**, via `@fontsource/inter`, latin subset, weights 400 to
-800, imported at the top of `main.js`. `--app-font` names it, so the dashboard
-gets it too; the dashboard keeps its own colours, sizes and components. That is
-the only font, and the only reason the app went from two dependencies to three.
+**The app loads no font.** `--app-font` is the system stack, so Calnio's users,
+who are on Apple devices by definition, read SF Pro, the face of the Calendar app
+it fills. Inter was dropped: it is the default face of AI-generated sites.
+
+**No AI template tells.** No small label above a headline, no grid of identical
+cards (lists are hairline rows), no fake window chrome around a screenshot, no
+paired-slogan headlines ("X. Y."), no generic "Get started": the button says
+what it does.
 
 **Sections alternate dark and light**, and `.section.dark` is the only thing that
-flips the ground. In order: nav and hero dark, real alerts light, two-way light,
+flips the ground. In order: nav and hero dark, real alerts light, security and privacy light, two-way light,
 setup light, indie dark, final call to action light, footer light.
 
 Under `components/landing/`: `LandingNav`, `HeroSection`, `RealAlerts`,
-`TwoWaySync`, `SetupShot`, `IndieDev`, `FinalCta`, `LandingFooter`, plus
+`SecurityPrivacy`, `TwoWaySync`, `SetupShot`, `IndieDev`, `FinalCta`, `LandingFooter`, plus
 `CalnioMark` (the logo, inline SVG so its plate can flip per band) and
-`GetStartedButton` (the one call to action, which routes a signed-in visitor to
-the dashboard instead of Google).
+`GetStartedButton` (the one call to action: "Sign in with Google", or "Open
+dashboard" for a signed-in visitor).
 
 **The illustrations are HTML and CSS, not images.** The task table, the week
-calendar, the swap circle, the phone lock screen and the browser frame are all
-drawn. The only real images are in `frontend/public/`: `dashboard.png` inside the
-browser frame, plus `favicon.ico`, `apple-touch-icon.png`, `og.jpg` and the logo
-files, which Vite copies to the root of `dist`. `main.py`'s SPA catch-all serves
+calendar, the swap circle and the phone lock screen are all
+drawn. The only real media are in `frontend/public/`: the setup video
+(`setup.mp4`, `setup-phone.mp4` under 600px, `setup-poster.jpg`), plus
+`favicon.ico`, `apple-touch-icon.png`, `og.jpg` and the logo files, which Vite copies to the root of `dist`. `main.py`'s SPA catch-all serves
 a real file when one exists at that path, so a crawler asking for `/og.jpg` is
 not handed `index.html`. `design-ref/` holds the source jpgs and `slides.html`
 and is gitignored and dockerignored: reference only, never shipped.
 
-**No motion anywhere**, same as the app: no `transition`, no `@keyframes`.
+**No motion anywhere**, same as the app: no `transition`, no `@keyframes`. The
+one exception is the setup video in `SetupShot`, which is a real recording-style
+walkthrough, not decoration. It does not autoplay under
+`prefers-reduced-motion`, and shows its controls instead.
+
+**The setup video** is rendered by Remotion from `video/`, its own npm project
+outside the frontend (dockerignored, never shipped). It imports the app's real
+stylesheets from `frontend/src/styles`, so the /welcome page in it is drawn by
+the same CSS as the live one. `video/src/welcome.css` copies the scoped styles of
+the setup components, and `Welcome.tsx` copies their markup: change the setup
+flow and change those two with it. Every beat is a frame number in
+`timeline.ts`; cursor stops and scroll offsets per cut live in `variants.ts` and
+are re-measured with `--props='{"variant":"desktop","debug":true}'` on a
+`remotion still`, which prints every `[data-target]` point over the frame. Two
+cuts: desktop 1440x1080 (app at 960px, 1.5x) and phone 1080x1350 (app at 400px,
+2.7x), because the desktop cut shrinks the app's text past reading on a phone.
+Remotion is free for individuals and companies of up to three people.
+
+A third composition, `ProductHunt` (`npm run producthunt`), is the Product
+Hunt video, rebuilt from the landing page: the hero's table and week
+(`HeroMockup.tsx`, styles copied into `landing-copies.css`), the lock screen
+(`LockScreen.tsx`), the /welcome walkthrough and the indie facts, on flat black
+and flat light grounds. Scene lengths live in `SCENES` in `ProductHunt.tsx`.
+It never shows anything the product does not do: a ticked Notion task does not
+change its calendar event, so the video does not claim it.
 
 **Product truth (never contradict in copy):** Calnio syncs **both ways**. Notion
 → Apple Calendar always, and Apple Calendar → Notion when the user switches
@@ -303,8 +332,8 @@ sides changed at once. Repeating events and invites are never imported. A user
 picks **several databases**, and each one gets **its own Apple calendar**. Ticking
 a database is the whole setup: the date column is inferred and the calendar is
 created. It is **hosted**, so nothing to install and no server to run. It is
-**free**, because the developer runs it on a Raspberry Pi on his desk; the `$0`
-stat card is where the page says so, and there is no pricing card. It is **not
+**free**, because the developer runs it on a Raspberry Pi on his desk; the indie
+section says so in one line of prose, and there is no pricing card. It is **not
 open source** — never mention GitHub, MIT, Docker, pip, or a CLI install.
 
 **Voice:** plain, honest, quietly confident. First person singular when the
@@ -412,14 +441,14 @@ Rules: **the affirmative button is ink**, the same button the landing page uses.
 
 ## 2. Components (all in `components.css`)
 
-- **`.card`**: the only container: white on the grey ground, 1px `--app-border`, 12px radius, `--app-shadow-card`. `.card-head` (subtle background, hairline under it, `h2` at 14px/600, one action or one `.label` on the right) plus `.card-body` (16px padding). Consecutive cards space themselves; a card never contains another card, which is why `MappingAdd` carries no card of its own and its two callers wrap it.
+- **`.card`**: the only container: white on the grey ground, 1px `--app-border`, 12px radius, `--app-shadow-card`. `.card-head` (white like the card, hairline under it, `h2` at 14px/600, one action or one `.label` on the right) plus `.card-body` (16px padding). Consecutive cards space themselves; a card never contains another card, which is why `MappingAdd` carries no card of its own and its two callers wrap it.
 - **`.label`**: the state pill. 20px tall, `--app-radius-pill`, 12px/500, one tone class: `neutral` `accent` `success` `attention` `danger`. Colour repeats what the text already says, it never carries the meaning alone.
 - **`.btn`**: one shape, three tones. Bare `.btn` is ink and commits (max one per view), `.btn.plain` is white with a hairline and is the default for everything else, `.btn.danger` destroys. 32px tall, 14px/500, 8px radius. Disabled is `opacity: 0.6`.
 - **`.actions`**: a wrapping row of buttons, `--app-gap-inline`. Buttons wrap rather than shrink.
 - **`.field`**: stacked label (14px/600) over an input (32px, 6px radius, focus ring). Max `--app-width-field`.
 - **`.picklist`**: bordered list box for a short set of radio choices, 40px rows, hover on `--app-canvas-subtle`. Max `--app-width-list`.
 - **`.datarows`**: `dl` of term/value pairs: `dt` muted 400, `dd` ink 500, hairline between rows, none after the last. This is how the app states a stored fact.
-- **`.switch`** (+ `.track`, `.knob`, `.switchlabel`): the on/off control. Used by the master switch in Settings and by every sync's own switch, which is why it lives here rather than scoped in a component. 48x28 track, the knob simply sits at the other end, no transition.
+- **`.switch`** (+ `.track`, `.knob`, `.switchlabel`): the on/off control. Used by the master switch in Settings and by every sync's own switch, which is why it lives here rather than scoped in a component. The label reads first and the switch sits at the far end of the row, as in Apple's settings. 48x28 track, the knob simply sits at the other end, no transition.
 - **`.page-head`**: the `h1` (`.title`) and its one `.lead` paragraph, 24px of space under it. Every app page starts with one.
 - **`.note`**: 12px muted small print. **`.error`**: 14px on the danger tint with a danger line, 6px radius. **`.loading`**: 14px muted, the single word while data is in flight.
 - **`code`**: mono 12px on `--app-canvas-subtle` with a subtle border, 4px radius.

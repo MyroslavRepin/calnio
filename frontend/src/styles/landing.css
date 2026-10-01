@@ -31,12 +31,11 @@
   --l-shadow: 0 1px 0 rgba(0, 0, 0, 0.04), 0 20px 50px -20px rgba(0, 0, 0, 0.18);
   --l-shadow-dark: 0 30px 80px -20px rgba(0, 0, 0, 0.6);
 
-  /* Type. Every headline is 800 at -0.035em and 1.04. */
+  /* Type. Every headline is 700 at -0.025em and 1.06. */
   --l-text-hero: clamp(32px, 5.2vw, 62px);
   --l-text-section: clamp(28px, 4.4vw, 54px);
   --l-text-stat: clamp(42px, 4.6vw, 62px);
   --l-text-lead: clamp(16px, 1.5vw, 22px);
-  --l-text-eyebrow: clamp(15px, 1.2vw, 18px);
   --l-text-row: clamp(15px, 1.2vw, 20px);
 
   /* Rhythm */
@@ -70,19 +69,18 @@
   padding: 0 var(--l-pad-page);
 }
 
-/* The small label above a headline. The only place the blue appears. */
-.landing-ui .eyebrow {
-  color: var(--l-blue);
-  font-size: var(--l-text-eyebrow);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
 .landing-ui .headline {
   font-size: var(--l-text-section);
-  font-weight: 800;
-  letter-spacing: -0.035em;
-  line-height: 1.04;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.06;
+}
+
+/* Balanced lines, so a last word never sits alone on a phone. */
+.landing-ui h1,
+.landing-ui h2,
+.landing-ui h3 {
+  text-wrap: balance;
 }
 
 .landing-ui .headline.hero {

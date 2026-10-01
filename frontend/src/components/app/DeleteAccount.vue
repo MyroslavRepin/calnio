@@ -70,7 +70,7 @@ async function confirm() {
 </script>
 
 <template>
-  <section class="card danger">
+  <section class="card">
     <div class="card-head">
       <h2>Delete account</h2>
     </div>
@@ -133,14 +133,5 @@ async function confirm() {
 <style scoped>
 .card-body > * + * {
   margin-top: var(--app-gap-stack);
-}
-
-.card.danger {
-  border-color: var(--app-danger-line);
-}
-
-.card.danger .card-head {
-  background: var(--app-danger-tint);
-  border-bottom-color: var(--app-danger-line);
 }
 </style>

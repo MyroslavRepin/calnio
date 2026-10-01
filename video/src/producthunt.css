@@ -1,0 +1,240 @@
+/* The Product Hunt cut. Boards are 1280x720 and scaled 1.5x, so these sizes
+   are the landing page's own; the setup scene is laid out in full 1920px. */
+
+.landing-ui.board {
+  position: relative;
+  width: 1280px;
+  height: 720px;
+  overflow: hidden;
+  background: transparent;
+}
+
+.landing-ui.board.dark {
+  color: #fff;
+}
+
+/* The intro, set like the hero headline and centred on the frame's height. */
+.landing-ui .introline {
+  position: absolute;
+  left: 100px;
+  right: 100px;
+  top: 290px;
+}
+
+.landing-ui .heroheads {
+  position: absolute;
+  left: 100px;
+  right: 100px;
+  top: 64px;
+}
+
+.landing-ui .heroheads .headline {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.landing-ui .heromock {
+  position: absolute;
+  left: 100px;
+  right: 100px;
+  top: 236px;
+}
+
+.landing-ui .heromock .week {
+  position: relative;
+}
+
+.landing-ui .heromock .dayrun {
+  height: 270px;
+}
+
+/* The week gets the extra width, so two-word titles fit on two lines. */
+.landing-ui .heromock .tasks {
+  flex: 0 0 420px;
+}
+
+.landing-ui .heromock .evlayer {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  position: relative;
+}
+
+.landing-ui .caption {
+  position: absolute;
+  left: 100px;
+  top: 664px;
+  color: var(--l-muted-dark);
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.landing-ui .alertclaim {
+  --gap: 20px;
+  position: absolute;
+  left: 100px;
+  top: 200px;
+  width: 600px;
+}
+
+.landing-ui .alertphone {
+  position: absolute;
+  right: 100px;
+  top: 64px;
+  width: 340px;
+}
+
+.landing-ui .alertphone .phone {
+  max-width: none;
+  width: 340px;
+}
+
+/* A flat wallpaper. */
+.landing-ui .alertphone .screen {
+  background: #1d2230;
+}
+
+.landing-ui .alertphone .alert {
+  margin-top: 16px;
+}
+
+.landing-ui .alertphone .clock + div .alert {
+  margin-top: 56px;
+}
+
+.landing-ui .indiehead {
+  position: absolute;
+  left: 100px;
+  top: 100px;
+  width: 820px;
+}
+
+.landing-ui .indiefacts {
+  --gap: 18px;
+  position: absolute;
+  left: 100px;
+  right: 100px;
+  top: 360px;
+  flex-wrap: nowrap;
+  align-items: stretch;
+}
+
+.landing-ui .indiefact {
+  --gap: 6px;
+  flex: 1 1 0;
+  border: 1px solid var(--l-line-dark);
+  border-radius: var(--l-radius);
+  padding: 30px;
+}
+
+.landing-ui .indiefact.filled {
+  background: #fff;
+  color: var(--l-ink);
+  border-color: #fff;
+}
+
+.landing-ui .indiefigure {
+  font-size: 62px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+}
+
+.landing-ui .indiefact p {
+  color: var(--l-muted-dark);
+  font-size: 19px;
+  line-height: 1.45;
+}
+
+.landing-ui .indiefact.filled p {
+  color: #48484a;
+}
+
+.landing-ui .endbody {
+  --gap: 12px;
+  position: absolute;
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.landing-ui .endplate {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 6px;
+}
+
+.landing-ui .endtitle {
+  font-size: 54px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.06;
+}
+
+.landing-ui .endline {
+  color: var(--l-muted-dark);
+  font-size: 22px;
+}
+
+.landing-ui .endsmall {
+  margin-top: 18px;
+  color: var(--l-dim);
+  font-size: 15px;
+}
+
+.debugtargets {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  margin: 0;
+  padding: 6px;
+  background: #ff0;
+  color: #000;
+  font-size: 12px;
+  z-index: 20;
+}
+
+/* Setup, in full 1920px, with the /welcome page in a window on the right. */
+
+.setupscene {
+  background: #f5f5f7;
+  color: #0a0a0a;
+  font-family: var(--app-font);
+}
+
+.setupscene .setupcopy {
+  position: absolute;
+  left: 150px;
+  top: 150px;
+  width: 660px;
+}
+
+.setupscene .setupheadline {
+  font-size: 81px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.06;
+  text-wrap: balance;
+}
+
+.setupscene .setupbody {
+  margin-top: 36px;
+  color: #6e6e73;
+  font-size: 30px;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+}
+
+.setupscene .setupwindow {
+  position: absolute;
+  left: 900px;
+  top: 120px;
+  width: 900px;
+  height: 1000px;
+  overflow: hidden;
+  background: #f5f5f7;
+  border: 1px solid #e3e3e8;
+  border-radius: 22px;
+  box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.25);
+}

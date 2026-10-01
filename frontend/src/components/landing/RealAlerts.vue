@@ -1,8 +1,4 @@
 <script setup>
-// The two ways a Notion date can reach a calendar.
-const feedLimits = ['Read-only', 'No alerts', 'Slow refresh']
-const calnioWins = ['Real iCloud events', 'Alerts on every device', 'Edit from either side']
-
 // The lock screen notifications. The second is dimmer, being the older one.
 const alerts = [
   {
@@ -14,11 +10,11 @@ const alerts = [
     faded: false,
   },
   {
-    weekday: 'TUE',
-    date: '6',
+    weekday: 'MON',
+    date: '5',
     title: 'Call with designer',
-    stamp: '9:00',
-    detail: 'Tomorrow at 14:00',
+    stamp: '15m ago',
+    detail: 'Today at 10:30 · in 1 hour',
     faded: true,
   },
 ]
@@ -28,34 +24,14 @@ const alerts = [
   <section class="section">
     <div class="container row alerts">
       <div class="column claim">
-        <p class="eyebrow">Not a webcal feed</p>
 
-        <h2 class="headline">Real calendar events.<br />Real alerts.</h2>
+        <h2 class="headline">Calnio writes real events into iCloud.</h2>
 
         <p class="tagline">
-          Calnio writes actual events into your iCloud calendar, so they behave
-          like any event you made yourself.
+          A webcal feed is read-only, stays silent and refreshes when it feels
+          like it. Calnio's events are ordinary iCloud events: they alert on
+          every device, and you can edit them from either side.
         </p>
-
-        <div class="grid compare">
-          <div class="card feeds">
-            <h3>Calendar feeds</h3>
-            <ul>
-              <li v-for="limit in feedLimits" :key="limit">
-                <span class="cross" aria-hidden="true">✕</span>{{ limit }}
-              </li>
-            </ul>
-          </div>
-
-          <div class="card ours">
-            <h3>Calnio</h3>
-            <ul>
-              <li v-for="win in calnioWins" :key="win">
-                <span class="tick" aria-hidden="true">✓</span>{{ win }}
-              </li>
-            </ul>
-          </div>
-        </div>
       </div>
 
       <!-- Drawn, not photographed: it stays sharp at any width. -->
@@ -97,56 +73,7 @@ const alerts = [
 }
 
 .claim .tagline {
-  max-width: 34ch;
-}
-
-.compare {
-  --col: 200px;
-  --gap: 16px;
-  margin-top: clamp(8px, 1.6vw, 20px);
-}
-
-.compare .card {
-  padding: 22px;
-}
-
-.compare h3 {
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 14px;
-}
-
-.compare ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  font-size: 16px;
-  line-height: 2;
-}
-
-/* The pale card loses the shadow too, and states its limits in grey. */
-.card.feeds {
-  box-shadow: none;
-  border: 1px solid var(--l-line);
-}
-
-.feeds h3 {
-  color: var(--l-muted);
-}
-
-.feeds ul {
-  color: #86868b;
-}
-
-.card.ours {
-  background: var(--l-ink);
-  color: #fff;
-}
-
-.cross,
-.tick {
-  display: inline-block;
-  width: 1.4em;
+  max-width: 40ch;
 }
 
 /* Phone */
@@ -229,7 +156,7 @@ const alerts = [
   justify-content: center;
   color: #d33;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1;
 }
 

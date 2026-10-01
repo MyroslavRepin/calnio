@@ -15,7 +15,7 @@ const label = computed(function () {
   if (state.ready && state.user) {
     return 'Open dashboard'
   }
-  return 'Get started'
+  return 'Sign in'
 })
 
 // Signed in goes to the app, signed out starts the Google flow.

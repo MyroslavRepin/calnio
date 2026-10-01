@@ -5,5 +5,8 @@ export function formatDateTime(value, fallback) {
     return fallback
   }
 
-  return new Date(value).toLocaleString()
+  return new Date(value).toLocaleString(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  })
 }

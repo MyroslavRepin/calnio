@@ -1,7 +1,6 @@
 <script setup>
 import { computed } from 'vue'
 import { useAppleCalendar } from '../../composables/useAppleCalendar'
-import { useAuth } from '../../composables/useAuth'
 import { useMappings } from '../../composables/useMappings'
 import { useNotion } from '../../composables/useNotion'
 import { useSetup } from '../../composables/useSetup'
@@ -22,9 +21,6 @@ const mappings = mappingsResult.state
 const syncResult = useSync()
 const sync = syncResult.state
 
-const authResult = useAuth()
-const auth = authResult.state
-
 const setupResult = useSetup()
 const stages = setupResult.stages
 const doneCount = setupResult.doneCount
@@ -38,24 +34,6 @@ const ready = computed(function () {
     return true
   } else {
     return false
-  }
-})
-
-// Greeting text at the top of the page.
-const greeting = computed(function () {
-  let name = auth.user?.name
-
-  if (!name) {
-    name = auth.user?.email
-  }
-  if (!name) {
-    name = ''
-  }
-
-  if (name) {
-    return 'Hi, ' + name
-  } else {
-    return 'Overview'
   }
 })
 
@@ -132,7 +110,7 @@ const summaries = computed(function () {
   <template v-else>
     <header class="column page-head">
       <div class="row headline">
-        <h1 class="title">{{ greeting }}</h1>
+        <h1 class="title">Overview</h1>
         <span class="label" :class="syncLabel.tone">{{ syncLabel.text }}</span>
       </div>
       <p class="lead">

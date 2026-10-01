@@ -1,16 +1,21 @@
 <script setup>
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../../composables/useAuth'
-
-defineProps({
-  label: { type: String, default: 'Get started' },
-})
 
 const authResult = useAuth()
 const state = authResult.state
 const login = authResult.login
 
 const router = useRouter()
+
+// Says exactly what the click does, rather than a generic "Get started".
+const label = computed(function () {
+  if (state.ready && state.user) {
+    return 'Open dashboard'
+  }
+  return 'Sign in with Google'
+})
 
 // A visitor with an account goes to the dashboard, everyone else starts the
 // Google flow. Login is a real navigation, not a fetch: the browser has to

@@ -58,9 +58,6 @@ async function toggle() {
   <section class="card">
     <div class="card-head">
       <h2>Syncing</h2>
-      <span class="label" :class="enabled ? 'success' : 'neutral'">
-        {{ enabled ? 'On' : 'Off' }}
-      </span>
     </div>
 
     <div class="card-body">

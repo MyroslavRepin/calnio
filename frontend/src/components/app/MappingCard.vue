@@ -350,7 +350,7 @@ async function confirmRemove() {
           </button>
 
           <p v-if="mapping.last_error" class="error">
-            Last run failed. {{ mapping.last_error }}
+            Last run failed: {{ mapping.last_error }}
           </p>
 
           <p v-if="!mapping.eligible" class="note">

@@ -1,0 +1,126 @@
+/* The scoped styles of WelcomeView, SetupStep, NotionSetup, AppleCalendarSetup
+   and MappingAdd, copied here because Vue's scoped blocks cannot be imported.
+   The shared look comes straight from frontend/src/styles. If those components
+   change, change this file with them. */
+
+.app-ui .topbar {
+  background: var(--app-canvas);
+  border-bottom: 1px solid var(--app-border);
+}
+
+.app-ui .plate {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  margin-right: var(--app-gap-inline);
+}
+
+.app-ui .topbarrow {
+  --gap: var(--app-gap-block);
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  max-width: var(--app-width-narrow);
+  margin: 0 auto;
+  padding: 10px var(--app-pad-page);
+}
+
+.app-ui .main {
+  --gap: 0px;
+  flex: 1;
+  width: 100%;
+  max-width: var(--app-width-narrow);
+  margin: 0 auto;
+  padding: var(--app-space-6) var(--app-pad-page) var(--app-space-8);
+}
+
+.app-ui .steps {
+  padding: var(--app-space-5);
+}
+
+.app-ui .exitrow {
+  display: flex;
+  padding-top: var(--app-space-5);
+  font-size: var(--app-text-body);
+}
+
+.app-ui .setupstep {
+  --gap: var(--app-gap-stack);
+  padding: var(--app-space-5) 0;
+  border-top: 1px solid var(--app-border-subtle);
+}
+
+.app-ui .setupstep:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+
+.app-ui .setupstep:last-child {
+  padding-bottom: 0;
+}
+
+.app-ui .setupstep.locked .steptitle {
+  color: var(--app-fg-subtle);
+}
+
+.app-ui .stepline {
+  --gap: var(--app-gap-stack);
+  flex-wrap: nowrap;
+}
+
+.app-ui .steptitle {
+  flex: 1;
+  margin: 0;
+  min-width: 0;
+  font-size: var(--app-text-head);
+  font-weight: var(--app-weight-bold);
+  letter-spacing: -0.01em;
+  color: var(--app-fg);
+}
+
+.app-ui .stepline .label {
+  max-width: 24ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-ui .stepbody {
+  --gap: var(--app-gap-block);
+  align-items: flex-start;
+  padding-left: calc(var(--app-marker) + var(--app-gap-stack));
+}
+
+.app-ui .notion,
+.app-ui .apple,
+.app-ui .addsync {
+  --gap: var(--app-gap-stack);
+  align-items: flex-start;
+  width: 100%;
+}
+
+.app-ui .walkthrough {
+  --gap: var(--app-space-1);
+  margin: 0;
+  padding-left: var(--app-space-5);
+  font-size: var(--app-text-body);
+  color: var(--app-fg-muted);
+  max-width: var(--app-measure);
+}
+
+.app-ui .credentials {
+  --gap: var(--app-gap-block);
+  align-items: flex-start;
+  width: 100%;
+  padding-top: var(--app-space-2);
+}
+
+/* Video only: states a recording shows but CSS cannot force. */
+
+.app-ui .field input.focused {
+  outline: none;
+  border-color: var(--app-accent);
+  box-shadow: var(--app-focus-ring);
+}
+
+.app-ui .btn.pushed {
+  background: var(--app-btn-primary-hover);
+}

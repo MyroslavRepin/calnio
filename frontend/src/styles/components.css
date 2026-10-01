@@ -24,8 +24,6 @@
   gap: var(--app-gap-inline) var(--app-gap-block);
   padding: var(--app-pad-card-head);
   border-bottom: 1px solid var(--app-border-subtle);
-  background: var(--app-canvas-subtle);
-  border-radius: var(--app-radius-card) var(--app-radius-card) 0 0;
 }
 
 .app-ui .card-head h2 {
@@ -347,11 +345,15 @@
 }
 
 /* The sync switch. Used by the master switch in Settings and by every sync's own
-   switch on the Syncs page. State is carried by colour and by the knob's side,
+   switch on the Syncs page. The label reads first and the switch sits at the end
+   of the row. State is carried by colour and by the knob's side,
    with no transition: it reads as a control, not as an animation. */
 .app-ui .switch {
-  display: inline-flex;
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: space-between;
   align-items: center;
+  width: 100%;
   gap: var(--app-space-2);
   padding: 0;
   background: none;

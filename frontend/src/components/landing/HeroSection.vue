@@ -80,12 +80,16 @@ function toggle(item) {
     <div class="container column herobody">
       <h1 class="headline hero">
         Notion and Apple Calendar.<br />
-        <span class="dim">Finally in sync. Both ways.</span>
+        <span class="dim">Finally in sync. Both&nbsp;ways.</span>
       </h1>
 
-      <div class="row herocta">
-        <GetStartedButton />
-        <p class="tagline freenote">Free. Nothing to install.</p>
+      <div class="column ctablock">
+        <div class="row herocta">
+          <GetStartedButton />
+          <p class="tagline freenote">Free. Nothing to install.</p>
+        </div>
+        <!-- Hardcoded. Update by hand from the admin page's linked events. -->
+        <p class="proof">3,800+ events synced so far.</p>
       </div>
 
       <div class="row mockup">
@@ -158,6 +162,16 @@ function toggle(item) {
 
 .herocta {
   --gap: var(--app-space-5);
+}
+
+.ctablock {
+  --gap: 14px;
+}
+
+.proof {
+  color: var(--l-muted-dark);
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .freenote {

@@ -49,7 +49,8 @@
   --app-btn-danger-hover: #71203f;
 
   /* Type */
-  --app-font: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans',
+  /* The system face: SF Pro on the Apple devices Calnio's users are on. */
+  --app-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans',
     Helvetica, Arial, sans-serif;
   --app-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
 

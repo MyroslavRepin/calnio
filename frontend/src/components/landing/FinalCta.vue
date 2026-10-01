@@ -10,7 +10,7 @@ import GetStartedButton from './GetStartedButton.vue'
         Sign in, tick a database, and it shows up in Apple Calendar. Turn two-way
         on and your calendar edits go back to Notion.
       </p>
-      <GetStartedButton label="Get started" />
+      <GetStartedButton />
     </div>
   </section>
 </template>

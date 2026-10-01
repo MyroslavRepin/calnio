@@ -1,0 +1,169 @@
+/* The calendar scene and the end card. Both sit on .landing-ui so they read
+   the landing page's tokens and its event chips. */
+
+.landing-ui.calscene {
+  --gap: 14px;
+  padding: 28px 32px;
+}
+
+.landing-ui.calscene.phone {
+  padding: 18px 14px;
+}
+
+.landing-ui.calscene.phone .calmain {
+  padding: 14px 12px;
+}
+
+.landing-ui .calcaption {
+  color: var(--l-muted);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.landing-ui .calwindow {
+  --gap: 0px;
+  flex: 1;
+  align-items: stretch;
+  flex-wrap: nowrap;
+  background: #fff;
+  border: 1px solid var(--l-line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.landing-ui .calsidebar {
+  --gap: 10px;
+  flex: 0 0 168px;
+  padding: 20px 18px;
+  background: #f0f0f3;
+  border-right: 1px solid var(--l-line);
+}
+
+.landing-ui .calgroup {
+  color: var(--l-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.landing-ui .calname {
+  --gap: 9px;
+  flex-wrap: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.landing-ui .calswatch {
+  width: 13px;
+  height: 13px;
+  flex: none;
+  border-radius: 4px;
+}
+
+.landing-ui .calswatch.blue {
+  background: var(--l-blue-text);
+}
+
+.landing-ui .calswatch.green {
+  background: var(--l-green-text);
+}
+
+.landing-ui .calswatch.amber {
+  background: var(--l-amber-text);
+}
+
+.landing-ui .calswatch.pink {
+  background: var(--l-pink-text);
+}
+
+.landing-ui .calmain {
+  --gap: 14px;
+  flex: 1;
+  min-width: 0;
+  padding: 18px 20px;
+}
+
+.landing-ui .calmonth {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.landing-ui .calgrid {
+  display: grid;
+  column-gap: 6px;
+}
+
+.landing-ui .calday {
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--l-line);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.landing-ui .calallday {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 34px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--l-line);
+}
+
+.landing-ui .calhour {
+  color: var(--l-muted);
+  font-size: 11px;
+  font-weight: 500;
+  padding-top: 5px;
+}
+
+.landing-ui .calhours {
+  --gap: 0px;
+}
+
+.landing-ui .calhours .calhour {
+  padding-top: 0;
+  transform: translateY(-6px);
+}
+
+/* One line per title, so a one-hour chip always has room for its time. */
+.landing-ui .calgrid .ev .evtitle {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.landing-ui.calscene.phone .calcolumn .ev small {
+  display: none;
+}
+
+/* Hour lines drawn as a repeating hairline, so the grid needs no extra nodes. */
+.landing-ui .calcolumn {
+  position: relative;
+  background-image: linear-gradient(to bottom, var(--l-line) 1px, transparent 1px);
+}
+
+.landing-ui.endcard {
+  --gap: 10px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.landing-ui .endmark {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 8px;
+}
+
+.landing-ui .endname {
+  font-size: 44px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.06;
+}
+
+.landing-ui .endline {
+  color: var(--l-muted);
+  font-size: 20px;
+}

@@ -1,0 +1,280 @@
+/* Copies of the landing page's scoped styles: the hero mockup from
+   HeroSection.vue and the lock screen from RealAlerts.vue, prefixed with
+   .landing-ui so they apply outside Vue. Re-copy them when those change. */
+
+.landing-ui .mockup {
+  --gap: clamp(16px, 2vw, 24px);
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
+.landing-ui .tasks,
+.landing-ui .calendar {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.landing-ui .swap {
+  width: clamp(54px, 5.6vw, 74px);
+  height: clamp(54px, 5.6vw, 74px);
+  flex: none;
+  border-radius: 50%;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.landing-ui .swap svg {
+  width: 52%;
+  height: 52%;
+}
+
+.landing-ui .tasks {
+  padding: 22px 24px;
+}
+
+.landing-ui .tablename,
+.landing-ui .calendarname {
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  margin-bottom: 12px;
+}
+
+.landing-ui .tablename h2,
+.landing-ui .calendarname h2 {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.landing-ui .tablename span,
+.landing-ui .calendarname span {
+  color: var(--l-muted);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.landing-ui .task {
+  --gap: 12px;
+  width: 100%;
+  flex-wrap: nowrap;
+  padding: 11px 0;
+  border: none;
+  border-top: 1px solid var(--l-line);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 15px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.landing-ui .checkbox {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  border: 1.8px solid #b8b8bf;
+  border-radius: 4px;
+  position: relative;
+}
+
+.landing-ui .checkbox.ticked {
+  background: var(--l-ink);
+  border-color: var(--l-ink);
+}
+
+.landing-ui .checkbox.ticked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.landing-ui .taskname {
+  flex: 1;
+  font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.landing-ui .task.done .taskname {
+  color: #a1a1a6;
+  text-decoration: line-through;
+}
+
+.landing-ui .chip {
+  background: #f0f0f3;
+  border-radius: 7px;
+  padding: 4px 9px;
+  color: #46464b;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.landing-ui .calendar {
+  padding: 20px 20px 18px;
+}
+
+.landing-ui .week {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+.landing-ui .weekday {
+  color: var(--l-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--l-line);
+}
+
+.landing-ui .weekday b {
+  display: block;
+  color: var(--l-ink);
+  font-size: 20px;
+  letter-spacing: -0.02em;
+  text-transform: none;
+}
+
+.landing-ui .dayrun {
+  position: relative;
+  height: 250px;
+  border-right: 1px dashed #ececf0;
+}
+
+.landing-ui .dayrun:last-child {
+  border-right: none;
+}
+
+.landing-ui .dayrun .ev {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+}
+
+.landing-ui .ev.past {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.landing-ui .phone {
+  flex: 0 1 340px;
+  max-width: 340px;
+  aspect-ratio: 340 / 700;
+  border-radius: 56px;
+  background: #1c1c1e;
+  padding: 12px;
+  box-shadow: 0 40px 80px -30px rgba(0, 0, 0, 0.45);
+}
+
+.landing-ui .screen {
+  --gap: 0px;
+  position: relative;
+  height: 100%;
+  border-radius: 45px;
+  overflow: hidden;
+  background: linear-gradient(160deg, #3a4a6b, #1b2233 55%, #0d1018);
+  color: #fff;
+  padding: 0 14px;
+}
+
+.landing-ui .notch {
+  position: absolute;
+  left: 50%;
+  top: 14px;
+  transform: translateX(-50%);
+  width: 110px;
+  height: 32px;
+  border-radius: 20px;
+  background: #000;
+}
+
+.landing-ui .today {
+  text-align: center;
+  margin-top: 78px;
+  font-size: 17px;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.landing-ui .clock {
+  text-align: center;
+  font-size: 88px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.landing-ui .alert {
+  --gap: 12px;
+  align-items: flex-start;
+  flex-wrap: nowrap;
+  border-radius: 22px;
+  background: rgba(245, 245, 250, 0.82);
+  color: #111;
+  padding: 14px 16px;
+  margin-top: 16px;
+}
+
+.landing-ui .alert:first-of-type {
+  margin-top: 56px;
+}
+
+.landing-ui .alert.faded {
+  background: rgba(245, 245, 250, 0.6);
+}
+
+.landing-ui .datemark {
+  --gap: 0px;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 10px;
+  background: #fff;
+  align-items: center;
+  justify-content: center;
+  color: #d33;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.landing-ui .datemark b {
+  color: #111;
+  font-size: 17px;
+}
+
+.landing-ui .alertcopy {
+  --gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.landing-ui .alertname {
+  --gap: 8px;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  font-size: 14px;
+}
+
+.landing-ui .stamp {
+  color: #777;
+  font-size: 12px;
+}
+
+.landing-ui .alertdetail {
+  color: #333;
+  font-size: 14px;
+}

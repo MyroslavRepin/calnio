@@ -3,7 +3,7 @@
 defineProps({
   name: { type: String, required: true },
   status: { type: String, required: true },
-  // success / attention / neutral, matching the .label tones in components.css.
+  // success draws the value in ink, anything else in grey.
   tone: { type: String, default: 'neutral' },
   // Empty action = inert row (a connection the user cannot configure yet).
   action: { type: String, default: '' },
@@ -18,7 +18,7 @@ defineEmits(['toggle'])
     <div class="card-head">
       <div class="row ident">
         <span class="name">{{ name }}</span>
-        <span class="label" :class="tone">{{ status }}</span>
+        <span class="connectedas" :class="tone">{{ status }}</span>
       </div>
 
       <button v-if="action" class="btn plain" type="button" @click="$emit('toggle')">
@@ -36,6 +36,14 @@ defineEmits(['toggle'])
 .ident {
   --gap: var(--app-gap-inline) var(--app-gap-stack);
   min-width: 0;
+}
+
+.connectedas {
+  color: var(--app-fg-muted);
+}
+
+.connectedas.success {
+  color: var(--app-fg);
 }
 
 .name {

@@ -1,0 +1,21 @@
+{
+  "name": "calnio-video",
+  "private": true,
+  "description": "The setup video on the landing page, rendered with Remotion.",
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "remotion render SetupDesktop out/setup.mp4 && remotion render SetupPhone out/setup-phone.mp4",
+    "poster": "remotion still SetupDesktop out/setup-poster.jpg --frame=650",
+    "producthunt": "remotion render ProductHunt out/calnio-producthunt.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.532",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "remotion": "4.0.532"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "typescript": "^7.0.2"
+  }
+}
