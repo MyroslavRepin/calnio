@@ -343,6 +343,11 @@ and flat light grounds. Scene lengths live in `SCENES` in `ProductHunt.tsx`.
 It never shows anything the product does not do: a ticked Notion task does not
 change its calendar event, so the video does not claim it.
 
+`npm run gallery` renders the Product Hunt gallery from the same scenes: a 7s
+looping GIF of the two-way edit (`GalleryLoop`, 1270x760, ends where it starts
+so the loop has no seam) and four stills (`GalleryStill` at 2540x1520, one frame
+per scene picked with `--frame`; Remotion's `<Freeze>` rendered these blank).
+
 **Product truth (never contradict in copy):** Calnio syncs **both ways**. Notion
 → Apple Calendar always, and Apple Calendar → Notion when the user switches
 two-way on for that database. Never describe it as one-way. Notion wins when both
