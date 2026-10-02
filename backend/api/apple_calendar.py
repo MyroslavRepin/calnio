@@ -53,6 +53,7 @@ async def connect_apple_calendar(
         notify,
         f"iCloud {'connected' if created else 'reconnected'}\n{user.email}\n"
         f"{len(calendars)} calendars visible\nid {user.id}",
+        silent=True,
     )
     response.status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
     return ConnectResponse(
