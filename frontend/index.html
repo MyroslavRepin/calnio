@@ -23,8 +23,11 @@
     <meta property="og:url" content="https://calnio.myroslavrepin.com/" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://calnio.myroslavrepin.com/og.jpg" />
-    <!-- Umami analytics (self-hosted); data-domains keeps localhost dev visits out -->
-    <script defer src="https://analytics.myroslavrepin.com/script.js" data-website-id="dfdaccb7-d57e-43c9-bfe7-913b8205e1f7" data-domains="calnio.myroslavrepin.com"></script>
+    <!-- Umami analytics (self-hosted); data-domains keeps localhost dev visits out,
+         data-performance adds Web Vitals. recorder.js does the click/scroll heatmaps
+         (switched on per site in Umami settings). -->
+    <script defer src="https://analytics.myroslavrepin.com/script.js" data-website-id="dfdaccb7-d57e-43c9-bfe7-913b8205e1f7" data-domains="calnio.myroslavrepin.com" data-performance="true"></script>
+    <script defer src="https://analytics.myroslavrepin.com/recorder.js" data-website-id="dfdaccb7-d57e-43c9-bfe7-913b8205e1f7"></script>
   </head>
   <body>
     <div id="app"></div>

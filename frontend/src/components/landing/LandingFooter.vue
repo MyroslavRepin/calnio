@@ -10,7 +10,10 @@ import CalnioMark from '../CalnioMark.vue'
         Calnio
       </span>
 
-      <span class="note">Free. Hosted on a Raspberry Pi on my desk.</span>
+      <span class="note">
+        Free. Hosted on a Raspberry Pi on my desk. Made by
+        <a class="author" href="https://myroslavrepin.com" data-umami-event="author_link">Myroslav Repin</a>.
+      </span>
 
       <a class="feedback" href="mailto:myroslavrepin@gmail.com?subject=Calnio%20feedback">
         Tell me what breaks
@@ -46,6 +49,16 @@ import CalnioMark from '../CalnioMark.vue'
 .note {
   color: var(--l-muted);
   font-size: 14px;
+}
+
+.author {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.author:hover {
+  color: var(--l-blue);
 }
 
 .feedback {
