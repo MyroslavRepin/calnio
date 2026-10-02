@@ -1,5 +1,6 @@
 import { reactive, readonly } from 'vue'
 import { send } from './useAuth'
+import { track } from './useAnalytics'
 import { reloadSync, watchRun } from './useSync'
 
 const BASE = '/api/v1/me/syncs'
@@ -62,6 +63,7 @@ async function create(dataSourceIds) {
   result.data.forEach(function (mapping) {
     replace(mapping)
   })
+  track('sync_created', { databases: result.data.length })
 
   // Creating a sync turns the master switch on, so the switch the Settings page
   // and the header read has to be re-read.

@@ -1,5 +1,6 @@
 import { reactive, readonly } from 'vue'
 import { send } from './useAuth'
+import { track } from './useAnalytics'
 
 const BASE = '/api/v1/me/apple-calendar'
 
@@ -53,6 +54,7 @@ async function connect(icloudEmail, appSpecificPassword) {
 
   state.connection = connection
   state.calendars = calendars
+  track('apple_connected')
   return {}
 }
 

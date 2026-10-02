@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../../composables/useAuth'
+import { track } from '../../composables/useAnalytics'
 
 const authResult = useAuth()
 const state = authResult.state
@@ -25,6 +26,7 @@ function start() {
     router.push('/dashboard')
     return
   }
+  track('sign_in_click')
   login()
 }
 </script>

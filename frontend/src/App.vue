@@ -1,11 +1,15 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useAuth } from './composables/useAuth'
+import { consumeEventFlag } from './composables/useAnalytics'
 
 // Ask the server who is signed in, once, when the app starts.
 const authResult = useAuth()
 
-onMounted(authResult.bootstrap)
+onMounted(function () {
+  consumeEventFlag()
+  authResult.bootstrap()
+})
 </script>
 
 <template>

@@ -82,7 +82,10 @@ async def google_callback(
         )
 
     access_token, refresh_token = jwt_service.create_token_pair(str(user.id))
-    response = RedirectResponse(f"{settings.frontend_url}/dashboard")
+    # ?event= is read once by the frontend and sent to Umami, so a signup can be
+    # told apart from a returning login; the browser never sees that otherwise.
+    event = "signup" if created else "login"
+    response = RedirectResponse(f"{settings.frontend_url}/dashboard?event={event}")
     set_auth_cookies(response, access_token, refresh_token)
     return response
 

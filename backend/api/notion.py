@@ -74,7 +74,11 @@ async def notion_callback(
         logger.warning("notion oauth: unexpected token response shape")
         return redirect_with_error("token")
 
-    NotionConnectionRepo(db).upsert(
+    repo = NotionConnectionRepo(db)
+    # Connect doubles as "share more databases", so only the first one counts
+    # as a new connection in analytics.
+    first_connect = repo.get(user.id) is None
+    repo.upsert(
         user.id,
         encrypt(token["access_token"]),
         bot_id=token.get("bot_id", ""),
@@ -90,7 +94,10 @@ async def notion_callback(
         f"Notion connected\n{user.email}\n"
         f"workspace {token.get('workspace_name') or 'unnamed'}\nid {user.id}",
     )
-    return RedirectResponse(f"{settings.frontend_url}/dashboard/connections")
+    event = "notion_connected" if first_connect else "notion_reconnected"
+    return RedirectResponse(
+        f"{settings.frontend_url}/dashboard/connections?event={event}"
+    )
 
 
 @router.get("/api/v1/me/notion", response_model=ConnectionStatus)
