@@ -93,7 +93,6 @@ async def notion_callback(
         notify,
         f"Notion connected\n{user.email}\n"
         f"workspace {token.get('workspace_name') or 'unnamed'}\nid {user.id}",
-        silent=True,
     )
     event = "notion_connected" if first_connect else "notion_reconnected"
     return RedirectResponse(

@@ -273,10 +273,3 @@ class AdminRepo:
                 )
             )
         return answer
-
-    def runs_since(self, since: datetime) -> list[tuple[str | None, str | None]]:
-        """Status and error of every sync that ran after a moment."""
-        statement = select(SyncMapping.last_status, SyncMapping.last_error).where(
-            SyncMapping.last_run_at >= since
-        )
-        return [(status, error) for status, error in self.db.execute(statement)]

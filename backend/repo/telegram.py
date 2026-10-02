@@ -30,7 +30,7 @@ class TelegramRepo:
             timeout=10.0,
         )
 
-    def send(self, text: str, *, buttons: bool = False, silent: bool = False) -> None:
+    def send(self, text: str, *, buttons: bool = False) -> None:
         """Post one message to the configured chat."""
         payload: dict = {
             "chat_id": self.chat_id,
@@ -38,8 +38,6 @@ class TelegramRepo:
             # A workspace or a display name can contain the characters
             # Telegram's markup would choke on, so the text stays plain.
             "disable_web_page_preview": True,
-            # Arrives without a sound. For news, so it never buries an alert.
-            "disable_notification": silent,
         }
         if buttons:
             payload["reply_markup"] = {"inline_keyboard": MENU}
@@ -64,7 +62,7 @@ def stamp() -> str:
     return datetime.now().strftime("%d %b %H:%M")
 
 
-def notify(text: str, *, buttons: bool = False, silent: bool = False) -> None:
+def notify(text: str, *, buttons: bool = False) -> None:
     """Send a notification, swallowing every failure.
 
     Notifying the operator must never break the thing that triggered it, so a
@@ -75,6 +73,6 @@ def notify(text: str, *, buttons: bool = False, silent: bool = False) -> None:
 
     try:
         repo = TelegramRepo(settings.telegram_bot_token, settings.telegram_chat_id)
-        repo.send(f"{text}\n{stamp()}", buttons=buttons, silent=silent)
+        repo.send(f"{text}\n{stamp()}", buttons=buttons)
     except Exception as exc:
         logger.opt(exception=exc).warning("telegram notification failed")
