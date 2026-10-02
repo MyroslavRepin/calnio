@@ -72,13 +72,14 @@ async def google_callback(
             f"New Calnio user  (#{total})\n{user.name or 'no name'}\n{user.email}\n"
             f"id {user.id}",
             buttons=True,
+            silent=True,
         )
     else:
-        # Every sign-in, so this is the loud one: a returning user whose cookie
-        # expired lands here too.
+        # Every sign-in, a returning user whose cookie expired included.
         background.add_task(
             notify,
             f"Login\n{user.name or 'no name'}\n{user.email}\nid {user.id}",
+            silent=True,
         )
 
     access_token, refresh_token = jwt_service.create_token_pair(str(user.id))

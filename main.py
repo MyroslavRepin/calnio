@@ -6,7 +6,6 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import text
 from starlette.middleware.sessions import SessionMiddleware
 
 from backend.api.account import router as account_router
@@ -19,46 +18,24 @@ from backend.api.oauth import router as oauth_router
 from backend.api.sync import router as sync_router
 from backend.api.telegram import router as telegram_router
 from backend.core.config import settings
-from backend.core.db import SessionLocal
 from backend.core.logging import setup_logging
 from backend.core.scheduler import init_scheduler
-from backend.repo.telegram import notify
-from backend.models.system_settings import SystemSettings
-from backend.services.sync import run_all_users
+from backend.services import monitor
 
 setup_logging()
-
-
-def database_state() -> str:
-    """Say whether the database answers, for the startup notification."""
-    try:
-        with SessionLocal() as db:
-            db.execute(text("select 1"))
-        return "ok"
-    except Exception:
-        return "unreachable"
-
-
-def run_all_users_if_enabled() -> None:
-    """Run the sync tick unless the global switch is off."""
-    with SessionLocal() as db:
-        row = db.query(SystemSettings).first()
-        if row is not None and not row.sync_enabled:
-            return
-    run_all_users()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Start the scheduler, schedule the sync tick, stop it on shutdown."""
+    monitor.report_startup(monitor.mark_started())
+
     # The scheduler starts either way, because turning a user's sync on queues
     # a one-off job through it and that path is gated separately.
-    notify(f"Calnio started\ndatabase {database_state()}")
-
     scheduler = init_scheduler()
     if settings.scheduler_enabled:
         scheduler.add_job(
-            run_all_users_if_enabled,
+            monitor.run_tick,
             "interval",
             minutes=int(settings.syncing_interval_minutes),
             max_instances=1,  # never overlap two ticks
@@ -66,6 +43,7 @@ async def lifespan(app: FastAPI):
         )
     yield
     scheduler.shutdown(wait=False)  # do not block Ctrl+C on an in-flight sync
+    monitor.mark_stopped()
 
 
 app = FastAPI(lifespan=lifespan)

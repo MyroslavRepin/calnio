@@ -37,8 +37,8 @@ class Settings(BaseSettings):
     # python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
     credentials_encryption_key: str
 
-    # Telegram notifications for the operator, currently a line when somebody
-    # signs up. Optional on purpose: unset means no bot and no notifying, so a
+    # Telegram notifications for the operator: the funnel, startup, and alerts
+    # from the sync tick. Optional on purpose: unset means no bot and no notifying, so a
     # dev machine and every existing deploy keep booting without them.
     telegram_bot_token: str | None = None
     telegram_chat_id: str | None = None
@@ -46,6 +46,11 @@ class Settings(BaseSettings):
     # Shared with Telegram at setWebhook time and sent back on every update.
     # The webhook is a public URL, so an update without it is discarded.
     telegram_webhook_secret: str | None = None
+
+    # A dead man's switch (healthchecks.io or the like) pinged after every
+    # tick. It alerts from outside when the pings stop, the one failure the
+    # bot cannot report: the whole machine going down.
+    healthcheck_url: str | None = None
 
     # Where the OAuth callback redirects back to, and the CORS allow-origin.
     frontend_url: str = "http://localhost:5173"
