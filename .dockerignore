@@ -19,6 +19,7 @@ openapi.json
 frontend/.env
 frontend/node_modules
 frontend/dist
+frontend/dist-ssr
 
 # landing design reference, never shipped
 design-ref/

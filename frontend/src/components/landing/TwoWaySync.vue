@@ -24,8 +24,9 @@ const edits = [
       </div>
 
       <p class="tagline closing">
-        Notion edits reach the calendar too. When both sides changed at once,
-        Notion wins. Repeating events and invites are never imported.
+        Two-way is a switch on each sync, off until you turn it on. Notion edits
+        reach the calendar either way. When both sides changed at once, Notion
+        wins. Repeating events and invites are never imported.
       </p>
     </div>
   </section>

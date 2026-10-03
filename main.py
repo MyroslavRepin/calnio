@@ -2,9 +2,9 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from starlette.middleware.sessions import SessionMiddleware
@@ -110,24 +110,48 @@ DIST = Path(__file__).parent / "frontend" / "dist"
 if DIST.is_dir():
     app.mount("/assets", StaticFiles(directory=DIST / "assets"), name="assets")
 
-    # Declared after every router so real endpoints win. The Vue router runs in
-    # history mode, so a hard refresh of /dashboard/connections asks the server
-    # for a path that is not a file and has to be answered with index.html.
-    @app.get("/{spa_path:path}", include_in_schema=False)
-    async def spa(spa_path: str) -> FileResponse:
-        """Serve the built file at that path, or index.html when there is none."""
+    def html_page(path: Path, status_code: int = 200) -> FileResponse:
+        """Serve a built HTML page that browsers must revalidate."""
+        # Every page references hashed bundle names that a redeploy replaces,
+        # and a stale copy points at files that are gone.
+        return FileResponse(
+            path, status_code=status_code, headers={"Cache-Control": "no-cache"}
+        )
+
+    # Declared after every router so real endpoints win. HEAD is listed because
+    # FastAPI does not add it to a GET route, and crawlers and curl -I send it.
+    @app.api_route("/{spa_path:path}", methods=["GET", "HEAD"], include_in_schema=False)
+    async def spa(spa_path: str, request: Request) -> Response:
+        """Serve the built file or page at that path, or the 404 page."""
         # An unmatched API path stays JSON: HTML with a 200 would make a typo'd
         # endpoint look like a successful request.
         if spa_path.startswith(("api/", "auth/")):
             raise HTTPException(status_code=404, detail="Not Found")
-        # Everything Vite copies out of frontend/public lands in the root of dist
-        # rather than under /assets, so the favicon, the touch icon and the og
-        # image arrive here. Answering them with index.html would hand a crawler
-        # HTML where it asked for a JPEG. The path comes from the URL, so it is
-        # resolved and confined to dist before anything is read off disk.
+        # The path comes from the URL, so it is resolved and confined to dist
+        # before anything is read off disk.
+        root = DIST.resolve()
         candidate = (DIST / spa_path).resolve()
-        if candidate.is_relative_to(DIST.resolve()) and candidate.is_file():
+        if not candidate.is_relative_to(root):
+            return html_page(DIST / "404.html", status_code=404)
+        # Everything Vite copies out of frontend/public lands in the root of
+        # dist: the favicon, the og image, robots.txt. prerender.js adds
+        # sitemap.xml and 404.html beside them.
+        if candidate.is_file():
+            if candidate.suffix == ".html":
+                return html_page(candidate)
             return FileResponse(candidate)
-        # index.html must not be cached: it references hashed bundle names that
-        # a redeploy replaces, and a stale copy points at files that are gone.
-        return FileResponse(DIST / "index.html", headers={"Cache-Control": "no-cache"})
+        # prerender.js writes one index.html per route the Vue router knows: a
+        # marketing page drawn in full, an app page as an empty noindex shell.
+        # Anything else is not a page, and gets a real 404 rather than the
+        # landing page under one more address.
+        page = candidate / "index.html"
+        if not page.is_file():
+            return html_page(DIST / "404.html", status_code=404)
+        # One address per page: /faq/ moves to /faq instead of answering twice.
+        # The target is built from the resolved path, so it stays on this site.
+        if spa_path.endswith("/"):
+            target = "/" + candidate.relative_to(root).as_posix()
+            if request.url.query:
+                target += "?" + request.url.query
+            return RedirectResponse(target, status_code=301)
+        return html_page(page)

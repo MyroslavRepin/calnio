@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api
+Disallow: /auth
+Disallow: /dashboard
+Disallow: /welcome
+Disallow: /me
+
+Sitemap: https://calnio.myroslavrepin.com/sitemap.xml

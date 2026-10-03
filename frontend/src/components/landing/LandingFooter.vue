@@ -1,23 +1,39 @@
 <script setup>
 import CalnioMark from '../CalnioMark.vue'
+
+// Every public page besides the landing, which the wordmark links to, so each
+// page links to all the others and a crawler that lands anywhere finds the rest.
+const pages = [
+  { to: '/notion-apple-calendar-sync', label: 'Notion Apple Calendar sync guide' },
+  { to: '/notion-icloud-calendar', label: 'Notion in your iPhone calendar' },
+  { to: '/faq', label: 'FAQ' },
+]
 </script>
 
 <template>
   <footer class="footer">
-    <div class="container row footerrow">
-      <span class="wordmark">
-        <span class="plate"><CalnioMark /></span>
-        Calnio
-      </span>
+    <div class="container column footerbody">
+      <div class="row footerrow">
+        <router-link to="/" class="wordmark">
+          <span class="plate"><CalnioMark /></span>
+          Calnio
+        </router-link>
 
-      <span class="note">
-        Free. Hosted on a Raspberry Pi on my desk. Made by
-        <a class="author" href="https://myroslavrepin.com" data-umami-event="author_link">Myroslav Repin</a>.
-      </span>
+        <nav class="row pagelinks" aria-label="Pages">
+          <router-link v-for="page in pages" :key="page.to" :to="page.to">{{ page.label }}</router-link>
+        </nav>
+      </div>
 
-      <a class="feedback" href="mailto:myroslavrepin@gmail.com?subject=Calnio%20feedback">
-        Tell me what breaks
-      </a>
+      <div class="row footerrow">
+        <span class="note">
+          Free. Hosted on a Raspberry Pi on my desk. Made by
+          <a class="author" href="https://myroslavrepin.com" data-umami-event="author_link">Myroslav Repin</a>.
+        </span>
+
+        <a class="feedback" href="mailto:myroslavrepin@gmail.com?subject=Calnio%20feedback">
+          Tell me what breaks
+        </a>
+      </div>
     </div>
   </footer>
 </template>
@@ -31,9 +47,23 @@ import CalnioMark from '../CalnioMark.vue'
   padding-bottom: calc(clamp(28px, 3.4vw, 40px) + env(safe-area-inset-bottom, 0px));
 }
 
+.footerbody {
+  --gap: var(--app-space-5);
+}
+
 .footerrow {
   --gap: var(--app-space-5);
   justify-content: space-between;
+}
+
+.pagelinks {
+  --gap: var(--app-space-2) var(--app-space-5);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.pagelinks a:hover {
+  color: var(--l-blue);
 }
 
 .plate {

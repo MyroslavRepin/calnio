@@ -78,10 +78,17 @@ function toggle(item) {
 <template>
   <section class="section dark hero">
     <div class="container column herobody">
-      <h1 class="headline hero">
-        Notion and Apple Calendar.<br />
-        <span class="dim">Finally in sync. Both&nbsp;ways.</span>
-      </h1>
+      <div class="column heroclaim">
+        <h1 class="headline hero">
+          Notion Apple Calendar sync<br />
+          <span class="dim">that works both&nbsp;ways.</span>
+        </h1>
+        <p class="tagline herolead">
+          Calnio puts your Notion dates in your iPhone calendar as real iCloud
+          events. Switch on two-way, and what you move, rename or delete in Apple
+          Calendar changes Notion too.
+        </p>
+      </div>
 
       <div class="column ctablock">
         <div class="row herocta">
@@ -95,7 +102,7 @@ function toggle(item) {
       <div class="row mockup">
         <div class="card tasks">
           <div class="row tablename">
-            <h2>Tasks</h2>
+            <p>Tasks</p>
             <span>Tick one</span>
           </div>
 
@@ -122,7 +129,7 @@ function toggle(item) {
 
         <div class="card calendar">
           <div class="row calendarname">
-            <h2>October</h2>
+            <p>October</p>
             <span>Tasks calendar</span>
           </div>
 
@@ -158,6 +165,14 @@ function toggle(item) {
 
 .herobody {
   --gap: clamp(28px, 4vw, 44px);
+}
+
+.heroclaim {
+  --gap: clamp(16px, 2vw, 24px);
+}
+
+.herolead {
+  max-width: 48ch;
 }
 
 .herocta {
@@ -220,8 +235,8 @@ function toggle(item) {
   margin-bottom: 12px;
 }
 
-.tablename h2,
-.calendarname h2 {
+.tablename p,
+.calendarname p {
   font-size: 18px;
   font-weight: 700;
   letter-spacing: -0.01em;

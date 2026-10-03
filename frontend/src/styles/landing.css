@@ -217,3 +217,83 @@
   font-size: var(--app-text-body);
   padding: var(--app-space-3) var(--app-space-4);
 }
+
+/* Hairline rows, like a spec sheet: a name on the left, the facts beside it.
+   The security section, the guides and the FAQ all read this way. */
+.landing-ui .topics {
+  --gap: 0px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.landing-ui .topic {
+  --gap: 8px 40px;
+  align-items: baseline;
+  border-top: 1px solid var(--l-line);
+  padding: clamp(22px, 2.6vw, 32px) 0;
+}
+
+.landing-ui .topicname {
+  flex: 0 1 260px;
+  font-size: clamp(17px, 1.6vw, 21px);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.landing-ui .topicbody {
+  --gap: 10px;
+  flex: 1 1 380px;
+  max-width: 62ch;
+  color: var(--l-muted);
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.landing-ui .topicbody ol {
+  margin: 0;
+  padding-left: 1.3em;
+}
+
+/* A link inside running copy: ink and underlined, white on a dark band. */
+.landing-ui .topicbody a,
+.landing-ui .tagline a {
+  color: var(--l-ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.landing-ui .section.dark .tagline a {
+  color: #fff;
+}
+
+.landing-ui .topicbody a:hover,
+.landing-ui .tagline a:hover {
+  color: var(--l-blue);
+}
+
+/* Every landing page: nav, a stack of bands, footer, at least a screen tall. */
+.landing-ui.page {
+  min-height: 100vh;
+}
+
+/* Sections space themselves, so the stack of bands carries no gap. */
+.landing-ui .bands {
+  --gap: 0px;
+  flex: 1;
+}
+
+/* One band of a guide page: a headline, its rows, and the words after them. */
+.landing-ui .chapter {
+  --gap: clamp(28px, 4vw, 48px);
+}
+
+.landing-ui .chapter .tagline {
+  max-width: 56ch;
+}
+
+/* A headline with the paragraph that belongs to it. */
+.landing-ui .chapterhead {
+  --gap: 16px;
+}
