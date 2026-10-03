@@ -15,6 +15,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [0.7.0] - 2026-10-03
+
+### Added
+
+- Guide pages at /notion-apple-calendar-sync, /notion-icloud-calendar and /faq
+- Public pages are prerendered, so crawlers read their full text without JavaScript
+- robots.txt and a sitemap.xml generated from the router
+- Per-page title, description, canonical and JSON-LD; app pages carry noindex
+- A 404 page for addresses that do not exist
+- Security and privacy section on the landing page
+- Setup walkthrough video on the landing page, rendered with Remotion
+- Self-hosted Umami analytics: page views, heatmaps, Web Vitals, signup and connect events
+- Footer links to every public page and to the author
+
+### Changed
+
+- Landing headline and copy rewritten around Notion Apple Calendar sync
+- System font replaces Inter across the landing page and the app
+- A trailing slash redirects to the same address without it
+
+### Fixed
+
+- Unknown paths, robots.txt and sitemap.xml no longer answer with the landing page and a 200
+- HEAD requests to pages are answered instead of refused with 405
+
+### Removed
+
+- The dashboard screenshot on the landing page, replaced by the setup video
+
 ## [0.6.0] - 2026-09-29
 
 ### Added
