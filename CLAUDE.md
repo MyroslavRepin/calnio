@@ -17,6 +17,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Dev server: `uv run uvicorn main:app --reload --port 8080`
 - Migrations: `uv run alembic upgrade head`; new one: `uv run alembic revision --autogenerate -m "..."` (autogenerate works — `alembic/env.py` imports all models and uses `Base.metadata`; a new model must be imported there or autogenerate won't see it)
 - Frontend dev server: `cd frontend && npm run dev` (Vite on 5173, cross-origin to the API on 8080 — that setup works, leave it alone)
+- Frontend build: `cd frontend && npm run build`. Three steps in one script: the browser bundle, the same app compiled for Node into `dist-ssr/`, then `node prerender.js`, which writes the public pages as finished HTML and deletes `dist-ssr/`. See "Prerendering" in the frontend section.
 - Landing video: `cd video && npm run studio` to preview, `npm run render && npm run poster` to rebuild, then copy `out/setup.mp4`, `out/setup-phone.mp4` and `out/setup-poster.jpg` into `frontend/public/`. See "The setup video" below.
 - Docker: `docker compose up --build` — **production only**, serves on 8082 via `network_mode: host` (the container reaches a self-hosted Postgres on the same machine through `localhost`, and the port number itself dodges a collision with another service already on that host's 8080). Reads `.env.prod` (not `.env`), builds the Vue app in a `node:22-slim` stage, one uvicorn worker, no `--reload`. Migrations are **not** run by the container.
 - Type check: pyright (config in `pyrightconfig.json`, venv-aware)
@@ -26,7 +27,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 FastAPI app in `main.py`: lifespan starts an APScheduler `BackgroundScheduler` that runs `run_all_users` every `SYNCING_INTERVAL_MINUTES` (and once at startup) when `SCHEDULER_ENABLED`; the scheduler itself always starts, because turning a user's sync on queues a one-off job through it. **Because of that scheduler the app runs on exactly one uvicorn worker** — a second worker is a second scheduler and doubles every user's sync. `SessionMiddleware` holds the OAuth `state` cookie; mounts the `oauth`, `apple_calendar`, `notion`, `sync`, `mapping` and `account` routers.
 
-**Serving the SPA** (bottom of `main.py`, after every router): if `frontend/dist` exists — it only does inside the Docker image — `StaticFiles` is mounted on `/assets` and a catch-all `GET /{spa_path:path}` returns `index.html` with `Cache-Control: no-cache`. The Vue router uses history mode, so deep links must be answered by the server with the app itself. Paths starting `api/` or `auth/` raise 404 from that handler so a mistyped endpoint never returns HTML. In dev the directory is absent, the block is skipped, and the app is a bare API exactly as before.
+**Serving the SPA** (bottom of `main.py`, after every router): if `frontend/dist` exists (it only does inside the Docker image), `StaticFiles` is mounted on `/assets` and a catch-all `GET`/`HEAD /{spa_path:path}` serves only what the build wrote: a real file (`robots.txt`, `sitemap.xml`, `og.jpg`), else `dist/<path>/index.html`, else `dist/404.html` **with a 404 status**. `prerender.js` writes one `index.html` per route the Vue router knows, so the router is the only list of real addresses and the server never repeats it. A path with a trailing slash gets a 301 to the same path without it, built from the resolved path so it cannot leave the site. HTML goes out with `Cache-Control: no-cache`. Paths starting `api/` or `auth/` raise a JSON 404 so a mistyped endpoint never returns HTML. HEAD is listed because FastAPI does not add it to a GET route. In dev the directory is absent, the block is skipped, and the app is a bare API exactly as before.
 
 **Everything DB is synchronous** — `create_engine` + `sessionmaker` (`core/db.py`), sync `Session` everywhere, psycopg3 driver. Routes are `async def` only because authlib requires `await`; don't introduce `AsyncSession` — that decision was made deliberately (scheduler thread + blocking CalDAV/Notion IO gain nothing from async).
 
@@ -201,6 +202,8 @@ await connect()                           // change it, every screen sees the ch
 
 **Auth, start to finish.** `main.js` mounts the app, `App.vue` calls `bootstrap()` once. `bootstrap()` strips `?auth_error=` off the URL, then calls `fetchMe()`, which goes through `apiFetch`. `apiFetch` adds `credentials: 'include'`, so the browser attaches its cookies. Both tokens live in httpOnly cookies: the JavaScript never holds a token and never stores one. On a 401, `apiFetch` calls `refresh()` once and retries; `refresh` keeps a single in-flight promise so ten parallel 401s cause one refresh. The result is `state.user` plus `state.ready`, and `state.ready` is the one flag that stops the whole app flickering before auth is known. Login is a real `window.location.href` navigation, not a fetch, because the browser has to follow redirects to Google and back.
 
+**Prerendering.** The public pages (`/`, `/notion-apple-calendar-sync`, `/notion-icloud-calendar`, `/faq`) arrive as finished HTML so a crawler reads them without running JavaScript; the app pages stay client-rendered. A route with `meta: { public: true, title, description, updated }` in `router.js` is a public page: `prerender.js` renders it with `vue/server-renderer` (part of `vue`, no extra dependency) through `src/entry-server.js`, fills `<!--head-->` in `index.html` with its title, description, canonical, og:title/description/url and JSON-LD (SoftwareApplication on `/`, FAQPage on `/faq` built from `src/faq.js`, the same list `FaqView` draws), and lists it in `sitemap.xml` with `updated` as lastmod. **Bump `updated` when a page's copy changes.** Every other fixed route gets an empty shell with `<meta name="robots" content="noindex">`, and the catch-all route renders `dist/404.html`. `main.js` hydrates with `createSSRApp` when `#app` arrived with markup and mounts with `createApp` when it arrived empty, after `router.isReady()` in both cases. Two traps follow: `router.js` picks `createMemoryHistory` under `import.meta.env.SSR` because Node has no address bar, and anything a public page renders before `onMounted` must come out the same in Node and in the browser, or hydration mismatches. That is why `state.ready` is false on both sides at first paint and the auth-dependent labels only change after `bootstrap()`. `robots.txt` is a static file in `frontend/public/`.
+
 **Who loads data.** The shell (`DashboardLayout`, `WelcomeView`) loads the cheap facts every page needs, through `loadWhenSignedIn`: the two connections, the master switch, and the mapping list. A component loads the slow lists itself, on demand: the iCloud calendar listing and the Notion database listing are third-party calls and must not run on page load. `MappingAdd` is the one component that fetches on mount, because listing databases is the only reason that card exists.
 
 **Composables.** `useAuth` (holds `apiFetch`, `send`, `loadWhenSignedIn`), `useNotion` and `useAppleCalendar` (one grant each, no targets), `useSync` (the master switch; exports `watchRun` and `reloadSync` because `useMappings` needs both), `useMappings` (the N syncs, plus `dateProperties` keyed by mapping id), `useSetup` (three stages, derived), `useAdmin` (the admin numbers, loaded by that page alone because the request counts every row).
@@ -286,9 +289,24 @@ setup light, indie dark, final call to action light, footer light.
 
 Under `components/landing/`: `LandingNav`, `HeroSection`, `RealAlerts`,
 `SecurityPrivacy`, `TwoWaySync`, `SetupShot`, `IndieDev`, `FinalCta`, `LandingFooter`, plus
-`CalnioMark` (the logo, inline SVG so its plate can flip per band) and
+`CalnioMark` (the logo, inline SVG so its plate can flip per band),
 `GetStartedButton` (the one call to action: "Sign in with Google", or "Open
-dashboard" for a signed-in visitor).
+dashboard" for a signed-in visitor) and `PageHero` (the dark band with the h1
+that opens each guide page).
+
+**Guide pages.** Besides `/` there are three public pages under `views/landing/`,
+each one prerendered, in the sitemap and linked from `LandingFooter`, so every
+page links to all the others: `SyncGuideView` (`/notion-apple-calendar-sync`,
+the step-by-step setup), `IcloudGuideView` (`/notion-icloud-calendar`, the
+iPhone and iCloud angle) and `FaqView` (`/faq`, drawn from `src/faq.js`).
+`NotFoundView` is the catch-all route, served with a 404 status. A guide page is
+nav and `PageHero` dark, then light bands of `.chapter` (a `.headline`, hairline
+`.topics` rows, closing `.tagline`), `FinalCta`, footer. The hairline rows
+(`.topics`, `.topic`, `.topicname`, `.topicbody`) are shared with
+`SecurityPrivacy` and live in `landing.css`. Every sentence on these pages is a
+product claim checked against the backend, same as the landing: the sync
+interval they state (15 minutes) is `SYNCING_INTERVAL_MINUTES`, so changing it
+in `.env.prod` means changing the copy.
 
 **The illustrations are HTML and CSS, not images.** The task table, the week
 calendar, the swap circle and the phone lock screen are all
@@ -296,7 +314,7 @@ drawn. The only real media are in `frontend/public/`: the setup video
 (`setup.mp4`, `setup-phone.mp4` under 600px, `setup-poster.jpg`), plus
 `favicon.ico`, `apple-touch-icon.png`, `og.jpg` and the logo files, which Vite copies to the root of `dist`. `main.py`'s SPA catch-all serves
 a real file when one exists at that path, so a crawler asking for `/og.jpg` is
-not handed `index.html`. `design-ref/` holds the source jpgs and `slides.html`
+not handed HTML, and answers a path that is neither a file nor a route with 404. `design-ref/` holds the source jpgs and `slides.html`
 and is gitignored and dockerignored: reference only, never shipped.
 
 **No motion anywhere**, same as the app: no `transition`, no `@keyframes`. The

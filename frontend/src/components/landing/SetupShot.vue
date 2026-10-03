@@ -25,10 +25,13 @@ onMounted(function () {
   <section class="section">
     <div class="container column setup">
       <div class="column intro">
-        <h2 class="headline">Ticking a database is the whole setup.</h2>
+        <h2 class="headline">To sync Notion with iCloud Calendar, tick a database.</h2>
         <p class="tagline">
-          Calnio finds the date column and creates the calendar for you. Two-way
-          is one switch on the same card.
+          Sign in with Google, connect Notion, add an iCloud app-specific
+          password, and tick the databases you want. Calnio finds the date column
+          and creates the calendar for you. Two-way is one switch on the same
+          card. The <router-link to="/notion-apple-calendar-sync">step-by-step guide</router-link>
+          walks through each screen.
         </p>
       </div>
 

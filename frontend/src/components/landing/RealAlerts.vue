@@ -25,12 +25,18 @@ const alerts = [
     <div class="container row alerts">
       <div class="column claim">
 
-        <h2 class="headline">Calnio writes real events into iCloud.</h2>
+        <h2 class="headline">Your Notion dates in your iPhone calendar, as real events.</h2>
 
         <p class="tagline">
           A webcal feed is read-only, stays silent and refreshes when it feels
           like it. Calnio's events are ordinary iCloud events: they alert on
           every device, and you can edit them from either side.
+        </p>
+        <p class="tagline">
+          Each database gets its own calendar. A date without a time becomes an
+          all-day event, a date with a time becomes an event at that time, and
+          Calnio checks for changes every 15 minutes.
+          <router-link to="/notion-icloud-calendar">How it works on an iPhone</router-link>.
         </p>
       </div>
 

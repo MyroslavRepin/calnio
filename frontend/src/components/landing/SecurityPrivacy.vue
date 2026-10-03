@@ -39,13 +39,14 @@ const topics = [
         <h2 class="headline">What Calnio keeps, and how to take it back.</h2>
         <p class="tagline">
           Calnio is run by one indie developer, me, on a server I host myself.
-          This is everything it holds.
+          This is everything it holds. More answers are in the
+          <router-link to="/faq">FAQ</router-link>.
         </p>
       </div>
 
       <div class="column topics">
         <div v-for="topic in topics" :key="topic.name" class="row topic">
-          <h3>{{ topic.name }}</h3>
+          <h3 class="topicname">{{ topic.name }}</h3>
           <div class="column topicbody">
             <p v-for="line in topic.lines" :key="line">{{ line }}</p>
             <p v-if="topic.apple">
@@ -71,40 +72,5 @@ const topics = [
 
 .intro .tagline {
   max-width: 46ch;
-}
-
-.topics {
-  --gap: 0px;
-}
-
-/* Hairline rows, like a spec sheet: the name on the left, the facts beside it. */
-.topic {
-  --gap: 8px 40px;
-  align-items: baseline;
-  border-top: 1px solid var(--l-line);
-  padding: clamp(22px, 2.6vw, 32px) 0;
-}
-
-.topic h3 {
-  flex: 0 1 260px;
-  font-size: clamp(17px, 1.6vw, 21px);
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
-
-.topicbody {
-  --gap: 10px;
-  flex: 1 1 380px;
-  max-width: 62ch;
-  color: var(--l-muted);
-  font-size: 17px;
-  line-height: 1.5;
-}
-
-.topicbody a {
-  color: var(--l-ink);
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 2px;
 }
 </style>

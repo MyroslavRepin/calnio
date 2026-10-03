@@ -52,16 +52,6 @@ const errorMessage = computed(function () {
 </template>
 
 <style scoped>
-.page {
-  min-height: 100vh;
-}
-
-/* Sections space themselves, so the stack carries no gap of its own. */
-.bands {
-  --gap: 0px;
-  flex: 1;
-}
-
 /* The sign-in failure sits on the hero's own black, above everything else. */
 .notice {
   background: var(--l-ink);
