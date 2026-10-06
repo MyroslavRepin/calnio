@@ -9,6 +9,14 @@ const pages = [
   { name: 'settings', label: 'Settings' },
 ]
 
+const adminPages = [
+  { name: 'admin', label: 'Overview' },
+  { name: 'admin-users', label: 'Accounts' },
+  { name: 'admin-syncs', label: 'Syncs' },
+  { name: 'admin-runs', label: 'Runs' },
+  { name: 'admin-errors', label: 'Errors' },
+]
+
 const authResult = useAuth()
 const auth = authResult.state
 
@@ -39,7 +47,9 @@ const isAdmin = computed(function () {
     <template v-if="isAdmin">
       <p class="group">Admin</p>
       <nav class="column menu">
-        <router-link :to="{ name: 'admin' }">Stats</router-link>
+        <router-link v-for="page in adminPages" :key="page.name" :to="{ name: page.name }">
+          {{ page.label }}
+        </router-link>
       </nav>
     </template>
   </aside>

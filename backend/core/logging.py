@@ -10,6 +10,10 @@ from loguru import logger
 LOG_DIR = Path("logs")
 LOG_FILE = LOG_DIR / "calnio.log"
 
+# Warnings and errors again, one JSON record per line, for the admin Errors
+# page. Structured so nothing has to parse the text format back apart.
+PROBLEMS_FILE = LOG_DIR / "problems.json"
+
 # Every line carries these, whether or not anything bound them, so a grep for
 # "user=4" never misses a line just because it was written outside a sync.
 CONTEXT = {"run": "-", "user": "-", "sync": "-"}
@@ -63,6 +67,20 @@ def setup_logging() -> None:
         format=FORMAT,
         rotation="20 MB",
         retention="14 days",
+        enqueue=True,
+        backtrace=True,
+        diagnose=False,
+    )
+
+    # Same rules as the text file: one writer, no variable dump. format is the
+    # bare message, so the record's text is the message plus its traceback.
+    logger.add(
+        PROBLEMS_FILE,
+        level="WARNING",
+        format="{message}",
+        serialize=True,
+        rotation="10 MB",
+        retention="30 days",
         enqueue=True,
         backtrace=True,
         diagnose=False,

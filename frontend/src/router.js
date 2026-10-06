@@ -4,7 +4,13 @@ import IcloudGuideView from './views/landing/IcloudGuideView.vue'
 import LandingView from './views/landing/LandingView.vue'
 import NotFoundView from './views/landing/NotFoundView.vue'
 import SyncGuideView from './views/landing/SyncGuideView.vue'
-import AdminView from './views/app/AdminView.vue'
+import AdminErrorsView from './views/app/AdminErrorsView.vue'
+import AdminOverviewView from './views/app/AdminOverviewView.vue'
+import AdminRunsView from './views/app/AdminRunsView.vue'
+import AdminSyncView from './views/app/AdminSyncView.vue'
+import AdminSyncsView from './views/app/AdminSyncsView.vue'
+import AdminUserView from './views/app/AdminUserView.vue'
+import AdminUsersView from './views/app/AdminUsersView.vue'
 import ConnectionsView from './views/app/ConnectionsView.vue'
 import DashboardLayout from './views/app/DashboardLayout.vue'
 import MeView from './views/app/MeView.vue'
@@ -92,9 +98,15 @@ export const router = createRouter({
         { path: 'syncs', name: 'syncs', component: SyncsView },
         { path: 'connections', name: 'connections', component: ConnectionsView },
         { path: 'settings', name: 'settings', component: SettingsView },
-        // Reachable by anyone who types it, and empty for them: the API
+        // Reachable by anyone who types them, and empty for them: the API
         // answers 404 unless the account is an admin.
-        { path: 'admin', name: 'admin', component: AdminView },
+        { path: 'admin', name: 'admin', component: AdminOverviewView },
+        { path: 'admin/users', name: 'admin-users', component: AdminUsersView },
+        { path: 'admin/user', name: 'admin-user', component: AdminUserView },
+        { path: 'admin/syncs', name: 'admin-syncs', component: AdminSyncsView },
+        { path: 'admin/sync', name: 'admin-sync', component: AdminSyncView },
+        { path: 'admin/runs', name: 'admin-runs', component: AdminRunsView },
+        { path: 'admin/errors', name: 'admin-errors', component: AdminErrorsView },
         // Absolute child path: the URL stays /me, but the page renders inside
         // the shell, so the sidebar does not disappear on the profile.
         { path: '/me', name: 'me', component: MeView },

@@ -4,7 +4,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from starlette.middleware.sessions import SessionMiddleware
@@ -20,7 +20,7 @@ from backend.api.sync import router as sync_router
 from backend.api.telegram import router as telegram_router
 from backend.core.config import settings
 from backend.core.db import SessionLocal
-from backend.core.logging import setup_logging
+from backend.core.logging import logger, setup_logging
 from backend.core.scheduler import init_scheduler
 from backend.repo.telegram import notify
 from backend.models.system_settings import SystemSettings
@@ -91,6 +91,18 @@ app.add_middleware(
     same_site=settings.cookie_samesite,
     https_only=settings.cookie_secure,
 )
+
+
+@app.exception_handler(Exception)
+async def log_crashed_request(request: Request, exc: Exception):
+    """Write a crashed request to the log with its traceback, answer 500."""
+    # uvicorn reports these on its own logger, which never reaches loguru, so
+    # without this a broken endpoint left no trace in the log file.
+    logger.opt(exception=exc).error(
+        "request crashed: {} {}", request.method, request.url.path
+    )
+    return JSONResponse({"detail": "internal error"}, status_code=500)
+
 
 app.include_router(health_router)
 app.include_router(oauth_router)
