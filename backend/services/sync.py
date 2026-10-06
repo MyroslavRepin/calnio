@@ -363,6 +363,8 @@ def merge_pages(
                 row.caldav_href if row is not None else "no event yet",
                 exc,
             )
+            counts.failed += 1
+            counts.failure = reason(exc)
 
     return counts
 
@@ -373,10 +375,9 @@ def drop_pages(
     *,
     mapping: SyncMapping,
     live: dict[str, tuple[NotionPage, NotionDate]],
-) -> int:
+    counts: SyncCounts,
+) -> None:
     """Delete the events of pages that are gone, archived, or lost their date."""
-    deleted = 0
-
     for row in rows_for(db, mapping.id):
         if row.notion_page_id in live:
             continue
@@ -388,7 +389,7 @@ def drop_pages(
                 pass
             db.delete(row)
             db.commit()
-            deleted += 1
+            counts.deleted += 1
         except Exception as exc:
             db.rollback()
             if is_auth_failure(exc):
@@ -399,8 +400,8 @@ def drop_pages(
                 row.caldav_href,
                 exc,
             )
-
-    return deleted
+            counts.failed += 1
+            counts.failure = reason(exc)
 
 
 def import_events(
@@ -510,7 +511,7 @@ def reconcile(
         changes=changes,
         title_property=title_property,
     )
-    counts.deleted = drop_pages(db, calendar, mapping=mapping, live=live)
+    drop_pages(db, calendar, mapping=mapping, live=live, counts=counts)
 
     if title_property is not None and may_import(db, mapping):
         counts.imported = import_events(
@@ -624,20 +625,36 @@ def sync_mapping(
         logger.opt(exception=exc).error("sync failed for this mapping: {}", exc)
         return STATUS_ERROR
 
-    record(
-        db, mapping, STATUS_OK, run_id=run_id, started_at=started_at, counts=counts
-    )
-    db.commit()
     logger.info(
         "sync done: {} created, {} updated, {} deleted, "
-        "{} written back, {} imported, {} trashed",
+        "{} written back, {} imported, {} trashed, {} failed",
         counts.created,
         counts.updated,
         counts.deleted,
         counts.pulled,
         counts.imported,
         counts.trashed,
+        counts.failed,
     )
+    if counts.failed:
+        # The rest of the run went through, but a stuck event must still reach
+        # the sync card and the admin page instead of hiding behind "ok".
+        record(
+            db,
+            mapping,
+            STATUS_ERROR,
+            run_id=run_id,
+            started_at=started_at,
+            counts=counts,
+            error=f"{counts.failed} events could not be synced. {counts.failure}",
+        )
+        db.commit()
+        return STATUS_ERROR
+
+    record(
+        db, mapping, STATUS_OK, run_id=run_id, started_at=started_at, counts=counts
+    )
+    db.commit()
     return STATUS_OK
 
 

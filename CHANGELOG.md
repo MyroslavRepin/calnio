@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [0.8.1] - 2026-10-06
+
+### Fixed
+
+- The 0.7.1 CalDAV fixes, merged into 0.8: events addressed by path, failed events counted
+- A run with failed events lands in the run history as failed, with the count in its error
+
 ## [0.8.0] - 2026-10-06
 
 ### Added
@@ -38,6 +45,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - GET /api/v1/admin/stats, replaced by one endpoint per admin page
+
+## [0.7.1] - 2026-10-05
+
+### Changed
+
+- A sync whose events fail one by one is marked as failed, with a count, on its card and the admin page
+
+### Fixed
+
+- Updates and deletes failing with "can't be joined" when iCloud named events on a different host than the calendar
 
 ## [0.7.0] - 2026-10-03
 

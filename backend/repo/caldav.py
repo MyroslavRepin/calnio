@@ -130,9 +130,7 @@ class CalDavEventRepo:
                 if known is not None:
                     deleted.append(known)
                 continue
-            # Kept in the server's own spelling. iCloud lists events on a
-            # sharded host and only that host answers a read or a write of one,
-            # so an href copied from an older row is not usable.
+            # Kept in the server's own spelling, for the row to store.
             events.append(self.parser.parse_event(obj, self.calendar_url))
 
         if listed_everything:
@@ -154,6 +152,15 @@ class CalDavEventRepo:
         event.href = str(created.url)
         return event
 
+    def event_at(self, href: str) -> caldav.Event:
+        """The event at href, addressed by path on this calendar's own host.
+
+        A stored href can name caldav.icloud.com while the calendar lives on a
+        sharded host, or the other way round, and the library refuses to join a
+        url from one host onto a calendar on another.
+        """
+        return self.calendar.event_by_url(href_path(href))
+
     def update(self, event: CalDavEvent) -> CalDavEvent:
         """Write the event's fields onto the one at event.href and return it.
 
@@ -162,7 +169,7 @@ class CalDavEventRepo:
         that Calnio has nowhere to keep and must not drop.
         """
         assert event.href, "event.href is required to update"
-        remote = self.calendar.event_by_url(event.href)
+        remote = self.event_at(event.href)
         remote.load()
         with remote.edit_icalendar_instance() as calendar:
             self.parser.apply_event(calendar.walk("vevent")[0], event)
@@ -172,11 +179,11 @@ class CalDavEventRepo:
     def delete(self, event: CalDavEvent) -> None:
         """Delete the event at event.href."""
         assert event.href, "event.href is required to delete"
-        self.calendar.event_by_url(event.href).delete()
+        self.event_at(event.href).delete()
 
     def delete_by_href(self, href: str) -> None:
         """Delete the event at href, without needing a CalDavEvent."""
-        self.calendar.event_by_url(href).delete()
+        self.event_at(href).delete()
 
     def delete_all(self) -> int:
         """Delete every event in the calendar and return how many went."""

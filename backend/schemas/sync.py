@@ -27,6 +27,9 @@ class SyncCounts(BaseModel):
     pulled: int = 0
     imported: int = 0
     trashed: int = 0
+    # Events that failed on their own while the run went on, and the last reason.
+    failed: int = 0
+    failure: str | None = None
 
 
 class UpdateSyncRequest(BaseModel):
