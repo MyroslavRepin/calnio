@@ -1,8 +1,6 @@
 import { Config } from '@remotion/cli/config'
 
-// H.264 for every browser, at a quality where the UI text stays crisp.
+// Frames as high quality JPEGs. The mp4 quality (--crf, yuv420p) is set in the
+// package.json scripts, because the gallery GIF render rejects both.
 Config.setVideoImageFormat('jpeg')
 Config.setJpegQuality(95)
-Config.setCodec('h264')
-Config.setCrf(20)
-Config.setPixelFormat('yuv420p')

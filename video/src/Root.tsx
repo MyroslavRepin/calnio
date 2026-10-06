@@ -1,4 +1,5 @@
 import { Composition } from 'remotion'
+import { GalleryLoop, GalleryStill, LOOP_LENGTH, STILL_LENGTH } from './Gallery'
 import { ProductHunt, PRODUCT_HUNT_TOTAL } from './ProductHunt'
 import { Setup } from './Setup'
 import { TOTAL } from './timeline'
@@ -34,6 +35,24 @@ export function Root() {
         width={1920}
         height={1080}
         defaultProps={{ debug: false }}
+      />
+      <Composition
+        id="GalleryLoop"
+        component={GalleryLoop}
+        durationInFrames={LOOP_LENGTH}
+        fps={30}
+        width={1270}
+        height={760}
+        defaultProps={{ debug: false }}
+      />
+      <Composition
+        id="GalleryStill"
+        component={GalleryStill}
+        durationInFrames={STILL_LENGTH}
+        fps={30}
+        width={2540}
+        height={1520}
+        defaultProps={{ scene: 'hero' as const }}
       />
     </>
   )

@@ -1,4 +1,4 @@
-from datetime import timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 import caldav.lib.error as caldav_error
@@ -25,6 +25,7 @@ from backend.repo.caldav_credential import CaldavCredentialRepo
 from backend.repo.notion import NotionPageRepo
 from backend.repo.notion_connection import NotionConnectionRepo
 from backend.repo.sync_mapping import SyncMappingRepo
+from backend.repo.sync_run import SyncRunRepo
 from backend.repo.telegram import notify
 from backend.repo.sync_settings import SyncSettingsRepo
 from backend.schemas.caldav_event import CalDavChanges, CalDavEvent
@@ -530,6 +531,28 @@ def reconcile(
     return counts
 
 
+def record(
+    db: Session,
+    mapping: SyncMapping,
+    status: str,
+    *,
+    run_id: str,
+    started_at: datetime,
+    counts: SyncCounts | None = None,
+    error: str | None = None,
+) -> None:
+    """Stamp a run on its mapping and add it to the run history."""
+    SyncMappingRepo(db).record_run(mapping, status, error=error, run_id=run_id)
+    SyncRunRepo(db).add(
+        mapping,
+        status,
+        run_id=run_id,
+        started_at=started_at,
+        counts=counts,
+        error=error,
+    )
+
+
 def sync_mapping(
     db: Session,
     mapping: SyncMapping,
@@ -538,6 +561,7 @@ def sync_mapping(
     *,
     can_write: bool,
     run_id: str,
+    started_at: datetime,
 ) -> str:
     """Run one mapping and return the status it recorded.
 
@@ -547,8 +571,6 @@ def sync_mapping(
     that is no longer shared included, stays this mapping's problem and the
     caller moves on to the next one.
     """
-    mapping_repo = SyncMappingRepo(db)
-
     try:
         # calendar_url was resolved and stored when the mapping was set up,
         # which skips iCloud's calendar-home discovery, the slowest call in the
@@ -569,25 +591,43 @@ def sync_mapping(
     except Exception as exc:
         db.rollback()
         if is_auth_failure(exc):
-            mapping_repo.record_run(
-                mapping, STATUS_AUTH_ERROR, error=reason(exc), run_id=run_id
+            record(
+                db,
+                mapping,
+                STATUS_AUTH_ERROR,
+                run_id=run_id,
+                started_at=started_at,
+                error=reason(exc),
             )
             raise
         if isinstance(exc, NotionReadOnly):
-            mapping_repo.record_run(
+            record(
+                db,
                 mapping,
                 STATUS_ERROR,
-                error="Notion refused the write, reconnect Calnio to allow it",
                 run_id=run_id,
+                started_at=started_at,
+                error="Notion refused the write, reconnect Calnio to allow it",
             )
             raise
-        mapping_repo.record_run(
-            mapping, STATUS_ERROR, error=reason(exc), run_id=run_id
+        record(
+            db,
+            mapping,
+            STATUS_ERROR,
+            run_id=run_id,
+            started_at=started_at,
+            error=reason(exc),
         )
+        # Committed here, or the next mapping's rollback would take this
+        # failure with it.
+        db.commit()
         logger.opt(exception=exc).error("sync failed for this mapping: {}", exc)
         return STATUS_ERROR
 
-    mapping_repo.record_run(mapping, STATUS_OK, run_id=run_id)
+    record(
+        db, mapping, STATUS_OK, run_id=run_id, started_at=started_at, counts=counts
+    )
+    db.commit()
     logger.info(
         "sync done: {} created, {} updated, {} deleted, "
         "{} written back, {} imported, {} trashed",
@@ -640,6 +680,7 @@ def sync_user(user_id: int) -> None:
             # Every line written from here down carries this sync's id, so one
             # grep follows one sync from its first query to its last write.
             with logger.contextualize(sync=mapping.id):
+                started_at = datetime.now(timezone.utc)
                 try:
                     status = sync_mapping(
                         db,
@@ -648,6 +689,7 @@ def sync_user(user_id: int) -> None:
                         credential,
                         can_write=connection.can_write,
                         run_id=run_id,
+                        started_at=started_at,
                     )
                 except NotionReadOnly as exc:
                     # The grant is older than two-way sync, or its capabilities
@@ -665,11 +707,13 @@ def sync_user(user_id: int) -> None:
                     if is_auth_failure(exc):
                         settings_repo.disable(row)
                         settings_repo.record_run(row, STATUS_AUTH_ERROR)
-                        SyncMappingRepo(db).record_run(
+                        record(
+                            db,
                             mapping,
                             STATUS_AUTH_ERROR,
-                            error=reason(exc),
                             run_id=run_id,
+                            started_at=started_at,
+                            error=reason(exc),
                         )
                         db.commit()
                         logger.opt(exception=exc).error(
@@ -688,8 +732,13 @@ def sync_user(user_id: int) -> None:
                         )
                         return
                     failed = True
-                    SyncMappingRepo(db).record_run(
-                        mapping, STATUS_ERROR, error=reason(exc), run_id=run_id
+                    record(
+                        db,
+                        mapping,
+                        STATUS_ERROR,
+                        run_id=run_id,
+                        started_at=started_at,
+                        error=reason(exc),
                     )
                     db.commit()
                     logger.opt(exception=exc).error("sync crashed: {}", exc)
@@ -740,6 +789,8 @@ def run_all_users() -> None:
     """
     with SessionLocal() as db:
         user_ids = eligible_user_ids(db)
+        SyncRunRepo(db).prune()
+        db.commit()
 
     logger.info("sync tick: {} eligible users", len(user_ids))
     for user_id in user_ids:

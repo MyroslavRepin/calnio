@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { createContext, useContext, useLayoutEffect, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { AbsoluteFill, Easing, interpolate, Sequence, useCurrentFrame } from 'remotion'
 import { Pointer } from './Cursor'
@@ -31,7 +31,7 @@ export const PRODUCT_HUNT_TOTAL = SCENES.end.from + SCENES.end.length
 const WIPE = 15
 const curve = Easing.bezier(0.4, 0, 0.2, 1)
 
-function amount(frame: number, from: number, to: number) {
+export function amount(frame: number, from: number, to: number) {
   return interpolate(frame, [from, to], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
@@ -40,7 +40,7 @@ function amount(frame: number, from: number, to: number) {
 }
 
 // Content arrives with a short fade and a few pixels of rise. Nothing else.
-function arrive(frame: number, at: number): CSSProperties {
+export function arrive(frame: number, at: number): CSSProperties {
   const shown = amount(frame, at, at + 14)
   return { opacity: shown, transform: `translateY(${(1 - shown) * 10}px)` }
 }
@@ -52,14 +52,25 @@ function Rise({ color, start }: { color: string; start: number }) {
   return <AbsoluteFill style={{ background: color, clipPath: `inset(${100 - covered}% 0 0 0)` }} />
 }
 
+// The board's size and scale. The video draws 1280x720 at 1.5x; the gallery
+// images draw Product Hunt's 1270x760 at 1x or 2x.
+export const BoardSize = createContext({ width: 1280, height: 720, scale: 1.5 })
+
 // Every scene but setup is drawn at 1280x720 and scaled to 1920x1080, so the
 // landing page's own type sizes and spacing apply unchanged.
-function Board({ dark, fade, children }: { dark: boolean; fade: number; children: ReactNode }) {
+export function Board({ dark, fade, children }: { dark: boolean; fade: number; children: ReactNode }) {
+  const size = useContext(BoardSize)
   return (
     <AbsoluteFill style={{ background: dark ? '#0a0a0a' : '#f5f5f7' }}>
       <div
         className={'landing-ui board' + (dark ? ' dark' : '')}
-        style={{ transform: 'scale(1.5)', transformOrigin: '0 0', opacity: fade }}
+        style={{
+          width: size.width,
+          height: size.height,
+          transform: `scale(${size.scale})`,
+          transformOrigin: '0 0',
+          opacity: fade,
+        }}
       >
         {children}
       </div>
@@ -85,7 +96,7 @@ function Intro() {
 // The hero's week fills in, then two edits show the sync running both ways:
 // a date changed in Notion moves the event, an event dragged in Apple Calendar
 // moves the Notion date.
-function Hero({ debug }: { debug: boolean }) {
+export function Hero({ debug }: { debug: boolean }) {
   const frame = useCurrentFrame()
 
   const swap = amount(frame, 105, 115)
@@ -137,9 +148,9 @@ function Hero({ debug }: { debug: boolean }) {
 
   // The pointer: in from the corner, onto Gym, drags it a day right, then
   // across to the Notion chip of the design call.
-  const gymAt: [number, number] = [995, 584]
-  const fridayAt: [number, number] = [1096, 584]
-  const chipAt: [number, number] = [440, 442]
+  const gymAt: [number, number] = [990, 584]
+  const fridayAt: [number, number] = [1095, 584]
+  const chipAt: [number, number] = [420, 442]
   let pointer: [number, number] = [1240, 700]
   if (frame >= 125) {
     const reach = amount(frame, 125, 150)
@@ -194,7 +205,7 @@ function Hero({ debug }: { debug: boolean }) {
   )
 }
 
-function Alerts() {
+export function Alerts() {
   const frame = useCurrentFrame()
   const fade = 1 - amount(frame, 170, 180)
   return (
@@ -215,7 +226,7 @@ function Alerts() {
   )
 }
 
-function Setup({ debug }: { debug: boolean }) {
+export function Setup({ debug }: { debug: boolean }) {
   const frame = useCurrentFrame()
   // The walkthrough runs at one and a half times the landing cut's pace and
   // stops on "You are set up".
@@ -241,7 +252,7 @@ function Setup({ debug }: { debug: boolean }) {
   )
 }
 
-function Indie() {
+export function Indie() {
   const frame = useCurrentFrame()
   const fade = 1 - amount(frame, 155, 165)
   const facts = [
@@ -294,7 +305,8 @@ function End() {
 
 // Debug renders print every [data-target] centre in board pixels, which is
 // where the pointer stops in Hero come from.
-function Targets() {
+export function Targets() {
+  const size = useContext(BoardSize)
   const box = useRef<HTMLPreElement>(null)
   const [text, setText] = useState('')
   useLayoutEffect(() => {
@@ -306,8 +318,8 @@ function Targets() {
     const lines: string[] = []
     board.querySelectorAll('[data-target]').forEach((element) => {
       const rect = element.getBoundingClientRect()
-      const x = Math.round((rect.left - origin.left + rect.width / 2) / 1.5)
-      const y = Math.round((rect.top - origin.top + rect.height / 2) / 1.5)
+      const x = Math.round((rect.left - origin.left + rect.width / 2) / size.scale)
+      const y = Math.round((rect.top - origin.top + rect.height / 2) / size.scale)
       lines.push(`${element.getAttribute('data-target')}: [${x}, ${y}]`)
     })
     setText(lines.join('\n'))

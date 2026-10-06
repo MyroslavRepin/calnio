@@ -4,9 +4,10 @@
   "description": "The setup video on the landing page, rendered with Remotion.",
   "scripts": {
     "studio": "remotion studio",
-    "render": "remotion render SetupDesktop out/setup.mp4 && remotion render SetupPhone out/setup-phone.mp4",
+    "render": "remotion render SetupDesktop out/setup.mp4 --codec=h264 --crf=20 --pixel-format=yuv420p && remotion render SetupPhone out/setup-phone.mp4 --codec=h264 --crf=20 --pixel-format=yuv420p",
     "poster": "remotion still SetupDesktop out/setup-poster.jpg --frame=650",
-    "producthunt": "remotion render ProductHunt out/calnio-producthunt.mp4"
+    "producthunt": "remotion render ProductHunt out/calnio-producthunt.mp4 --codec=h264 --crf=20 --pixel-format=yuv420p",
+    "gallery": "remotion render GalleryLoop out/gallery/1-two-way.gif --codec=gif --every-nth-frame=2 && remotion still GalleryStill out/gallery/2-hero.png --frame=95 --props='{\"scene\":\"hero\"}' && remotion still GalleryStill out/gallery/3-alerts.png --frame=120 --props='{\"scene\":\"alerts\"}' && remotion still GalleryStill out/gallery/4-setup.png --frame=295 --props='{\"scene\":\"setup\"}' && remotion still GalleryStill out/gallery/5-indie.png --frame=100 --props='{\"scene\":\"indie\"}'"
   },
   "dependencies": {
     "@remotion/cli": "4.0.532",

@@ -401,3 +401,91 @@
 .app-ui .switchlabel {
   font-weight: var(--app-weight-medium);
 }
+
+/* Admin tables. Wider than the page on a laptop, so .tablebox scrolls inside
+   its card rather than pushing the whole page sideways. */
+.app-ui .tablebox {
+  overflow-x: auto;
+}
+
+.app-ui .datatable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--app-text-body);
+  white-space: nowrap;
+}
+
+.app-ui .datatable th {
+  padding: var(--app-space-2) var(--app-space-3) var(--app-space-2) 0;
+  border-bottom: 1px solid var(--app-border);
+  font-size: var(--app-text-meta);
+  font-weight: var(--app-weight-bold);
+  color: var(--app-fg-muted);
+  text-align: left;
+}
+
+.app-ui .datatable td {
+  padding: var(--app-space-2) var(--app-space-3) var(--app-space-2) 0;
+  border-bottom: 1px solid var(--app-border-subtle);
+  color: var(--app-fg);
+  vertical-align: top;
+}
+
+.app-ui .datatable tr:last-child td {
+  border-bottom: none;
+}
+
+/* A cell holding a failure reason wraps instead of stretching the table. */
+.app-ui .datatable .reason {
+  min-width: 240px;
+  max-width: 420px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  color: var(--app-danger);
+}
+
+/* A record id next to the thing it identifies: #12. */
+.app-ui .ident {
+  font-family: var(--app-font-mono);
+  font-size: var(--app-text-meta);
+  color: var(--app-fg-muted);
+}
+
+/* Headline numbers on the admin pages, a big value over a small name. */
+.app-ui .figures {
+  --gap: var(--app-gap-block);
+  --col: 140px;
+}
+
+.app-ui .figurevalue {
+  font-size: var(--app-text-title);
+  font-weight: var(--app-weight-bold);
+  line-height: var(--app-lh-tight);
+  color: var(--app-fg);
+}
+
+.app-ui .figurename {
+  font-size: var(--app-text-meta);
+  color: var(--app-fg-muted);
+}
+
+/* The filter controls above an admin list. */
+.app-ui .filters {
+  --gap: var(--app-gap-stack);
+  align-items: flex-end;
+}
+
+.app-ui .filters .field {
+  width: auto;
+  flex: 1 1 180px;
+}
+
+/* An admin list card: filters above, the table under them. */
+.app-ui .adminlist {
+  --gap: var(--app-gap-block);
+}
+
+/* Several charts stacked in one card, each under its own note. */
+.app-ui .charts {
+  --gap: var(--app-gap-stack);
+}

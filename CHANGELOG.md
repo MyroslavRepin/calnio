@@ -15,6 +15,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [0.8.0] - 2026-10-06
+
+### Added
+
+- Admin split into Overview, Accounts, Syncs, Runs and Errors pages, plus a page per account and per sync
+- Every id on the admin pages links to its record, and run ids come with the grep command for the log
+- Sync run history, kept 90 days, charting runs, success rate, run time and work done per day
+- Admin analytics: time to first sync, signup weeks, syncs per account, stale syncs, commonest failure reasons
+- Errors page over a new loguru JSON sink: every warning and error in the app, with its traceback
+- Product Hunt gallery GIF and stills, rendered from the video's scenes
+
+### Changed
+
+- A sync's result is committed as soon as it is recorded, so a later sync failing in the same pass cannot undo it
+
+### Fixed
+
+- Crashed requests reach the log file with their traceback instead of only uvicorn's stderr
+- Admin account list read a row method instead of the event count
+
+### Removed
+
+- GET /api/v1/admin/stats, replaced by one endpoint per admin page
+
 ## [0.7.0] - 2026-10-03
 
 ### Added
