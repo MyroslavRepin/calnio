@@ -3,6 +3,7 @@ from urllib.parse import urlparse
 
 import caldav
 import caldav.lib.error as caldav_error
+from caldav.calendarobjectresource import CalendarObjectResource, Event
 
 from backend.core.logging import logger
 from backend.parsers.caldav import ICalParser
@@ -32,6 +33,7 @@ class CalDavAccountRepo:
             url=caldav_url,
             username=username,
             password=password,
+            auth_type="basic",
         )
         self.principal = client.principal()
 
@@ -80,10 +82,13 @@ class CalDavEventRepo:
         # calendars out on a sharded host (p48-caldav.icloud.com) while the
         # front door stays caldav.icloud.com, and the library refuses to join a
         # url onto a client that lives on another host.
+        # Basic is named up front: iCloud takes it, and without it the library
+        # sends every new client's first request bare to learn the scheme from a 401.
         client = caldav.DAVClient(  # pyright: ignore[reportCallIssue]
             url=calendar_url or caldav_url,
             username=username,
             password=password,
+            auth_type="basic",
         )
         self.calendar_url = calendar_url
         self.calendar = client.calendar(url=calendar_url)
@@ -107,21 +112,28 @@ class CalDavEventRepo:
         caller knows and the server did not mention, which is why the caller
         hands its hrefs in.
         """
+        # A "fake-" token stands in for a real one after the library listed the
+        # whole calendar. Handed back, it makes the library list everything
+        # again on every run, so the next run starts over with a real report.
+        if sync_token is not None and sync_token.startswith("fake-"):
+            sync_token = None
         collection = self.calendar.get_objects_by_sync_token(
             sync_token=sync_token, load_objects=False
         )
-        # The library answers with a "fake-" token when it listed the whole
-        # calendar instead of asking the server for a diff.
         listed_everything = str(collection.sync_token).startswith("fake-")
         known_by_path = {href_path(href): href for href in known_hrefs}
+        loaded = self.load_many([obj for obj in collection if not obj.is_loaded()])
 
         events: list[CalDavEvent] = []
         deleted: list[str] = []
         seen: set[str] = set()
 
-        for obj in collection:
-            path = href_path(str(obj.url))
+        for listed in collection:
+            path = href_path(str(listed.url))
             seen.add(path)
+            obj = loaded.get(path)
+            if obj is None:
+                obj = listed
             try:
                 obj.load(only_if_unloaded=True)
             except caldav_error.NotFoundError:
@@ -142,9 +154,33 @@ class CalDavEventRepo:
             len(deleted),
             self.calendar_url,
         )
+        sync_token = collection.sync_token
+        if listed_everything:
+            sync_token = None
         return CalDavChanges(
-            events=events, deleted_hrefs=deleted, sync_token=collection.sync_token
+            events=events, deleted_hrefs=deleted, sync_token=sync_token
         )
+
+    def load_many(
+        self, objects: list[CalendarObjectResource]
+    ) -> dict[str, CalendarObjectResource]:
+        """Fetch many events in a few multiget reports, keyed by path.
+
+        Anything missing from the answer, a deleted event or a refused report,
+        is left for the caller to load one by one, which is also how a deletion
+        gets confirmed.
+        """
+        loaded: dict[str, CalendarObjectResource] = {}
+        for start in range(0, len(objects), 50):
+            urls = [obj.url for obj in objects[start : start + 50]]
+            try:
+                fetched = self.calendar.multiget(urls)
+            except caldav_error.ReportError as exc:
+                logger.warning("multiget refused, loading events one by one: {}", exc)
+                return loaded
+            for obj in fetched:
+                loaded[href_path(str(obj.url))] = obj
+        return loaded
 
     def create(self, event: CalDavEvent) -> CalDavEvent:
         """Create the event and return it with href filled in."""
@@ -152,14 +188,17 @@ class CalDavEventRepo:
         event.href = str(created.url)
         return event
 
-    def event_at(self, href: str) -> caldav.Event:
+    def event_at(self, href: str) -> Event:
         """The event at href, addressed by path on this calendar's own host.
 
         A stored href can name caldav.icloud.com while the calendar lives on a
         sharded host, or the other way round, and the library refuses to join a
         url from one host onto a calendar on another.
+
+        Not loaded: a delete needs no GET first, and one that finds the event
+        already gone is answered 404, which the library takes as done.
         """
-        return self.calendar.event_by_url(href_path(href))
+        return Event(url=href_path(href), parent=self.calendar)
 
     def update(self, event: CalDavEvent) -> CalDavEvent:
         """Write the event's fields onto the one at event.href and return it.

@@ -22,7 +22,7 @@ from backend.models.sync_settings import (
 from backend.models.synced_event import SyncedEvent
 from backend.repo.caldav import CalDavAccountRepo, CalDavEventRepo, href_path
 from backend.repo.caldav_credential import CaldavCredentialRepo
-from backend.repo.notion import NotionPageRepo
+from backend.repo.notion import NotionPageRepo, is_notion_outage
 from backend.repo.notion_connection import NotionConnectionRepo
 from backend.repo.sync_mapping import SyncMappingRepo
 from backend.repo.sync_run import SyncRunRepo
@@ -40,6 +40,10 @@ class NotionReadOnly(Exception):
     never clears by itself and retrying is pointless. The grant is marked and
     the user is asked to connect Calnio again.
     """
+
+
+class RateLimited(Exception):
+    """iCloud or Notion asked Calnio to slow down for this user."""
 
 
 def event_from_page(
@@ -205,13 +209,32 @@ def is_read_only_grant(exc: BaseException) -> bool:
     return isinstance(exc, APIResponseError) and exc.code == "restricted_resource"
 
 
+def is_rate_limited(exc: BaseException) -> bool:
+    """True when iCloud or Notion asked Calnio to slow down."""
+    if isinstance(exc, caldav_error.RateLimitError):
+        return True
+    return isinstance(exc, APIResponseError) and exc.code == "rate_limited"
+
+
+def reached_write_limit(counts: SyncCounts) -> bool:
+    """Whether this run has made the 100 calendar writes one run may make."""
+    return counts.created + counts.updated + counts.deleted >= 100
+
+
 def reason(exc: BaseException) -> str:
     """One line a person can act on, short enough for a card.
 
     The class name carries as much as the text half the time (NotFoundError,
     AuthorizationError), so both go in, and the whole thing is cut to something
-    a card can hold.
+    a card can hold. A failure that clears by itself says so in plain words
+    instead, since the person has nothing to act on.
     """
+    if isinstance(exc, caldav_error.RateLimitError):
+        return "iCloud is limiting requests from Calnio. It tries again on the next run."
+    if is_rate_limited(exc):
+        return "Notion is limiting requests from Calnio. It tries again on the next run."
+    if is_notion_outage(exc):
+        return "Notion did not answer in time. Calnio tries again on the next run."
     text = f"{type(exc).__name__}: {exc}".strip()
     text = " ".join(text.split())
     if len(text) > 300:
@@ -274,6 +297,11 @@ def merge_pages(
     rows_by_page = {row.notion_page_id: row for row in rows_for(db, mapping.id)}
 
     for page, date in live.values():
+        # A first sync of a big database would otherwise send hundreds of
+        # events in one burst, which is how iCloud gets talked into a limit.
+        if reached_write_limit(counts):
+            counts.deferred = True
+            break
         row = rows_by_page.get(page.id)
 
         # An event the user made in Apple Calendar keeps the uid Apple gave it.
@@ -352,7 +380,7 @@ def merge_pages(
 
         except Exception as exc:
             db.rollback()
-            if is_auth_failure(exc):
+            if is_auth_failure(exc) or is_rate_limited(exc):
                 raise  # not this event's problem, the whole run is dead
             if is_read_only_grant(exc):
                 raise NotionReadOnly(str(exc)) from exc
@@ -379,6 +407,9 @@ def drop_pages(
 ) -> None:
     """Delete the events of pages that are gone, archived, or lost their date."""
     for row in rows_for(db, mapping.id):
+        if reached_write_limit(counts):
+            counts.deferred = True
+            break
         if row.notion_page_id in live:
             continue
         try:
@@ -392,7 +423,7 @@ def drop_pages(
             counts.deleted += 1
         except Exception as exc:
             db.rollback()
-            if is_auth_failure(exc):
+            if is_auth_failure(exc) or is_rate_limited(exc):
                 raise
             logger.opt(exception=exc).error(
                 "delete failed for page {} at {}: {}",
@@ -447,7 +478,7 @@ def import_events(
             imported += 1
         except Exception as exc:
             db.rollback()
-            if is_auth_failure(exc):
+            if is_auth_failure(exc) or is_rate_limited(exc):
                 raise
             if is_read_only_grant(exc):
                 raise NotionReadOnly(str(exc)) from exc
@@ -482,10 +513,32 @@ def reconcile(
         raise RuntimeError(f"mapping {mapping.id} is not configured")
 
     parser = notion.parser
+    # Read per run: a renamed or retyped date column would otherwise read as
+    # every page losing its date, and the drop pass would delete every event.
+    database = notion.get_database(mapping.data_source_id)
+    date_column = database.properties.get(due_property)
+    if date_column is None or date_column.get("type") != "date":
+        raise RuntimeError(
+            f"The date column {due_property!r} is no longer in this database"
+        )
+
     live: dict[str, tuple[NotionPage, NotionDate]] = {}
-    for page in notion.query_database(mapping.data_source_id):
+    for page in notion.query_database(
+        mapping.data_source_id,
+        # Pages without a date never reach the calendar, so Notion keeps them.
+        filter={"property": due_property, "date": {"is_not_empty": True}},
+        # Every title column has the id "title". The fewer columns, the faster
+        # Notion answers, rollups and formulas above all.
+        property_ids=["title", date_column["id"]],
+    ):
         if page.archived:
             continue
+        # A page short of either column would read as untitled or dateless and
+        # rename or delete its event, so a short answer stops the run instead.
+        if due_property not in page.properties or parser.find_title_property(
+            page.properties
+        ) is None:
+            raise RuntimeError("Notion answered without the title or the date column")
         date = parser.parse_date(page.properties, due_property)
         if date is not None:
             live[page.id] = (page, date)
@@ -493,9 +546,8 @@ def reconcile(
     changes = CalDavChanges(events=[], deleted_hrefs=[])
     title_property = None
     if write_back:
-        # Read per run, because a renamed title column would otherwise be
-        # written to under its old name and answer 400 on every page.
-        database = notion.get_database(mapping.data_source_id)
+        # A renamed title column would otherwise be written to under its old
+        # name and answer 400 on every page.
         title_property = parser.find_title_property(database.properties)
         changes = calendar.changes(
             mapping.caldav_sync_token,
@@ -512,6 +564,8 @@ def reconcile(
         title_property=title_property,
     )
     drop_pages(db, calendar, mapping=mapping, live=live, counts=counts)
+    if counts.deferred:
+        logger.info("write limit reached, the rest goes on the next run")
 
     if title_property is not None and may_import(db, mapping):
         counts.imported = import_events(
@@ -522,10 +576,12 @@ def reconcile(
             title_property=title_property,
         )
 
-    if write_back:
+    if write_back and not counts.deferred:
         # Deliberately the token from before this run's own writes. The next
         # run sees them again, finds them equal to the baseline and does
         # nothing, which costs a read. Missing a change would cost correctness.
+        # A run cut short by the write limit keeps the old token, so the
+        # calendar changes it never reached come round again.
         mapping.caldav_sync_token = changes.sync_token
         db.commit()
 
@@ -622,6 +678,12 @@ def sync_mapping(
         # Committed here, or the next mapping's rollback would take this
         # failure with it.
         db.commit()
+        if is_rate_limited(exc):
+            logger.opt(exception=exc).warning("sync stopped, asked to slow down: {}", exc)
+            raise RateLimited(str(exc)) from exc
+        if is_notion_outage(exc):
+            logger.opt(exception=exc).warning("sync failed, notion was down: {}", exc)
+            return STATUS_ERROR
         logger.opt(exception=exc).error("sync failed for this mapping: {}", exc)
         return STATUS_ERROR
 
@@ -708,6 +770,12 @@ def sync_user(user_id: int) -> None:
                         run_id=run_id,
                         started_at=started_at,
                     )
+                except RateLimited:
+                    # iCloud limits the Apple ID and Notion the grant, and every
+                    # sync of this user shares both, so the rest would only be
+                    # refused too. Already recorded on the mapping that hit it.
+                    failed = True
+                    break
                 except NotionReadOnly as exc:
                     # The grant is older than two-way sync, or its capabilities
                     # were taken away. Reading still works, so the user keeps a

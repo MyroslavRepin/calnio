@@ -30,6 +30,8 @@ class SyncCounts(BaseModel):
     # Events that failed on their own while the run went on, and the last reason.
     failed: int = 0
     failure: str | None = None
+    # True when the run stopped at its write limit and left the rest for the next.
+    deferred: bool = False
 
 
 class UpdateSyncRequest(BaseModel):
