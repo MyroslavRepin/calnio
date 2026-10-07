@@ -1,14 +1,11 @@
+import logging
 import time
 from typing import Any, Callable
 from urllib.parse import unquote
 
 import httpx
 from notion_client import Client
-from notion_client.errors import (
-    APIResponseError,
-    RequestTimeoutError,
-    UnknownHTTPResponseError,
-)
+from notion_client.errors import HTTPResponseError, RequestTimeoutError
 
 from backend.core.logging import logger
 from backend.parsers.notion import NotionParser
@@ -20,13 +17,7 @@ def is_notion_outage(exc: BaseException) -> bool:
     """True when Notion was slow or briefly down, which clears by itself."""
     if isinstance(exc, (RequestTimeoutError, httpx.TransportError)):
         return True
-    if isinstance(exc, APIResponseError):
-        return exc.code in (
-            "internal_server_error",
-            "service_unavailable",
-            "gateway_timeout",
-        )
-    return isinstance(exc, UnknownHTTPResponseError) and exc.status >= 500
+    return isinstance(exc, HTTPResponseError) and exc.status >= 500
 
 
 def retry_read(read: Callable[[], dict[str, Any]]) -> dict[str, Any]:
@@ -69,7 +60,10 @@ class NotionPageRepo:
     """
 
     def __init__(self, token: str) -> None:
-        self.client = Client(auth=token)
+        # The plain logger, which reaches loguru through the root bridge. Left to
+        # itself the client adds a console handler to it for every client made,
+        # and they pile up for the life of the process.
+        self.client = Client(auth=token, logger=logging.getLogger("notion_client"))
         self.parser = NotionParser()
 
     def get_page(self, page_id: str) -> NotionPage:

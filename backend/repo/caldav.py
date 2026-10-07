@@ -107,30 +107,41 @@ class CalDavEventRepo:
         the one way a deletion is ever heard about: a deleted event leaves
         nothing behind, not even a time of death.
 
-        Without a token, or with one the server has forgotten, the library
-        lists the whole calendar instead. A deletion is then whatever href the
-        caller knows and the server did not mention, which is why the caller
-        hands its hrefs in.
+        Without a token the report lists every event there is and names nothing
+        as gone, so a deletion from before it is never heard about. The caller
+        hands its hrefs in so a deleted event is reported in the stored spelling.
         """
-        # A "fake-" token stands in for a real one after the library listed the
-        # whole calendar. Handed back, it makes the library list everything
-        # again on every run, so the next run starts over with a real report.
+        # Left by older runs: the library's stand-in after it listed the whole
+        # calendar, which makes it list everything again whenever handed back.
         if sync_token is not None and sync_token.startswith("fake-"):
             sync_token = None
-        collection = self.calendar.get_objects_by_sync_token(
-            sync_token=sync_token, load_objects=False
-        )
-        listed_everything = str(collection.sync_token).startswith("fake-")
+        # disable_fallback, because the library answers any failed report, a
+        # rate limit included, by listing the whole calendar: the heaviest
+        # request there is, sent to a server that just asked to be left alone.
+        try:
+            collection = self.calendar.get_objects_by_sync_token(
+                sync_token=sync_token, load_objects=False, disable_fallback=True
+            )
+        except caldav_error.RateLimitError:
+            raise
+        except caldav_error.DAVError as exc:
+            if sync_token is None:
+                raise
+            # A server refuses a token it has forgotten with a 403 (RFC 6578),
+            # which the library raises as an AuthorizationError. A refused
+            # password fails the fresh report too, so it still reads as one.
+            logger.warning("sync token refused, starting over: {}", exc)
+            collection = self.calendar.get_objects_by_sync_token(
+                sync_token=None, load_objects=False, disable_fallback=True
+            )
         known_by_path = {href_path(href): href for href in known_hrefs}
         loaded = self.load_many([obj for obj in collection if not obj.is_loaded()])
 
         events: list[CalDavEvent] = []
         deleted: list[str] = []
-        seen: set[str] = set()
 
         for listed in collection:
             path = href_path(str(listed.url))
-            seen.add(path)
             obj = loaded.get(path)
             if obj is None:
                 obj = listed
@@ -145,37 +156,32 @@ class CalDavEventRepo:
             # Kept in the server's own spelling, for the row to store.
             events.append(self.parser.parse_event(obj, self.calendar_url))
 
-        if listed_everything:
-            deleted = [href for path, href in known_by_path.items() if path not in seen]
-
         logger.info(
             "{} events changed and {} gone in {}",
             len(events),
             len(deleted),
             self.calendar_url,
         )
-        sync_token = collection.sync_token
-        if listed_everything:
-            sync_token = None
         return CalDavChanges(
-            events=events, deleted_hrefs=deleted, sync_token=sync_token
+            events=events, deleted_hrefs=deleted, sync_token=collection.sync_token
         )
 
     def load_many(
         self, objects: list[CalendarObjectResource]
     ) -> dict[str, CalendarObjectResource]:
-        """Fetch many events in a few multiget reports, keyed by path.
-
-        Anything missing from the answer, a deleted event or a refused report,
-        is left for the caller to load one by one, which is also how a deletion
-        gets confirmed.
-        """
+        """Fetch many events in a few multiget reports, keyed by path."""
+        # Whatever is missing from the answer, a deleted event or a refused
+        # report, the caller loads one by one, which is also how a deletion is
+        # confirmed. Only a rate limit stops here, since the single loads would
+        # be refused too.
         loaded: dict[str, CalendarObjectResource] = {}
         for start in range(0, len(objects), 50):
             urls = [obj.url for obj in objects[start : start + 50]]
             try:
                 fetched = self.calendar.multiget(urls)
-            except caldav_error.ReportError as exc:
+            except caldav_error.RateLimitError:
+                raise
+            except caldav_error.DAVError as exc:
                 logger.warning("multiget refused, loading events one by one: {}", exc)
                 return loaded
             for obj in fetched:
