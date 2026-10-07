@@ -217,8 +217,8 @@ def is_rate_limited(exc: BaseException) -> bool:
 
 
 def reached_write_limit(counts: SyncCounts) -> bool:
-    """Whether this run has made the 100 calendar writes one run may make."""
-    return counts.created + counts.updated + counts.deleted >= 100
+    """Whether this run has made the 500 calendar writes one run may make."""
+    return counts.created + counts.updated + counts.deleted >= 500
 
 
 def reason(exc: BaseException) -> str:
@@ -297,8 +297,8 @@ def merge_pages(
     rows_by_page = {row.notion_page_id: row for row in rows_for(db, mapping.id)}
 
     for page, date in live.values():
-        # A first sync of a big database would otherwise send hundreds of
-        # events in one burst, which is how iCloud gets talked into a limit.
+        # A write takes about half a second, so a first sync of thousands of
+        # pages would hold the tick past its interval and the next one is skipped.
         if reached_write_limit(counts):
             counts.deferred = True
             break
