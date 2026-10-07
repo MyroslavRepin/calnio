@@ -6,7 +6,6 @@ and nothing leaves it. Prints ids and counts only, never a token or a title.
 
 import os
 import sys
-from collections import Counter
 from datetime import datetime, timezone
 
 from backend.core.config import settings
@@ -18,9 +17,13 @@ from backend.models.sync_mapping import SyncMapping
 from backend.models.synced_event import SyncedEvent
 from backend.models.user import User  # noqa: F401, so the mappers resolve
 from backend.repo.caldav import CalDavEventRepo, href_path
-from backend.repo.notion import NotionPageRepo, paginate
+from backend.repo.notion import NotionPageRepo
 from backend.services.sync import remember
+from notion_client.errors import APIResponseError
 from sqlalchemy import select
+import re
+
+NOTION_ID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 
 MAPPING_ID = 22
 USER_ID = 25
@@ -45,17 +48,6 @@ with SessionLocal() as db:
     parser = notion.parser
     due = mapping.due_date_property
 
-    # Every trashed page of the data source, grouped by when it was trashed.
-    raw = paginate(lambda cursor: notion.client.data_sources.query(
-        data_source_id=mapping.data_source_id, in_trash=True, start_cursor=cursor))
-    trashed = [parser.parse_page(item) for item in raw if item.get("in_trash")]
-    print(f"trashed pages in the data source: {len(trashed)}")
-    by_minute = Counter(page.updated_at.strftime("%m-%d %H:%M") for page in trashed if page.updated_at)
-    for minute, count in sorted(by_minute.items()):
-        print(f"  trashed at {minute} UTC: {count}")
-    batch = [page for page in trashed if page.updated_at and BATCH_START <= page.updated_at < BATCH_END]
-    print(f"pages to restore (01:53 batch): {len(batch)}")
-
     # What the calendar really holds now, read with a tokenless report.
     calendar = CalDavEventRepo(caldav_url=settings.caldav_url, username=credential.icloud_email,
                                password=decrypt(credential.password_encrypted), calendar_url=mapping.calendar_url or "")
@@ -66,62 +58,77 @@ with SessionLocal() as db:
     rows_by_path = {href_path(row.caldav_href): row for row in rows}
     print(f"link rows now: {len(rows)}")
 
-    # Pair every event with its original page: by uid when Calnio made it,
-    # by title and start day when the user made it in Apple Calendar.
-    batch_by_id = {page.id: page for page in batch}
-    plan = []
-    used = set()
-    for event in events:
-        page = batch_by_id.get(event.uid)
-        how = "uid"
-        if page is None:
-            how = "title+day"
-            candidates = []
-            for candidate in batch:
-                date = parser.parse_date(candidate.properties, due)
-                if date is not None and candidate.title == event.title and date.start.date() == event.start.date():
-                    candidates.append(candidate)
-            if len(candidates) != 1:
-                stop(f"event {event.uid} matches {len(candidates)} trashed pages by title and day")
-            page = candidates[0]
-        if page.id in used:
-            stop(f"page {page.id} would be linked twice")
-        used.add(page.id)
-        row = rows_by_path.get(href_path(event.href or ""))
-        plan.append((event, page, how, row))
+    def is_original(raw):
+        """Whether a raw page is a sync 22 page trashed by the 01:53 run, or one this script already restored."""
+        if raw.get("parent", {}).get("data_source_id") != mapping.data_source_id:
+            return False
+        if raw.get("in_trash") is not True:
+            return True
+        edited = parser.parse_timestamp(raw.get("last_edited_time"))
+        return edited is not None and BATCH_START <= edited < BATCH_END
 
-    unmatched = [page.id for page in batch if page.id not in used]
-    repoint = [item for item in plan if item[3] is not None]
-    insert = [item for item in plan if item[3] is None]
-    duplicates = [item[3].notion_page_id for item in repoint if item[3].notion_page_id != item[1].id]
-    print(f"matched by uid: {sum(1 for item in plan if item[2] == 'uid')}, by title+day: {sum(1 for item in plan if item[2] == 'title+day')}")
-    print(f"rows to repoint: {len(repoint)}, rows to insert: {len(insert)}, duplicate pages to trash: {len(duplicates)}")
-    print(f"batch pages with no event (restored, Calnio will create their event): {len(unmatched)}")
-    if len(rows) != len(repoint):
-        stop("some existing link rows point at events not in the calendar listing")
+    def retrieve(page_id):
+        """A page by id, trashed or not, None when Notion has no such page."""
+        try:
+            return notion.client.pages.retrieve(page_id=page_id)
+        except APIResponseError as exc:
+            if exc.code in ("object_not_found", "validation_error"):
+                return None
+            raise
+
+    # Calnio made these events from the pages, so an event's uid is its page id.
+    # Events the user made in Apple Calendar have no such page and keep the row
+    # today's import gave them.
+    plan = []
+    kept = []
+    missing = []
+    for event in events:
+        row = rows_by_path.get(href_path(event.href or ""))
+        raw = retrieve(event.uid) if NOTION_ID.match(event.uid) else None
+        if raw is None or not is_original(raw):
+            if row is not None:
+                kept.append(event.uid)
+            else:
+                missing.append(event.uid)
+            continue
+        if row is not None and row.notion_page_id != raw["id"]:
+            stop(f"event {event.uid} is linked to another page")
+        plan.append((event, raw, row))
+
+    to_restore = [raw["id"] for event, raw, row in plan if raw.get("in_trash") is True]
+    to_insert = [event.uid for event, raw, row in plan if row is None]
+    print(f"originals matched by uid: {len(plan)} (still in trash: {len(to_restore)}, rows to insert: {len(to_insert)})")
+    print(f"events kept on today's import: {len(kept)}")
+    print(f"events with no row and no original: {len(missing)}")
+    if len(rows) != len(kept) + sum(1 for item in plan if item[2] is not None):
+        stop("some link rows point at events not in the calendar listing")
+    expected = os.environ.get("EXPECT")
+    if expected is not None:
+        want_plan, want_kept = (int(part) for part in expected.split(","))
+        if (len(plan), len(kept), len(missing)) != (want_plan, want_kept, 0):
+            stop(f"expected {want_plan} originals, {want_kept} kept, 0 missing")
 
     if not APPLY:
         print("DRY RUN: nothing changed")
         sys.exit(0)
+    if expected is None:
+        stop("APPLY needs EXPECT")
 
+    was_enabled = mapping.enabled
     mapping.enabled = False
     db.commit()
     print("sync 22 paused")
-    for page in batch:
-        notion.client.pages.update(page_id=page.id, in_trash=False)
-    print(f"restored {len(batch)} pages")
-    for event, page, how, row in plan:
+    for page_id in to_restore:
+        notion.client.pages.update(page_id=page_id, in_trash=False)
+    print(f"restored {len(to_restore)} pages")
+    for event, raw, row in plan:
         if row is None:
-            row = SyncedEvent(mapping_id=MAPPING_ID, user_id=USER_ID, notion_page_id=page.id,
+            row = SyncedEvent(mapping_id=MAPPING_ID, user_id=USER_ID, notion_page_id=raw["id"],
                               caldav_href=event.href or "", caldav_uid=event.uid)
             db.add(row)
-        row.notion_page_id = page.id
-        remember(row, event)
+            remember(row, event)
     db.commit()
     print(f"link rows now: {len(list(db.scalars(select(SyncedEvent).where(SyncedEvent.mapping_id == MAPPING_ID))))}")
-    for page_id in duplicates:
-        notion.trash_page(page_id)
-    print(f"trashed {len(duplicates)} duplicate pages")
-    mapping.enabled = True
+    mapping.enabled = was_enabled
     db.commit()
-    print("sync 22 resumed")
+    print(f"sync 22 resumed (enabled={was_enabled})")
