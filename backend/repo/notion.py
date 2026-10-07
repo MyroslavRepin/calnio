@@ -1,6 +1,11 @@
+import logging
+import time
 from typing import Any, Callable
+from urllib.parse import unquote
 
+import httpx
 from notion_client import Client
+from notion_client.errors import HTTPResponseError, RequestTimeoutError
 
 from backend.core.logging import logger
 from backend.parsers.notion import NotionParser
@@ -8,12 +13,37 @@ from backend.schemas.notion_database import NotionDatabase
 from backend.schemas.notion_page import NotionPage, NotionPageWrite
 
 
+def is_notion_outage(exc: BaseException) -> bool:
+    """True when Notion was slow or briefly down, which clears by itself."""
+    if isinstance(exc, (RequestTimeoutError, httpx.TransportError)):
+        return True
+    return isinstance(exc, HTTPResponseError) and exc.status >= 500
+
+
+def retry_read(read: Callable[[], dict[str, Any]]) -> dict[str, Any]:
+    """Run a Notion read, up to twice more when Notion was slow or briefly down.
+
+    The client retries none of these on a query, which is a POST, and no
+    timeout on anything. Reads only: a write that timed out may still have
+    landed, and repeating it would make a second page.
+    """
+    for attempt in range(2):
+        try:
+            return read()
+        except Exception as exc:
+            if not is_notion_outage(exc):
+                raise
+            logger.warning("notion read failed, trying again: {}", exc)
+            time.sleep(5 * (attempt + 1))
+    return read()
+
+
 def paginate(fetch: Callable[[str | None], dict[str, Any]]) -> list[dict[str, Any]]:
     """Drain a Notion cursor-paginated endpoint into one list of raw results."""
     results: list[dict[str, Any]] = []
     cursor: str | None = None
     while True:
-        data = fetch(cursor)
+        data = retry_read(lambda: fetch(cursor))
         results.extend(data["results"])
         if not data.get("has_more"):
             break
@@ -30,7 +60,10 @@ class NotionPageRepo:
     """
 
     def __init__(self, token: str) -> None:
-        self.client = Client(auth=token)
+        # The plain logger, which reaches loguru through the root bridge. Left to
+        # itself the client adds a console handler to it for every client made,
+        # and they pile up for the life of the process.
+        self.client = Client(auth=token, logger=logging.getLogger("notion_client"))
         self.parser = NotionParser()
 
     def get_page(self, page_id: str) -> NotionPage:
@@ -42,7 +75,9 @@ class NotionPageRepo:
         # Notion API 2025-09-03: pages and schema live on the data source, not
         # on the database container.
         return self.parser.parse_database(
-            self.client.data_sources.retrieve(data_source_id=data_source_id)
+            retry_read(
+                lambda: self.client.data_sources.retrieve(data_source_id=data_source_id)
+            )
         )
 
     def query_database(
@@ -51,6 +86,7 @@ class NotionPageRepo:
         *,
         filter: dict[str, Any] | None = None,
         sorts: list[dict[str, Any]] | None = None,
+        property_ids: list[str] | None = None,
     ) -> list[NotionPage]:
         """Fetch every page in a data source, paginating fully."""
 
@@ -63,6 +99,12 @@ class NotionPageRepo:
                 body["filter"] = filter
             if sorts is not None:
                 body["sorts"] = sorts
+            if property_ids is not None:
+                # Notion hands ids out url-encoded, and they travel in the query
+                # string, which httpx encodes again unless they are decoded first.
+                body["filter_properties"] = [
+                    unquote(property_id) for property_id in property_ids
+                ]
             return self.client.data_sources.query(**body)
 
         pages = [self.parser.parse_page(page) for page in paginate(fetch)]

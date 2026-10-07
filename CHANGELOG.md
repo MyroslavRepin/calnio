@@ -15,6 +15,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [0.8.2] - 2026-10-07
+
+### Changed
+
+- Notion is queried for dated pages only, and only for the title and date columns
+- Changed calendar events load with calendar-multiget, and an update or a delete sends one request fewer
+- iCloud requests send Basic auth up front instead of learning it from a 401
+- A run makes at most 500 calendar writes per sync, and the rest follows on the next run
+- A rate limit or a Notion outage puts a plain sentence on the sync card
+
+### Fixed
+
+- Notion reads that time out, fail with a 5xx or drop the connection are tried twice more before a sync fails
+- An iCloud or Notion rate limit stops that user's run for the tick and leaves the master switch on
+- A failed sync report no longer falls back to listing the whole calendar, and a stored `fake-` token no longer keeps it doing so
+- An expired sync token recovers in the same run instead of reading as a refused password
+- Pages are no longer trashed because a full calendar listing left their events out
+- A renamed or retyped date column, or a page that arrives without it, stops the sync instead of deleting its events
+- Deleting a sync whose events were already removed in Apple Calendar no longer fails
+- Notion client log handlers no longer pile up for the life of the process
+
 ## [0.8.1] - 2026-10-06
 
 ### Fixed

@@ -1,6 +1,6 @@
 [project]
 name = "calnio"
-version = "0.8.1"
+version = "0.8.2"
 description = "Add your description here"
 requires-python = ">=3.14"
 dependencies = [
