@@ -6,7 +6,6 @@ from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import text
 from starlette.middleware.sessions import SessionMiddleware
 
 from backend.api.account import router as account_router
@@ -17,7 +16,7 @@ from backend.api.mapping import router as mapping_router
 from backend.api.notion import router as notion_router
 from backend.api.oauth import router as oauth_router
 from backend.api.sync import router as sync_router
-from backend.api.telegram import router as telegram_router
+from backend.api.telegram import format_health, router as telegram_router
 from backend.core.config import settings
 from backend.core.db import SessionLocal
 from backend.core.logging import logger, setup_logging
@@ -27,16 +26,6 @@ from backend.models.system_settings import SystemSettings
 from backend.services.sync import run_all_users
 
 setup_logging()
-
-
-def database_state() -> str:
-    """Say whether the database answers, for the startup notification."""
-    try:
-        with SessionLocal() as db:
-            db.execute(text("select 1"))
-        return "ok"
-    except Exception:
-        return "unreachable"
 
 
 def run_all_users_if_enabled() -> None:
@@ -53,7 +42,8 @@ async def lifespan(app: FastAPI):
     """Start the scheduler, schedule the sync tick, stop it on shutdown."""
     # The scheduler starts either way, because turning a user's sync on queues
     # a one-off job through it and that path is gated separately.
-    notify(f"Calnio started\ndatabase {database_state()}")
+    with SessionLocal() as db:
+        notify(f"Server restarted\n{format_health(db)}", buttons=True)
 
     scheduler = init_scheduler()
     if settings.scheduler_enabled:

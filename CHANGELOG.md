@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [0.8.5] - 2026-10-11
+
+### Changed
+
+- The startup message and the Health button report version, database, schema, sync schedule, failing syncs and free disk
+- Telegram messages show their title in bold and the time in italics
+
 ## [0.8.4] - 2026-10-11
 
 ### Added
