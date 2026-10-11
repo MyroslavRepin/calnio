@@ -1,11 +1,19 @@
+import tomllib
+from pathlib import Path
+
+from alembic.config import Config
+from alembic.script import ScriptDirectory
 from fastapi import APIRouter, Depends, Header, Request, Response, status
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from backend.core.config import settings
 from backend.core.logging import logger
 from backend.deps.db import get_session
+from backend.models.system_settings import SystemSettings
 from backend.repo.admin import AdminRepo
 from backend.repo.telegram import TelegramRepo, stamp
+from backend.services.sync import eligible_user_ids
 
 router = APIRouter(tags=["telegram"])
 
@@ -62,16 +70,43 @@ def format_failures(repo: AdminRepo) -> str:
     return answer
 
 
+# The repo root, where pyproject.toml and alembic.ini sit, in dev and in the image.
+ROOT = Path(__file__).resolve().parents[2]
+
+
 def format_health(db: Session) -> str:
-    """Whether the database answers, asked the same way the probe asks."""
-    from sqlalchemy import text
+    """Version, database, schema and sync schedule, for startup and the Health button."""
+    version = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]["version"]
+    lines = [f"Calnio v{version}"]
 
     try:
         db.execute(text("select 1"))
-        return "Database ok"
     except Exception as exc:
         logger.opt(exception=exc).error("telegram health check failed")
-        return "Database unreachable"
+        lines.append("Database unreachable")
+        return "\n".join(lines)
+    lines.append("Database ok")
+
+    # The container never migrates, so a deploy that skipped it shows up here
+    # before the first query for a missing column does.
+    applied = db.scalar(text("select version_num from alembic_version"))
+    head = ScriptDirectory.from_config(Config(str(ROOT / "alembic.ini"))).get_current_head()
+    if applied == head:
+        lines.append("Schema up to date")
+    else:
+        lines.append(f"Schema behind: database at {applied}, code wants {head}")
+
+    switch = db.query(SystemSettings).first()
+    if not settings.scheduler_enabled:
+        lines.append("Sync off: SCHEDULER_ENABLED is false")
+    elif switch is not None and not switch.sync_enabled:
+        lines.append("Sync paused by the admin switch")
+    else:
+        lines.append(
+            f"Sync every {settings.syncing_interval_minutes} min, "
+            f"{len(eligible_user_ids(db))} users due"
+        )
+    return "\n".join(lines)
 
 
 def build_report(action: str, db: Session) -> str:
