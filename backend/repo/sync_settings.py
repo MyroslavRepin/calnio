@@ -35,5 +35,15 @@ class SyncSettingsRepo:
         row.last_run_at = datetime.now(timezone.utc)
         row.last_status = status
 
+    def count_rejection(self, row: SyncSettings) -> int:
+        """Add one run whose credentials were rejected, return the streak."""
+        row.auth_failures += 1
+        return row.auth_failures
+
+    def clear_rejections(self, row: SyncSettings) -> None:
+        row.auth_failures = 0
+
     def disable(self, row: SyncSettings) -> None:
         row.enabled = False
+        # A reconnect starts the count over, not one rejection from off.
+        row.auth_failures = 0
