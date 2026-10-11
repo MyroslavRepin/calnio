@@ -10,6 +10,7 @@ from backend.core.oauth import oauth
 from backend.deps.auth import get_current_user
 from backend.deps.db import get_session
 from backend.deps.notion import get_connection, get_notion_repo, notion_errors
+from backend.deps.sync import resume_after_reconnect
 from backend.models.notion_connection import NotionConnection
 from backend.models.user import User
 from backend.repo.notion_connection import NotionConnectionRepo
@@ -89,6 +90,7 @@ async def notion_callback(
     db.commit()
 
     logger.info("notion connected for user {}", user.id)
+    resume_after_reconnect(db, user.id)
     background.add_task(
         notify,
         f"Notion connected\n{user.email}\n"

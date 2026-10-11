@@ -1,6 +1,7 @@
 import { reactive, readonly } from 'vue'
 import { send } from './useAuth'
 import { track } from './useAnalytics'
+import { reloadSync } from './useSync'
 
 const BASE = '/api/v1/me/apple-calendar'
 
@@ -55,6 +56,10 @@ async function connect(icloudEmail, appSpecificPassword) {
   state.connection = connection
   state.calendars = calendars
   track('apple_connected')
+
+  // Reconnecting after a rejected password turns syncing back on, so the
+  // master switch has to be read again.
+  await reloadSync()
   return {}
 }
 

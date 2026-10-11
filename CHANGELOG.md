@@ -15,6 +15,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [0.8.3] - 2026-10-11
+
+### Added
+
+- Reconnecting iCloud or Notion turns syncing back on when rejected credentials turned it off
+
+### Fixed
+
+- One rejected login no longer turns syncing off: it takes three runs in a row, and the sync card says so in between
+
 ## [0.8.2] - 2026-10-07
 
 ### Changed

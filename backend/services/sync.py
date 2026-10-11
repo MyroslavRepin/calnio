@@ -188,7 +188,8 @@ def is_auth_failure(exc: BaseException) -> bool:
 
     A network blip clears on its own and is worth retrying every interval. A
     revoked grant or a wrong app-specific password never does, and re-sending
-    that password to Apple every interval is how an Apple ID gets locked.
+    that password to Apple every interval is how an Apple ID gets locked, so
+    record_rejection turns the user off after a few in a row.
 
     This is the one failure that is the user's problem rather than a single
     mapping's: the grant and the credential are shared by all of them.
@@ -720,6 +721,77 @@ def sync_mapping(
     return STATUS_OK
 
 
+# Runs in a row with rejected credentials before syncing turns off. One 401
+# cannot tell a revoked password from a passing refusal. Three runs are half an
+# hour: long enough for a refusal that clears by itself, short enough that a
+# revoked password is not sent to Apple all day.
+REJECTIONS_BEFORE_DISABLE = 3
+
+
+def record_rejection(
+    db: Session,
+    row: SyncSettings,
+    mapping: SyncMapping,
+    exc: BaseException,
+    *,
+    run_id: str,
+    started_at: datetime,
+) -> None:
+    """Count a rejected credential, and turn the user off on the third in a row."""
+    settings_repo = SyncSettingsRepo(db)
+    rejections = settings_repo.count_rejection(row)
+
+    if rejections < REJECTIONS_BEFORE_DISABLE:
+        if isinstance(exc, caldav_error.AuthorizationError):
+            refusal = "iCloud refused the password."
+        else:
+            refusal = "Notion refused the connection."
+        settings_repo.record_run(row, STATUS_ERROR)
+        record(
+            db,
+            mapping,
+            STATUS_ERROR,
+            run_id=run_id,
+            started_at=started_at,
+            error=f"{refusal} Calnio tries again on the next run, and turns "
+            f"syncing off if it is refused {REJECTIONS_BEFORE_DISABLE} times in a row.",
+        )
+        db.commit()
+        logger.opt(exception=exc).warning(
+            "credentials rejected, {} of {}: {}",
+            rejections,
+            REJECTIONS_BEFORE_DISABLE,
+            exc,
+        )
+        return
+
+    settings_repo.disable(row)
+    settings_repo.record_run(row, STATUS_AUTH_ERROR)
+    record(
+        db,
+        mapping,
+        STATUS_AUTH_ERROR,
+        run_id=run_id,
+        started_at=started_at,
+        error=reason(exc),
+    )
+    db.commit()
+    logger.opt(exception=exc).error(
+        "syncing disabled for this user: credentials rejected {} runs in a row ({})",
+        rejections,
+        exc,
+    )
+    # Worth pushing: this switched the user's sync off, so nothing else will
+    # happen until they reconnect. It cannot repeat for the same reason. A
+    # mapping that merely errors is left to the Failures button, which would
+    # otherwise fire every tick.
+    notify(
+        f"Sync disabled: credentials rejected {rejections} runs in a row\n"
+        f"user {row.user_id}\nrun={run_id}\n{reason(exc)}",
+        buttons=True,
+    )
+
+
 def sync_user(user_id: int) -> None:
     """Run every one of a user's eligible mappings. Never raises.
 
@@ -790,30 +862,15 @@ def sync_user(user_id: int) -> None:
                 except Exception as exc:
                     db.rollback()
                     if is_auth_failure(exc):
-                        settings_repo.disable(row)
-                        settings_repo.record_run(row, STATUS_AUTH_ERROR)
-                        record(
+                        # The rest of this user's syncs share the credential,
+                        # so they would only send the rejected one again.
+                        record_rejection(
                             db,
+                            row,
                             mapping,
-                            STATUS_AUTH_ERROR,
+                            exc,
                             run_id=run_id,
                             started_at=started_at,
-                            error=reason(exc),
-                        )
-                        db.commit()
-                        logger.opt(exception=exc).error(
-                            "syncing disabled for this user: credentials rejected ({})",
-                            exc,
-                        )
-                        # Worth pushing: this switched the user's sync off, so
-                        # nothing else will happen until they reconnect. It
-                        # cannot repeat for the same reason. A mapping that
-                        # merely errors is left to the Failures button, which
-                        # would otherwise fire every tick.
-                        notify(
-                            f"Sync disabled: credentials rejected\n"
-                            f"user {user_id}\nrun={run_id}\n{reason(exc)}",
-                            buttons=True,
                         )
                         return
                     failed = True
@@ -832,6 +889,8 @@ def sync_user(user_id: int) -> None:
                 if status != STATUS_OK:
                     failed = True
 
+        # Nothing was rejected this tick, so an earlier rejection was passing.
+        settings_repo.clear_rejections(row)
         # The user's own status summarises the tick, so the dashboard can say
         # "something failed" without the reader opening every mapping.
         if failed:

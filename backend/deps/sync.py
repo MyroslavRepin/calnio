@@ -8,7 +8,7 @@ from backend.core.logging import logger
 from backend.core.scheduler import scheduler
 from backend.deps.auth import get_current_user
 from backend.deps.db import get_session
-from backend.models.sync_settings import SyncSettings
+from backend.models.sync_settings import STATUS_AUTH_ERROR, SyncSettings
 from backend.models.user import User
 from backend.repo.caldav_credential import CaldavCredentialRepo
 from backend.repo.notion_connection import NotionConnectionRepo
@@ -73,3 +73,17 @@ def queue_run(user_id: int) -> None:
         id=job_id,
         next_run_time=datetime.now(),
     )
+
+
+def resume_after_reconnect(db: Session, user_id: int) -> None:
+    """Turn syncing back on when rejected credentials are what turned it off."""
+    row = SyncSettingsRepo(db).get(user_id)
+    # Switched off by the user's own hand stays off.
+    if row is None or row.enabled or row.last_status != STATUS_AUTH_ERROR:
+        return
+    if not has_eligible_mapping(db, user_id):
+        return
+    row.enabled = True
+    db.commit()
+    logger.info("syncing resumed for user {} after a reconnect", user_id)
+    queue_run(user_id)

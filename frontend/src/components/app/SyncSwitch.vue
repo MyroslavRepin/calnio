@@ -39,7 +39,7 @@ const statusLine = computed(function () {
     return 'Last sync failed. Calnio tries again on the next run.'
   }
   if (status === 'auth_error') {
-    return 'A connection was rejected, so syncing was turned off. Reconnect it, then turn syncing back on.'
+    return 'A connection was rejected three runs in a row, so syncing was turned off. Reconnect it and syncing turns back on.'
   }
   return 'Nothing has synced yet.'
 })

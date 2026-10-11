@@ -7,6 +7,7 @@ from backend.core.logging import logger
 from backend.deps.auth import get_current_user
 from backend.deps.caldav import get_credential, icloud_credentials, icloud_errors
 from backend.deps.db import get_session
+from backend.deps.sync import resume_after_reconnect
 from backend.models.caldav_credential import CaldavCredential
 from backend.models.user import User
 from backend.repo.caldav_credential import CaldavCredentialRepo
@@ -47,6 +48,7 @@ async def connect_apple_calendar(
     db.commit()
 
     logger.info("apple calendar connected for user {}", user.id)
+    resume_after_reconnect(db, user.id)
     # upsert already says whether this is a first connect, so the message can
     # tell a signup apart from somebody repairing a rejected password.
     background.add_task(

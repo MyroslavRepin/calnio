@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.core.base import Base
@@ -10,9 +10,9 @@ if TYPE_CHECKING:
     from backend.models.user import User
 
 # Values `last_status` takes. "auth_error" is kept apart from "error" because
-# only it disables the user: a rejected credential never fixes itself, and
-# re-sending a bad app-specific password every interval risks locking the
-# Apple ID.
+# only it disables the user: a credential rejected three runs in a row is not
+# coming back, and re-sending a bad app-specific password every interval risks
+# locking the Apple ID.
 STATUS_OK = "ok"
 STATUS_ERROR = "error"
 STATUS_AUTH_ERROR = "auth_error"
@@ -49,6 +49,13 @@ class SyncSettings(Base):
         DateTime(timezone=True), nullable=True
     )
     last_status: Mapped[str | None] = mapped_column(String, nullable=True)
+
+    # Runs in a row whose credentials were rejected. One 401 cannot tell a
+    # revoked password from a passing refusal, so the third disables the user,
+    # not the first. Any run that gets through clears it.
+    auth_failures: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0"
+    )
 
     row_created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
