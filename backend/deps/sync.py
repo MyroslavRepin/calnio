@@ -40,6 +40,21 @@ def has_eligible_mapping(db: Session, user_id: int) -> bool:
     return len(SyncMappingRepo(db).eligible(user_id)) > 0
 
 
+def rejected_by(db: Session, row: SyncSettings) -> str | None:
+    """Which grant turned syncing off, "icloud" or "notion", or None."""
+    if row.enabled or row.last_status != STATUS_AUTH_ERROR:
+        return None
+    for mapping in SyncMappingRepo(db).list(row.user_id):
+        if mapping.last_status != STATUS_AUTH_ERROR or mapping.last_error is None:
+            continue
+        # reason() opens with the exception's class, and only the caldav
+        # library raises AuthorizationError.
+        if mapping.last_error.startswith("AuthorizationError"):
+            return "icloud"
+        return "notion"
+    return None
+
+
 def sync_status(db: Session, row: SyncSettings) -> SyncStatus:
     """The sync row plus what the client needs to render the master toggle."""
     return SyncStatus(
@@ -48,6 +63,7 @@ def sync_status(db: Session, row: SyncSettings) -> SyncStatus:
         mapping_count=len(SyncMappingRepo(db).list(row.user_id)),
         last_run_at=row.last_run_at,
         last_status=row.last_status,
+        rejected_by=rejected_by(db, row),
     )
 
 
