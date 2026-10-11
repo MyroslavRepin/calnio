@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [0.8.4] - 2026-10-11
+
+### Added
+
+- A banner on every dashboard page says which connection was rejected and holds its reconnect while syncing is off
+
 ## [0.8.3] - 2026-10-11
 
 ### Added
