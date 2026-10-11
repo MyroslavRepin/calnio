@@ -15,6 +15,9 @@ class SyncStatus(BaseModel):
     mapping_count: int
     last_run_at: datetime | None
     last_status: str | None
+    # "icloud" or "notion" while rejected credentials keep syncing off, so the
+    # client can put the right reconnect in front of the user. None otherwise.
+    rejected_by: str | None
 
 
 class SyncCounts(BaseModel):

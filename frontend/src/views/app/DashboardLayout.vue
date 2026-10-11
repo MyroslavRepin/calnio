@@ -1,5 +1,6 @@
 <script setup>
 import AppHeader from '../../components/app/AppHeader.vue'
+import ReconnectBanner from '../../components/app/ReconnectBanner.vue'
 import SidebarMenu from '../../components/app/SidebarMenu.vue'
 import { useAppleCalendar } from '../../composables/useAppleCalendar'
 import { loadWhenSignedIn, useAuth } from '../../composables/useAuth'
@@ -46,6 +47,7 @@ loadWhenSignedIn(
       <div v-else class="row columns">
         <SidebarMenu />
         <section class="content">
+          <ReconnectBanner />
           <router-view />
         </section>
       </div>
