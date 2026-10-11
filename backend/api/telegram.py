@@ -1,3 +1,4 @@
+import shutil
 import tomllib
 from pathlib import Path
 
@@ -12,7 +13,7 @@ from backend.core.logging import logger
 from backend.deps.db import get_session
 from backend.models.system_settings import SystemSettings
 from backend.repo.admin import AdminRepo
-from backend.repo.telegram import TelegramRepo, stamp
+from backend.repo.telegram import TelegramRepo
 from backend.services.sync import eligible_user_ids
 
 router = APIRouter(tags=["telegram"])
@@ -28,6 +29,7 @@ def format_stats(repo: AdminRepo) -> str:
     events = repo.event_totals()
 
     return (
+        "Stats\n"
         f"Users {totals.users}  (+{totals.signed_up_7d} in 7d)\n"
         f"Notion {totals.notion_connected}   iCloud {totals.icloud_connected}\n"
         f"Set up {totals.with_sync}   Syncing {totals.syncing}\n"
@@ -106,6 +108,14 @@ def format_health(db: Session) -> str:
             f"Sync every {settings.syncing_interval_minutes} min, "
             f"{len(eligible_user_ids(db))} users due"
         )
+    syncs = AdminRepo(db).sync_totals()
+    lines.append(f"Syncs failing {syncs.error}, credentials rejected {syncs.auth_error}")
+
+    # Inside the container this is the Pi's own SD card, where the logs grow.
+    disk = shutil.disk_usage(ROOT)
+    lines.append(
+        f"Disk {disk.free / 1e9:.1f} GB free of {disk.total / 1e9:.1f} GB"
+    )
     return "\n".join(lines)
 
 
@@ -180,7 +190,7 @@ async def telegram_webhook(
         body = build_report(action, db)
 
     try:
-        repo.send(f"{body}\n{stamp()}", buttons=True)
+        repo.send(body, buttons=True)
     except Exception as exc:
         logger.opt(exception=exc).warning("telegram: sending the report failed")
 

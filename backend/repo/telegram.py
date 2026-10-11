@@ -1,4 +1,5 @@
 from datetime import datetime
+from html import escape
 
 import httpx
 
@@ -31,12 +32,20 @@ class TelegramRepo:
         )
 
     def send(self, text: str, *, buttons: bool = False) -> None:
-        """Post one message to the configured chat."""
+        """Post one message, its first line bold and the time under it."""
+        # Every message opens with its title line. The text itself is escaped,
+        # since a workspace or a display name can carry the characters
+        # Telegram's markup would choke on, so the only tags are the ones here.
+        lines = text.split("\n", 1)
+        parts = [f"<b>{escape(lines[0], quote=False)}</b>"]
+        if len(lines) > 1:
+            parts.append(escape(lines[1], quote=False))
+        parts.append(f"<i>{stamp()}</i>")
+
         payload: dict = {
             "chat_id": self.chat_id,
-            "text": text,
-            # A workspace or a display name can contain the characters
-            # Telegram's markup would choke on, so the text stays plain.
+            "text": "\n".join(parts),
+            "parse_mode": "HTML",
             "disable_web_page_preview": True,
         }
         if buttons:
@@ -73,6 +82,6 @@ def notify(text: str, *, buttons: bool = False) -> None:
 
     try:
         repo = TelegramRepo(settings.telegram_bot_token, settings.telegram_chat_id)
-        repo.send(f"{text}\n{stamp()}", buttons=buttons)
+        repo.send(text, buttons=buttons)
     except Exception as exc:
         logger.opt(exception=exc).warning("telegram notification failed")
