@@ -4,6 +4,7 @@ import IcloudGuideView from './views/landing/IcloudGuideView.vue'
 import LandingView from './views/landing/LandingView.vue'
 import NotFoundView from './views/landing/NotFoundView.vue'
 import PrivacyView from './views/landing/PrivacyView.vue'
+import TermsView from './views/landing/TermsView.vue'
 import SyncGuideView from './views/landing/SyncGuideView.vue'
 import AdminErrorsView from './views/app/AdminErrorsView.vue'
 import AdminOverviewView from './views/app/AdminOverviewView.vue'
@@ -97,6 +98,18 @@ export const router = createRouter({
         title: 'Privacy policy · Calnio',
         description:
           'What Calnio stores from Google, Notion and iCloud, who else handles it, analytics, cookies and logs, how long it is kept, and how to delete it.',
+        updated: '2026-10-15',
+      },
+    },
+    {
+      path: '/terms',
+      name: 'terms',
+      component: TermsView,
+      meta: {
+        public: true,
+        title: 'Terms of use · Calnio',
+        description:
+          'The terms for using Calnio, the free Notion and Apple Calendar sync: what it changes in your accounts, your part, and what it cannot promise.',
         updated: '2026-10-15',
       },
     },

@@ -8,6 +8,7 @@ const pages = [
   { to: '/notion-icloud-calendar', label: 'Notion in your iPhone calendar' },
   { to: '/faq', label: 'FAQ' },
   { to: '/privacy', label: 'Privacy' },
+  { to: '/terms', label: 'Terms' },
 ]
 </script>
 
