@@ -3,6 +3,7 @@ import FaqView from './views/landing/FaqView.vue'
 import IcloudGuideView from './views/landing/IcloudGuideView.vue'
 import LandingView from './views/landing/LandingView.vue'
 import NotFoundView from './views/landing/NotFoundView.vue'
+import PrivacyView from './views/landing/PrivacyView.vue'
 import SyncGuideView from './views/landing/SyncGuideView.vue'
 import AdminErrorsView from './views/app/AdminErrorsView.vue'
 import AdminOverviewView from './views/app/AdminOverviewView.vue'
@@ -85,6 +86,18 @@ export const router = createRouter({
         description:
           'Is Calnio free, is it safe, what does it store, one-way or two-way, how often does it sync, and how to disconnect. Straight answers about Calnio.',
         updated: '2026-10-03',
+      },
+    },
+    {
+      path: '/privacy',
+      name: 'privacy',
+      component: PrivacyView,
+      meta: {
+        public: true,
+        title: 'Privacy policy · Calnio',
+        description:
+          'What Calnio stores from Google, Notion and iCloud, who else handles it, analytics, cookies and logs, how long it is kept, and how to delete it.',
+        updated: '2026-10-15',
       },
     },
     // Outside DashboardLayout: onboarding takes the whole screen, so it has no
