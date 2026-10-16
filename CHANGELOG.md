@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [0.8.6] - 2026-10-15
+
+### Added
+
+- A privacy policy page at /privacy, listed in the sitemap and linked from every footer
+
 ## [0.8.5] - 2026-10-11
 
 ### Changed
