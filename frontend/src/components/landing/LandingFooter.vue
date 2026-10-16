@@ -7,6 +7,7 @@ const pages = [
   { to: '/notion-apple-calendar-sync', label: 'Notion Apple Calendar sync guide' },
   { to: '/notion-icloud-calendar', label: 'Notion in your iPhone calendar' },
   { to: '/faq', label: 'FAQ' },
+  { to: '/privacy', label: 'Privacy' },
 ]
 </script>
 
