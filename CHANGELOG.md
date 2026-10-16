@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+## [0.8.7] - 2026-10-15
+
+### Added
+
+- A terms of use page at /terms, listed in the sitemap and linked from every footer
+
 ## [0.8.6] - 2026-10-15
 
 ### Added
